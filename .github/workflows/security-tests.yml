@@ -1,0 +1,295 @@
+name: Security Test Suite & Incident Response
+
+on:
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '21'
+  MAVEN_OPTS: -Xmx2048m
+  JIRA_URL: ${{ secrets.JIRA_URL }}
+  JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+  JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+  JIRA_PROJECT_KEY: 'SEC'
+
+jobs:
+  build:
+    name: Build & Compile
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Build with Maven
+        run: mvn clean compile -B
+      
+      - name: Run OWASP Dependency Check
+        run: mvn dependency-check:check -P security-scan
+        continue-on-error: true
+      
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: target/dependency-check-report.html
+
+  security-tests:
+    name: Run Security Test Suite
+    runs-on: ubuntu-latest
+    needs: build
+    
+    services:
+      ecommerce-app:
+        image: openjdk:21-slim
+        ports:
+          - 8080:8080
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Start E-Commerce Application
+        run: |
+          cd ecommerce-app
+          mvn spring-boot:run &
+          echo $! > app.pid
+          sleep 30  # Wait for application to start
+        env:
+          SPRING_PROFILES_ACTIVE: test
+      
+      - name: Run Security Tests
+        run: |
+          cd security-tests
+          mvn test -DbaseUrl=http://localhost:8080 -Dheadless=true
+        continue-on-error: true
+      
+      - name: Stop Application
+        if: always()
+        run: |
+          if [ -f ecommerce-app/app.pid ]; then
+            kill $(cat ecommerce-app/app.pid) || true
+          fi
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-test-results
+          path: |
+            security-tests/target/surefire-reports/
+            security-tests/test-output/
+      
+      - name: Upload Security Events Database
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-events-db
+          path: data/security-events.mv.db
+
+  threat-analysis:
+    name: Analyze Security Events & Detect Threats
+    runs-on: ubuntu-latest
+    needs: security-tests
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install Python Dependencies
+        run: |
+          pip install pandas requests
+      
+      - name: Download Security Events Database
+        uses: actions/download-artifact@v4
+        with:
+          name: security-events-db
+          path: data/
+      
+      - name: Run Security Event Analyzer
+        id: analyzer
+        run: |
+          python scripts/python/security_analyzer.py
+        continue-on-error: true
+      
+      - name: Upload Incident Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: incident-report
+          path: security_incident_report_*.json
+      
+      - name: Create JIRA Tickets for Incidents
+        if: always()
+        run: |
+          REPORT_FILE=$(ls -t security_incident_report_*.json | head -1)
+          python scripts/python/jira_ticket_generator.py "$REPORT_FILE"
+        continue-on-error: true
+
+  system-monitoring:
+    name: System Security Monitoring (Windows)
+    runs-on: windows-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Run PowerShell Security Monitor
+        shell: pwsh
+        run: |
+          .\scripts\powershell\SecurityMonitor.ps1 -Verbose
+        continue-on-error: true
+      
+      - name: Upload Monitoring Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: system-monitoring-report
+          path: reports/security_monitoring_report.json
+
+  vulnerability-scan:
+    name: Run Fortify Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      # Note: Fortify requires license - this is a placeholder
+      - name: Run Fortify SCA
+        run: |
+          echo "Fortify SCA would run here with proper license"
+          # mvn clean compile -P fortify
+        continue-on-error: true
+
+  generate-report:
+    name: Generate Consolidated Security Report
+    runs-on: ubuntu-latest
+    needs: [security-tests, threat-analysis, system-monitoring]
+    if: always()
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+      
+      - name: Generate Consolidated Report
+        run: |
+          mkdir -p final-report
+          
+          echo "# Security Test & Monitoring Report" > final-report/REPORT.md
+          echo "Generated: $(date)" >> final-report/REPORT.md
+          echo "" >> final-report/REPORT.md
+          
+          echo "## Test Execution Summary" >> final-report/REPORT.md
+          if [ -f security-test-results/testng-results.xml ]; then
+            echo "- Security tests executed successfully" >> final-report/REPORT.md
+          fi
+          
+          echo "" >> final-report/REPORT.md
+          echo "## Detected Incidents" >> final-report/REPORT.md
+          if [ -f incident-report/security_incident_report_*.json ]; then
+            INCIDENT_FILE=$(ls incident-report/security_incident_report_*.json | head -1)
+            python3 -c "import json; data = json.load(open('$INCIDENT_FILE')); print(f\"- Total Incidents: {data['total_incidents']}\"); print(f\"- High Severity: {data['high_severity_count']}\"); print(f\"- Medium Severity: {data['medium_severity_count']}\")" >> final-report/REPORT.md
+          fi
+          
+          echo "" >> final-report/REPORT.md
+          echo "## Artifacts" >> final-report/REPORT.md
+          echo "- Test Results: security-test-results/" >> final-report/REPORT.md
+          echo "- Incident Reports: incident-report/" >> final-report/REPORT.md
+          echo "- System Monitoring: system-monitoring-report/" >> final-report/REPORT.md
+      
+      - name: Upload Final Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-security-report
+          path: final-report/
+      
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('final-report/REPORT.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });
+      
+      - name: Fail if High-Severity Incidents Found
+        run: |
+          if [ -f incident-report/security_incident_report_*.json ]; then
+            INCIDENT_FILE=$(ls incident-report/security_incident_report_*.json | head -1)
+            HIGH_COUNT=$(python3 -c "import json; data = json.load(open('$INCIDENT_FILE')); print(data['high_severity_count'])")
+            if [ "$HIGH_COUNT" -gt 0 ]; then
+              echo "❌ Found $HIGH_COUNT high-severity security incidents!"
+              exit 1
+            fi
+          fi
+
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [generate-report]
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Send Email Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Security Test Results - ${{ github.repository }}"
+          body: |
+            Security test suite completed.
+            
+            Workflow: ${{ github.workflow }}
+            Status: ${{ job.status }}
+            
+            View full report: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: security-team@example.com
+          from: github-actions@example.com
