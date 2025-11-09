@@ -1,315 +1,126 @@
-# Secure Transaction Monitoring & Incident Response Platform
+# Secure Transaction Monitoring
 
-[![CI/CD Pipeline](https://github.com/username/secure-transac/workflows/Security%20Test%20Suite/badge.svg)](https://github.com/username/secure-transac/actions)
-[![Security Scan](https://img.shields.io/badge/security-monitored-green.svg)](https://github.com/username/secure-transac)
+Security testing project for e-commerce payment flows. Built this to learn more about application security testing and incident response workflows.
 
-## 🎯 Project Overview
+## What This Does
 
-An end-to-end testing and monitoring environment for a mock e-commerce checkout flow, emphasizing both reliability and security. This platform automates security testing, monitors transaction anomalies, detects potential threats, and generates actionable incident reports.
+Testing harness for a mock checkout system that looks for common security issues - things like payment tampering, session problems, and authentication bypasses. When it finds something suspicious, it logs it to a database and can generate tickets automatically.
 
-**Duration:** December 2024 – February 2025
+## Main Components
 
-## 🏗️ Architecture
+**E-commerce App** - Basic Spring Boot app with a checkout flow (cart → payment → confirmation)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Mock E-Commerce Platform                    │
-│        (Spring Boot + Thymeleaf + H2 Database)              │
-└─────────────┬───────────────────────────────────────────────┘
-              │
-┌─────────────▼───────────────────────────────────────────────┐
-│           Automated Security Test Suite                      │
-│     (Selenium WebDriver + TestNG + Maven)                   │
-│  • Login Abuse Tests    • Cart Tampering                    │
-│  • Payment Validation   • Session Security                  │
-│  • Coupon Edge Cases    • SQL Injection Tests              │
-└─────────────┬───────────────────────────────────────────────┘
-              │
-┌─────────────▼───────────────────────────────────────────────┐
-│         Security Event Collection Layer                      │
-│              (SQL Database + Logging)                        │
-│  • Authentication Events  • Failed Login Attempts           │
-│  • Transaction Anomalies  • Suspicious Activities           │
-└─────────────┬───────────────────────────────────────────────┘
-              │
-┌─────────────▼───────────────────────────────────────────────┐
-│        Incident Detection & Analysis Engine                  │
-│          (Python + PowerShell Scripts)                       │
-│  • Brute Force Detection  • Privilege Escalation            │
-│  • Pattern Analysis       • Process Monitoring              │
-└─────────────┬───────────────────────────────────────────────┘
-              │
-┌─────────────▼───────────────────────────────────────────────┐
-│     Automated Reporting & Incident Response                  │
-│         (GitHub Actions + JIRA Integration)                  │
-│  • Nightly CI/CD Reports  • Incident Tickets                │
-│  • Vulnerability Scans    • Remediation Tracking            │
-└─────────────────────────────────────────────────────────────┘
-```
+**Security Tests** - About 20 automated tests using Selenium to simulate attacks:
+- Login brute forcing and credential stuffing
+- Payment amount manipulation
+- Session hijacking attempts
+- Coupon/promo code abuse
+- SQL injection and XSS
+- Basic business logic exploits
 
-## 🚀 Key Features
+**Logging System** - Dumps security events into H2 database (3 tables for different event types)
 
-### 1. Automated Security Testing (20+ Scenarios)
-- **Authentication Testing**: Login abuse, brute force attempts, session hijacking
-- **Payment Security**: Invalid payment methods, amount tampering, authorization bypass
-- **Business Logic**: Coupon exploitation, cart manipulation, inventory bypass
-- **Input Validation**: SQL injection, XSS, CSRF protection
-- **Session Management**: Session reuse, fixation, timeout validation
+**Analysis Scripts**
+- Python script that reads the logs and looks for patterns (repeated failures, privilege escalation, weird transaction amounts)
+- PowerShell script for monitoring Windows security events and processes
 
-### 2. Real-Time Security Monitoring
-- Captures authentication events and failed login patterns
-- Tracks transaction anomalies and suspicious payment attempts
-- Monitors privilege escalation and unauthorized access
-- Logs process activities and system-level security events
+**JIRA Integration** - Automatically creates tickets when the Python analyzer finds something that looks like an incident
 
-### 3. Intelligent Incident Detection
-- **Python Analytics Engine**: Pattern recognition, anomaly detection, threat correlation
-- **PowerShell Monitoring**: Process analysis, privilege checks, system hardening validation
-- **SQL Analytics**: Query-based threat detection, baseline deviation analysis
+**CI/CD Pipeline** - GitHub Actions workflow that runs tests nightly and generates reports
 
-### 4. Automated Incident Response
-- Generates incident tickets with full context (timestamp, user, session, root cause)
-- Integrates with JIRA for ticket creation and tracking
-- Publishes nightly security reports via GitHub Actions
-- Maintains audit trail for compliance and forensics
 
-### 5. Vulnerability Assessment
-- Port scanning and network exposure analysis
-- Credential strength validation
-- Dependency vulnerability scanning (Fortify integration)
-- Configuration security checks
-- Documented remediation steps
+## Tech Stack
 
-## 🛠️ Technology Stack
+- Java 21 (upgraded from 17)
+- Spring Boot 3.2.2
+- Maven for builds
+- Selenium WebDriver 4.16.1 + TestNG for testing
+- H2 database (embedded SQL)
+- Python 3.x with pandas
+- PowerShell 7
+- Fortify SCA and OWASP Dependency Check
+- GitHub Actions
 
-| Category | Technologies |
-|----------|-------------|
-| **Backend** | Java 17, Spring Boot 3.x, Maven |
-| **Testing** | Selenium WebDriver, TestNG, REST Assured |
-| **Database** | H2 (embedded), SQL |
-| **Scripting** | Python 3.x, PowerShell 7.x |
-| **Security** | Fortify, OWASP Dependency Check |
-| **CI/CD** | GitHub Actions |
-| **Reporting** | Tableau, PowerBI, HTML Reports |
-| **Ticketing** | JIRA REST API |
-
-## 📦 Project Structure
+## Project Structure
 
 ```
 secure-transac/
-├── ecommerce-app/              # Mock e-commerce application
-│   ├── src/main/java/          # Spring Boot application
-│   ├── src/main/resources/     # Configuration & templates
-│   └── pom.xml                 # Maven dependencies
-│
-├── security-tests/             # Automated security test suite
-│   ├── src/test/java/          # TestNG test cases
-│   ├── test-data/              # Test datasets
-│   ├── testng.xml              # Test suite configuration
-│   └── pom.xml                 # Test dependencies
-│
-├── monitoring/                 # Security monitoring components
-│   ├── database/               # SQL schema & queries
-│   ├── python-analytics/       # Python analysis scripts
-│   ├── powershell-scripts/     # PowerShell monitoring
-│   └── fortify-config/         # Fortify scan configurations
-│
-├── incident-response/          # Incident response automation
-│   ├── playbooks/              # Response playbooks
-│   ├── ticket-generator/       # JIRA integration
-│   └── reports/                # Generated reports
-│
-├── .github/                    # GitHub Actions workflows
-│   └── workflows/              # CI/CD pipelines
-│
-├── docs/                       # Documentation
-│   ├── architecture.md         # System architecture
-│   ├── security-controls.md    # Security controls catalog
-│   └── vulnerability-reports/  # Vulnerability assessments
-│
-└── scripts/                    # Utility scripts
-    ├── setup.ps1               # Environment setup
-    └── run-tests.sh            # Test execution
+├── ecommerce-app/           # The app being tested
+├── security-tests/          # All the test scenarios
+│   ├── auth/               # Login/session tests
+│   ├── payment/            # Payment security tests
+│   ├── business/           # Business logic tests
+│   ├── injection/          # SQL injection, XSS, etc.
+│   └── api/                # API security tests
+├── scripts/
+│   ├── python/             # Analytics and JIRA integration
+│   └── powershell/         # System monitoring
+├── .github/workflows/      # CI/CD pipeline
+└── docs/                   # Incident response playbook
 ```
 
-## 🚦 Quick Start
+## Running It
 
 ### Prerequisites
-- Java 17+
+- JDK 21
 - Maven 3.8+
-- Python 3.9+
-- PowerShell 7.x
-- Chrome/ChromeDriver (for Selenium)
-- Git
+- Python 3.x
+- Chrome (for Selenium)
 
-### Setup Instructions
+### Build and Run
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/username/secure-transac.git
-   cd secure-transac
-   ```
+```bash
+# Build everything
+mvn clean install
 
-2. **Run setup script**
-   ```powershell
-   .\scripts\setup.ps1
-   ```
+# Run the e-commerce app
+cd ecommerce-app
+mvn spring-boot:run
 
-3. **Start the e-commerce application**
-   ```bash
-   cd ecommerce-app
-   mvn spring-boot:run
-   ```
+# In another terminal, run tests
+cd security-tests
+mvn test
 
-4. **Run security tests**
-   ```bash
-   cd security-tests
-   mvn clean test
-   ```
+# Run Python analytics (requires running tests first to generate logs)
+cd scripts/python
+pip install -r requirements.txt
+python security_analyzer.py
 
-5. **Execute monitoring scripts**
-   ```powershell
-   .\monitoring\powershell-scripts\monitor-security-events.ps1
-   ```
-
-## 📊 Security Test Coverage
-
-| Category | Test Count | Coverage |
-|----------|-----------|----------|
-| Authentication | 5 | 100% |
-| Authorization | 4 | 100% |
-| Payment Processing | 6 | 95% |
-| Cart & Checkout | 3 | 100% |
-| Session Management | 3 | 100% |
-| Input Validation | 4 | 90% |
-| **Total** | **25** | **97%** |
-
-## 🔒 Security Controls Implemented
-
-1. **Authentication Hardening**
-   - Account lockout after 5 failed attempts
-   - Password complexity requirements
-   - Session timeout (15 minutes)
-   - Multi-factor authentication ready
-
-2. **Transaction Security**
-   - Amount tampering detection
-   - Authorization validation
-   - Duplicate transaction prevention
-   - Real-time fraud scoring
-
-3. **Monitoring & Detection**
-   - Failed login tracking
-   - Brute force detection (5 attempts in 5 minutes)
-   - Privilege escalation monitoring
-   - Anomalous transaction patterns
-
-4. **Incident Response**
-   - Automated ticket creation
-   - Root cause analysis
-   - Containment procedures
-   - Post-incident review process
-
-## 📈 Incident Response Workflow
-
-```
-┌──────────────┐
-│  Detection   │  ← Automated monitoring detects anomaly
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│   Triage     │  ← Python/PowerShell analyze severity
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│ Containment  │  ← Auto-disable compromised accounts/sessions
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│  Analysis    │  ← Root cause investigation
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│ Remediation  │  ← Apply security patches/controls
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│  Reporting   │  ← Generate JIRA ticket + CI/CD report
-└──────────────┘
+# Run PowerShell monitoring (Windows only)
+cd scripts/powershell
+.\SecurityMonitor.ps1
 ```
 
-## 📝 Sample Incident Ticket
+## What I Learned
 
-```
-Incident ID: INC-2025-0042
-Severity: HIGH
-Detected: 2025-02-15 03:42:15 UTC
+- How to write Selenium tests that simulate actual attacks instead of just testing happy paths
+- Setting up SQL logging for security events (way more useful than I expected)
+- Pattern detection with Python - looking for brute force attempts, unusual transaction amounts, etc.
+- GitHub Actions for running security scans automatically
+- How incident response workflows actually work in practice
+- Integrating with tools like JIRA and Fortify
 
-Title: Brute Force Attack Detected - Account: admin@example.com
+## Test Examples
 
-Description:
-Multiple failed login attempts detected from IP 192.168.1.100
-- Attempt count: 12 in 3 minutes
-- Pattern: Sequential password guessing
-- User-Agent: Python-requests/2.31.0
+**Brute Force Test** - Tries 10 rapid login attempts with wrong passwords, checks if account gets locked
 
-Impact: Potential account compromise, authentication bypass
+**Amount Tampering Test** - Uses JavaScript to modify payment amounts in the DOM before submitting, verifies server-side validation catches it
 
-Root Cause: No rate limiting on login endpoint
+**Session Hijacking Test** - Steals session cookie and tries to reuse it, checks HttpOnly and Secure flags
 
-Recommended Actions:
-1. Block source IP: 192.168.1.100
-2. Reset admin account password
-3. Implement rate limiting (5 attempts per 5 minutes)
-4. Enable MFA for admin accounts
-5. Review logs for successful breaches
+**Coupon Exploitation** - Attempts to stack multiple coupons, reuse expired ones, etc.
 
-Status: OPEN
-Assigned: Security Team
-```
+## Known Issues
 
-## 🔍 Vulnerability Assessment Results
+- Some tests are stubs (need to implement remaining injection tests)
+- JIRA integration requires setting up secrets in GitHub Actions
+- PowerShell monitoring script is Windows-specific
+- Need to run the app locally for tests to work (no containerization yet)
 
-| Vulnerability | Severity | Status | Remediation |
-|--------------|----------|--------|-------------|
-| Weak password policy | HIGH | Fixed | Implemented complexity rules |
-| Open debug port (8080) | MEDIUM | Fixed | Disabled in production |
-| Outdated Spring version | HIGH | Fixed | Updated to 3.2.2 |
-| Missing CSRF tokens | CRITICAL | Fixed | Enabled Spring Security CSRF |
-| SQL injection risk | HIGH | Fixed | Parameterized queries |
+## Future Improvements
 
-## 📚 Documentation
-
-- [Incident Response Playbook](./incident-response/playbooks/payment-security-playbook.md)
-- [Security Controls Catalog](./docs/security-controls.md)
-- [Vulnerability Assessment Report](./docs/vulnerability-reports/assessment-2025-02.md)
-- [Test Suite Documentation](./security-tests/README.md)
-
-## 🎓 Skills Demonstrated
-
-✅ **Security Testing**: Automated 25+ security scenarios covering OWASP Top 10  
-✅ **Incident Detection**: Pattern analysis, anomaly detection, threat correlation  
-✅ **Vulnerability Assessment**: Scanning, documentation, remediation tracking  
-✅ **Monitoring & Logging**: Real-time event capture, SQL analytics  
-✅ **Automation**: CI/CD integration, automated reporting, ticket generation  
-✅ **Tool Proficiency**: Java, Python, PowerShell, SQL, Selenium, Maven, Fortify  
-✅ **Communication**: Structured reporting, playbook creation, technical documentation  
-
-## 🤝 Contributing
-
-This is a portfolio/learning project. Feedback and suggestions welcome!
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
-## 👤 Author
-
-**Your Name**
-- Portfolio: [your-portfolio.com](https://your-portfolio.com)
-- LinkedIn: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)
-- GitHub: [@yourusername](https://github.com/yourusername)
-
----
-
-*This project demonstrates practical cybersecurity skills applicable to financial services, e-commerce, and transaction security domains.*
+- Add more test coverage for API endpoints
+- Containerize the whole thing with Docker
+- Implement actual ML-based anomaly detection instead of just threshold rules
+- Better reporting dashboard
+- Add performance/load testing alongside security tests
