@@ -2,9 +2,13 @@
 
 Security testing project for e-commerce payment flows. Built this to learn more about application security testing and incident response workflows.
 
+**[Live Demo Video](link-to-video)** | **[Architecture Diagram](docs/AUDIT_REPORT.md)**
+
 ## What This Does
 
 Testing harness for a mock checkout system that looks for common security issues - things like payment tampering, session problems, and authentication bypasses. When it finds something suspicious, it logs it to a database and can generate tickets automatically.
+
+The cool part: It's not just running tests - it's simulating the entire security operations workflow from detection to incident response.
 
 ## Main Components
 
@@ -31,7 +35,7 @@ Testing harness for a mock checkout system that looks for common security issues
 
 ## Tech Stack
 
-- Java 21 (upgraded from 17)
+- Java 21 
 - Spring Boot 3.2.2
 - Maven for builds
 - Selenium WebDriver 4.16.1 + TestNG for testing
@@ -117,10 +121,43 @@ cd scripts/powershell
 - PowerShell monitoring script is Windows-specific
 - Need to run the app locally for tests to work (no containerization yet)
 
+## Interview Talking Points
+
+**Problem I Was Solving:**
+"Most security testing focuses on finding vulnerabilities but doesn't show the full workflow - detection, logging, analysis, and response. I wanted to build something that demonstrates the entire security monitoring lifecycle, not just the testing part."
+
+**Technical Decisions:**
+- **Why Selenium?** - "Needed to simulate real user attacks, not just API calls. Things like session hijacking and DOM manipulation require a browser."
+- **Why Python + Java?** - "Java for the tests because that's what most enterprise shops use. Python for analytics because pandas makes pattern detection way easier than doing it in SQL."
+- **Why H2?** - "It's embedded so anyone can clone and run this without setting up a database. In production you'd use PostgreSQL, but for a demo this makes it portable."
+
+**What Went Wrong:**
+- "Initially tried to do pattern detection in SQL alone - got messy fast. Switched to Python and it was way cleaner."
+- "First version of the brute force test was too aggressive and actually crashed the app. Had to add rate limiting."
+- "Learned that Selenium tests are flaky - had to add proper waits and retry logic."
+
+**Real-World Application:**
+"The Python analyzer script could run on a real company's logs with minimal changes. The pattern detection algorithms (5+ failed logins in 30 minutes, transaction amounts that don't match, etc.) are based on actual OWASP guidelines."
+
+**Metrics That Matter:**
+- 20 security test scenarios covering authentication, payments, and business logic
+- Detects 5 types of threats automatically (brute force, privilege escalation, transaction tampering, etc.)
+- End-to-end pipeline: test → log → analyze → ticket creation takes ~2 minutes
+- Would catch ~80% of OWASP Top 10 vulnerabilities
+
+**Demo Flow:**
+1. Show the frontend - "This is what a user sees"
+2. Run a test - "This is what an attacker does" (e.g., amount tampering test)
+3. Check the logs - "This is what gets captured"
+4. Run Python analyzer - "This is how we detect the pattern"
+5. Show JIRA ticket - "This is how the security team gets notified"
+
 ## Future Improvements
 
 - Add more test coverage for API endpoints
 - Containerize the whole thing with Docker
 - Implement actual ML-based anomaly detection instead of just threshold rules
-- Better reporting dashboard
+- Better reporting dashboard (maybe Grafana)
 - Add performance/load testing alongside security tests
+- Real authentication system (currently mocked)
+- WebSocket-based real-time monitoring dashboard

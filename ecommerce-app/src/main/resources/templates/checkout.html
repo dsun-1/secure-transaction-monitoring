@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - SecureShop</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .checkout-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-section:last-child { border-bottom: none; }
+        
+        .form-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .order-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .order-total {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover { background: #5568d3; }
+        
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .btn-secondary:hover { background: #5a6268; }
+        
+        .promo-section {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .promo-section input { flex: 1; }
+        .promo-section button {
+            padding: 12px 30px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .promo-section button:hover { background: #218838; }
+        
+        .alert {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 Secure Checkout</h1>
+        </div>
+        
+        <div class="checkout-form">
+            <div class="alert alert-success" id="alert-success"></div>
+            <div class="alert alert-error" id="alert-error"></div>
+            
+            <form id="checkout-form" onsubmit="submitOrder(event)">
+                <!-- Order Summary -->
+                <div class="form-section">
+                    <h2>Order Summary</h2>
+                    <div class="order-summary" id="order-summary">
+                        <!-- Cart items will be loaded here -->
+                    </div>
+                    
+                    <div class="promo-section">
+                        <input type="text" id="promo-code" placeholder="Enter promo code">
+                        <button type="button" onclick="applyPromo()">Apply</button>
+                    </div>
+                </div>
+                
+                <!-- Shipping Information -->
+                <div class="form-section">
+                    <h2>Shipping Information</h2>
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="full-name" name="fullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address *</label>
+                        <input type="text" id="address" name="address" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>City *</label>
+                            <input type="text" id="city" name="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label>ZIP Code *</label>
+                            <input type="text" id="zip" name="zip" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Information -->
+                <div class="form-section">
+                    <h2>Payment Information</h2>
+                    <div class="form-group">
+                        <label>Card Number *</label>
+                        <input type="text" id="cardNumber" name="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Expiry Date *</label>
+                            <input type="text" id="expiry" name="expiry" placeholder="MM/YY" maxlength="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label>CVV *</label>
+                            <input type="text" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Cardholder Name *</label>
+                        <input type="text" id="cardName" name="cardName" required>
+                    </div>
+                </div>
+                
+                <!-- Hidden field for amount (this is what security tests will try to tamper with) -->
+                <input type="hidden" id="total-amount" name="amount" value="">
+                <input type="hidden" id="transaction-id" name="transactionId" value="">
+                
+                <button type="submit" class="btn">Complete Purchase</button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='/'">Back to Shopping</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let discount = 0;
+        let subtotal = 0;
+        
+        function renderOrderSummary() {
+            const summary = document.getElementById('order-summary');
+            
+            if (cart.length === 0) {
+                window.location.href = '/';
+                return;
+            }
+            
+            subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const total = subtotal - discount;
+            
+            summary.innerHTML = cart.map(item => `
+                <div class="order-item">
+                    <div>
+                        <strong>${item.name}</strong> x ${item.quantity}
+                    </div>
+                    <div>$${(item.price * item.quantity).toFixed(2)}</div>
+                </div>
+            `).join('') + 
+            (discount > 0 ? `
+                <div class="order-item" style="color: #28a745;">
+                    <div>Discount</div>
+                    <div>-$${discount.toFixed(2)}</div>
+                </div>
+            ` : '') +
+            `
+                <div class="order-total">
+                    <span>Total</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+            `;
+            
+            document.getElementById('total-amount').value = total.toFixed(2);
+            document.getElementById('transaction-id').value = 'TXN-' + Date.now();
+        }
+        
+        function applyPromo() {
+            const promoCode = document.getElementById('promo-code').value.toUpperCase();
+            const validCodes = {
+                'SAVE10': 10,
+                'SAVE20': 20,
+                'SAVE50': 50,
+                'EXPIRED': 30,
+                'WELCOME': 15
+            };
+            
+            if (validCodes[promoCode]) {
+                discount = validCodes[promoCode];
+                showAlert('Promo code applied! $' + discount + ' discount', 'success');
+                renderOrderSummary();
+            } else {
+                showAlert('Invalid promo code', 'error');
+            }
+        }
+        
+        function submitOrder(event) {
+            event.preventDefault();
+            
+            // Simulate order processing
+            const formData = new FormData(event.target);
+            const orderData = {
+                transactionId: formData.get('transactionId'),
+                amount: formData.get('amount'),
+                cardNumber: formData.get('cardNumber'),
+                customerEmail: formData.get('email'),
+                items: cart
+            };
+            
+            console.log('Order submitted:', orderData);
+            
+            // This is where security tests will intercept and tamper with data
+            showAlert('Processing payment...', 'success');
+            
+            setTimeout(() => {
+                localStorage.removeItem('cart');
+                window.location.href = '/confirmation?id=' + orderData.transactionId;
+            }, 1500);
+        }
+        
+        function showAlert(message, type) {
+            const alertSuccess = document.getElementById('alert-success');
+            const alertError = document.getElementById('alert-error');
+            
+            alertSuccess.style.display = 'none';
+            alertError.style.display = 'none';
+            
+            if (type === 'success') {
+                alertSuccess.textContent = message;
+                alertSuccess.style.display = 'block';
+            } else {
+                alertError.textContent = message;
+                alertError.style.display = 'block';
+            }
+        }
+        
+        // Format card number with spaces
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+            e.target.value = formattedValue;
+        });
+        
+        // Format expiry date
+        document.getElementById('expiry').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                e.target.value = value.slice(0, 2) + '/' + value.slice(2, 4);
+            } else {
+                e.target.value = value;
+            }
+        });
+        
+        // Initialize
+        renderOrderSummary();
+    </script>
+</body>
+</html>
