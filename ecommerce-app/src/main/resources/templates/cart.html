@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Shopping Cart - SecureShop</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .header { background: #667eea; color: white; padding: 20px; margin: -20px -20px 20px -20px; }
+        .cart-item { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+        .cart-actions { margin-top: 20px; }
+        button { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        .total { font-size: 24px; font-weight: bold; margin: 20px 0; }
+        input[type="number"] { width: 60px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Shopping Cart</h1>
+        <a href="/products" style="color: white;">Continue Shopping</a>
+    </div>
+    
+    <div th:if="${cartItems.empty}">
+        <p>Your cart is empty.</p>
+    </div>
+    
+    <div th:unless="${cartItems.empty}">
+        <div class="cart-item" th:each="item : ${cartItems}">
+            <h3 th:text="${item.product.name}">Product</h3>
+            <p>Price: $<span th:text="${item.price}">0.00</span></p>
+            <p>
+                Quantity: 
+                <input type="number" class="quantity-input" th:value="${item.quantity}" 
+                       th:attr="data-item-id=${item.id}" min="0">
+                <button class="update-cart" th:attr="data-item-id=${item.id}">Update</button>
+                <button class="remove-item" th:attr="data-item-id=${item.id}">Remove</button>
+            </p>
+            <p>Subtotal: $<span th:text="${item.subtotal}">0.00</span></p>
+        </div>
+        
+        <div class="total">
+            Total: $<span th:text="${total}">0.00</span>
+        </div>
+        
+        <div class="cart-actions">
+            <button id="checkout-button" onclick="window.location.href='/checkout'">Proceed to Checkout</button>
+            <button onclick="clearCart()">Clear Cart</button>
+        </div>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.update-cart').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const quantity = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`).value;
+                updateCart(itemId, quantity);
+            });
+        });
+        
+        document.querySelectorAll('.remove-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                removeItem(itemId);
+            });
+        });
+        
+        function updateCart(itemId, quantity) {
+            fetch('/cart/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `cartItemId=${itemId}&quantity=${quantity}`
+            }).then(() => location.reload());
+        }
+        
+        function removeItem(itemId) {
+            fetch('/cart/remove', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `cartItemId=${itemId}`
+            }).then(() => location.reload());
+        }
+        
+        function clearCart() {
+            fetch('/cart/clear', {
+                method: 'POST'
+            }).then(() => location.reload());
+        }
+    </script>
+</body>
+</html>

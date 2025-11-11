@@ -21,7 +21,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/register", "/h2-console/**", "/css/**", "/js/**").permitAll()
+                .requestMatchers("/", "/register", "/h2-console/**", "/css/**", "/js/**", 
+                               "/products", "/product/**", "/cart/**", "/api/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -41,6 +42,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/cart/**", "/api/**")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)

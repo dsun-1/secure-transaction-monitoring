@@ -19,11 +19,11 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         
-        <spring.boot.version>3.2.2</spring.boot.version>
+        <spring.boot.version>3.5.0</spring.boot.version>
         <selenium.version>4.16.1</selenium.version>
         <testng.version>7.9.0</testng.version>
         <rest-assured.version>5.4.0</rest-assured.version>
-        <fortify.version>23.2.0</fortify.version>
+        <spotbugs.version>4.8.3.0</spotbugs.version>
     </properties>
 
     <modules>
@@ -84,11 +84,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>3.2.3</version>
-                    <configuration>
-                        <suiteXmlFiles>
-                            <suiteXmlFile>testng.xml</suiteXmlFile>
-                        </suiteXmlFiles>
-                    </configuration>
                 </plugin>
 
                 <!-- Spring Boot Maven Plugin -->
@@ -116,15 +111,11 @@
                     </configuration>
                 </plugin>
 
-                <!-- Fortify SCA Plugin -->
+                <!-- SpotBugs Security Plugin -->
                 <plugin>
-                    <groupId>com.fortify.sca.plugins.maven</groupId>
-                    <artifactId>sca-maven-plugin</artifactId>
-                    <version>${fortify.version}</version>
-                    <configuration>
-                        <source>${java.version}</source>
-                        <buildId>secure-transac-${project.version}</buildId>
-                    </configuration>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -139,28 +130,6 @@
                     <plugin>
                         <groupId>org.owasp</groupId>
                         <artifactId>dependency-check-maven</artifactId>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Fortify Scan Profile -->
-        <profile>
-            <id>fortify</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.fortify.sca.plugins.maven</groupId>
-                        <artifactId>sca-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>clean</goal>
-                                    <goal>translate</goal>
-                                    <goal>scan</goal>
-                                </goals>
-                            </execution>
-                        </executions>
                     </plugin>
                 </plugins>
             </build>

@@ -1,6 +1,7 @@
 package com.security.ecommerce.service;
 
 import com.security.ecommerce.model.Transaction;
+import com.security.ecommerce.model.User;
 import com.security.ecommerce.repository.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -23,6 +25,44 @@ public class TransactionService {
     
     @Autowired
     private SecurityEventService securityEventService;
+    
+    public Transaction createTransaction(User user, BigDecimal amount, String lastFourDigits, String shippingAddress) {
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(UUID.randomUUID().toString());
+        transaction.setUser(user);
+        transaction.setAmount(amount);
+        transaction.setOriginalAmount(amount);
+        transaction.setPaymentMethod("CARD_" + lastFourDigits);
+        transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
+        transaction.setTransactionDate(LocalDateTime.now());
+        
+        // Detect anomalies
+        String username = user != null ? user.getUsername() : "guest";
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            transaction.setStatus(Transaction.TransactionStatus.FAILED);
+            transaction.setFailureReason("Negative amount not allowed");
+            securityEventService.logHighSeverityEvent(
+                "TRANSACTION_ANOMALY",
+                username,
+                "Negative transaction amount attempted",
+                "Amount: " + amount
+            );
+        } else if (amount.compareTo(new BigDecimal("10000")) > 0) {
+            transaction.setStatus(Transaction.TransactionStatus.FAILED);
+            transaction.setFailureReason("Amount exceeds limit");
+            securityEventService.logHighSeverityEvent(
+                "TRANSACTION_ANOMALY",
+                username,
+                "Suspiciously high transaction amount",
+                "Amount: " + amount
+            );
+        }
+        
+        Transaction saved = transactionRepository.save(transaction);
+        logger.info("Transaction created: {} - ${} - {}", transaction.getTransactionId(), amount, transaction.getStatus());
+        
+        return saved;
+    }
     
     public Transaction createTransaction(String username, String transactionId, 
                                          double amount, String paymentMethod) {

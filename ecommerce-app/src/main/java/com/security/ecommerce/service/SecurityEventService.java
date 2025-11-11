@@ -20,6 +20,9 @@ public class SecurityEventService {
     @Autowired
     private SecurityEventRepository securityEventRepository;
     
+    @Autowired(required = false)
+    private SiemIntegrationService siemIntegrationService;
+    
     public SecurityEvent logEvent(SecurityEvent event) {
         if (event.getTimestamp() == null) {
             event.setTimestamp(LocalDateTime.now());
@@ -27,6 +30,12 @@ public class SecurityEventService {
         SecurityEvent saved = securityEventRepository.save(event);
         logger.info("Security Event Logged: {} - {} - {}", 
             event.getEventType(), event.getSeverity(), event.getDescription());
+        
+        // Send to SIEM if available
+        if (siemIntegrationService != null) {
+            siemIntegrationService.sendToSiem(saved);
+        }
+        
         return saved;
     }
     

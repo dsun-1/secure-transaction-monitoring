@@ -183,7 +183,7 @@ jobs:
           path: reports/security_monitoring_report.json
 
   vulnerability-scan:
-    name: Run Fortify Security Scan
+    name: Run SpotBugs Security Scan
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -199,12 +199,18 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
-      # Note: Fortify requires license - this is a placeholder
-      - name: Run Fortify SCA
+      - name: Run SpotBugs Security Analysis
         run: |
-          echo "Fortify SCA would run here with proper license"
-          # mvn clean compile -P fortify
+          cd ecommerce-app
+          mvn spotbugs:check
         continue-on-error: true
+      
+      - name: Upload SpotBugs Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spotbugs-report
+          path: ecommerce-app/target/spotbugs*.html
 
   generate-report:
     name: Generate Consolidated Security Report

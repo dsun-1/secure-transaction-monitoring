@@ -11,18 +11,8 @@ public class WebController {
         return "index";
     }
 
-    @GetMapping("/checkout")
-    public String checkout() {
-        return "checkout";
-    }
-
     @GetMapping("/confirmation")
     public String confirmation() {
         return "confirmation";
-    }
-    
-    @GetMapping("/login")
-    public String login() {
-        return "login";
     }
 }

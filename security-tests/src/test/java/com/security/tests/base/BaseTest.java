@@ -73,6 +73,9 @@ public class BaseTest {
     }
     
     protected void navigateToUrl(String path) {
+        if (baseUrl == null || baseUrl.isEmpty()) {
+            baseUrl = "http://localhost:8080";
+        }
         driver.get(baseUrl + path);
     }
     
