@@ -57,4 +57,35 @@
         </classes>
     </test>
 
+    <!-- OWASP Top 10 2021 Additional Tests -->
+    <test name="OWASP A02 - Cryptographic Failures">
+        <classes>
+            <class name="com.security.tests.crypto.CryptographicFailuresTest"/>
+        </classes>
+    </test>
+
+    <test name="OWASP A05 - Security Misconfiguration">
+        <classes>
+            <class name="com.security.tests.config.SecurityMisconfigurationTest"/>
+        </classes>
+    </test>
+
+    <test name="OWASP A06 - Vulnerable Components">
+        <classes>
+            <class name="com.security.tests.components.VulnerableComponentsTest"/>
+        </classes>
+    </test>
+
+    <test name="OWASP A08 - Software Integrity">
+        <classes>
+            <class name="com.security.tests.integrity.SoftwareIntegrityTest"/>
+        </classes>
+    </test>
+
+    <test name="OWASP A10 - SSRF">
+        <classes>
+            <class name="com.security.tests.ssrf.SSRFTest"/>
+        </classes>
+    </test>
+
 </suite>

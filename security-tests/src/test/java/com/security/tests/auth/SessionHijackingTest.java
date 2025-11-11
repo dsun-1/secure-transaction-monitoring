@@ -1,7 +1,6 @@
 package com.security.tests.auth;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.testng.Assert;
@@ -36,14 +35,9 @@ public class SessionHijackingTest extends BaseTest {
         
         // Log security event if cookies are vulnerable
         if (!isHttpOnly || (!isSecure && !baseUrl.contains("localhost"))) {
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "INSECURE_SESSION_COOKIE",
-                "testuser",
-                "Session hijacking vulnerability",
-                "Session cookie lacks proper security flags (HttpOnly: " + 
-                isHttpOnly + ", Secure: " + isSecure + ")"
-            );
-            eventLogger.logSecurityEvent(event);
+            logSecurityEvent("INSECURE_SESSION_COOKIE", "HIGH",
+                "Session hijacking vulnerability - Session cookie lacks proper security flags (HttpOnly: " + 
+                isHttpOnly + ", Secure: " + isSecure + ") for user: testuser");
         }
     }
     
@@ -78,13 +72,8 @@ public class SessionHijackingTest extends BaseTest {
             "Old session should not be valid after logout - session hijacking vulnerability!");
         
         if (!isRedirectedToLogin) {
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "SESSION_REUSE_VULNERABILITY",
-                "testuser",
-                "Session reuse after logout",
-                "Session " + oldSessionId + " remained valid after logout"
-            );
-            eventLogger.logSecurityEvent(event);
+            logSecurityEvent("SESSION_REUSE_VULNERABILITY", "HIGH",
+                "Session reuse after logout - Session " + oldSessionId + " remained valid after logout for user: testuser");
         }
     }
     
@@ -93,12 +82,7 @@ public class SessionHijackingTest extends BaseTest {
         // This test would require parallel browser instances
         // For now, we log that this test should be implemented with Selenium Grid
         
-        SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-            "CONCURRENT_SESSION_TEST",
-            "testuser",
-            "Testing concurrent login detection",
-            "Verifying that multiple simultaneous logins are detected and handled"
-        );
-        eventLogger.logSecurityEvent(event);
+        logSecurityEvent("CONCURRENT_SESSION_TEST", "MEDIUM",
+            "Testing concurrent login detection - Verifying that multiple simultaneous logins are detected and handled for user: testuser");
     }
 }

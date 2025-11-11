@@ -1,7 +1,6 @@
 package com.security.tests.payment;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
@@ -69,14 +68,9 @@ public class AmountTamperingTest extends BaseTest {
         );
         
         if (!hasErrorMessage) {
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "PRICE_TAMPERING_SUCCESSFUL",
-                "testuser",
-                "Payment amount manipulation",
-                "Successfully modified transaction amount from $" + original + 
-                " to $" + tamperedPrice + " - CRITICAL VULNERABILITY"
-            );
-            eventLogger.logSecurityEvent(event);
+            logSecurityEvent("PRICE_TAMPERING_SUCCESSFUL", "HIGH",
+                "Payment amount manipulation - Successfully modified transaction amount from $" + original + 
+                " to $" + tamperedPrice + " - CRITICAL VULNERABILITY for user: testuser");
         }
     }
     
@@ -142,12 +136,7 @@ public class AmountTamperingTest extends BaseTest {
         navigateToUrl("/checkout?currency=EUR");
         
         // Log potential currency arbitrage attempt
-        SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-            "CURRENCY_MANIPULATION_ATTEMPT",
-            "testuser",
-            "Currency conversion bypass",
-            "Attempted to exploit currency conversion in checkout process"
-        );
-        eventLogger.logSecurityEvent(event);
+        logSecurityEvent("CURRENCY_MANIPULATION_ATTEMPT", "MEDIUM",
+            "Currency conversion bypass - Attempted to exploit currency conversion in checkout process for user: testuser");
     }
 }

@@ -1,7 +1,6 @@
 package com.security.tests.auth;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
@@ -56,14 +55,8 @@ public class BruteForceTest extends BaseTest {
             "System should implement brute force protection after " + attemptCount + " failed attempts");
         
         // Log security event
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "BRUTE_FORCE_DETECTED",
-            testUsername,
-            "Potential brute force attack",
-            attemptCount + " rapid failed login attempts detected from same IP"
-        );
-        event.setIpAddress("127.0.0.1");
-        eventLogger.logSecurityEvent(event);
+        logSecurityEvent("BRUTE_FORCE_DETECTED", "HIGH", 
+            attemptCount + " rapid failed login attempts detected from same IP for user: " + testUsername);
     }
     
     @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
@@ -92,13 +85,8 @@ public class BruteForceTest extends BaseTest {
         }
         
         // Log sophisticated attack pattern
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "DISTRIBUTED_BRUTE_FORCE",
-            testUsername,
-            "Coordinated brute force attack",
-            "Multiple failed attempts across different sessions/IPs detected"
-        );
-        eventLogger.logSecurityEvent(event);
+        logSecurityEvent("DISTRIBUTED_BRUTE_FORCE", "HIGH", 
+            "Coordinated brute force attack - Multiple failed attempts across different sessions/IPs detected for user: " + testUsername);
     }
     
     @Test(priority = 3, description = "Test credential stuffing with leaked credentials")
@@ -131,12 +119,7 @@ public class BruteForceTest extends BaseTest {
             );
         }
         
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CREDENTIAL_STUFFING",
-            "multiple_accounts",
-            "Credential stuffing attack",
-            "Automated login attempts with leaked credential database"
-        );
-        eventLogger.logSecurityEvent(event);
+        logSecurityEvent("CREDENTIAL_STUFFING", "HIGH",
+            "Automated login attempts with leaked credential database detected");
     }
 }

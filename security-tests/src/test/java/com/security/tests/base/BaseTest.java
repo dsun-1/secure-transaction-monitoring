@@ -10,6 +10,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import com.security.tests.utils.SecurityEventLogger;
+import com.security.tests.utils.SecurityEvent;
 import com.security.tests.utils.ConfigReader;
 
 /**
@@ -73,5 +74,20 @@ public class BaseTest {
     
     protected void navigateToUrl(String path) {
         driver.get(baseUrl + path);
+    }
+    
+    /**
+     * Helper method to log security events from tests
+     */
+    protected void logSecurityEvent(String eventType, String severity, String description) {
+        if (eventLogger != null) {
+            SecurityEvent event = new SecurityEvent();
+            event.setEventType(eventType);
+            event.setSeverity(severity);
+            event.setEventDetails(description);
+            event.setUsername("test-user");
+            event.setIpAddress("127.0.0.1");
+            eventLogger.logSecurityEvent(event);
+        }
     }
 }
