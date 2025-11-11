@@ -32,15 +32,17 @@ public class SecurityEventLogger {
                     user_agent VARCHAR(500),
                     event_details TEXT,
                     suspected_threat VARCHAR(100),
-                    timestamp TIMESTAMP NOT NULL,
-                    INDEX idx_event_type (event_type),
-                    INDEX idx_severity (severity),
-                    INDEX idx_username (username),
-                    INDEX idx_timestamp (timestamp)
+                    timestamp TIMESTAMP NOT NULL
                 );
             """;
             
             stmt.execute(createTable);
+            
+            // Create indexes separately
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_event_type ON security_events(event_type)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_severity ON security_events(severity)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_username ON security_events(username)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON security_events(timestamp)");
             
             // Create authentication_attempts table
             String createAuthTable = """
@@ -50,13 +52,13 @@ public class SecurityEventLogger {
                     success BOOLEAN NOT NULL,
                     ip_address VARCHAR(45),
                     failure_reason VARCHAR(200),
-                    attempt_timestamp TIMESTAMP NOT NULL,
-                    INDEX idx_username_time (username, attempt_timestamp),
-                    INDEX idx_success (success)
+                    attempt_timestamp TIMESTAMP NOT NULL
                 );
             """;
             
             stmt.execute(createAuthTable);
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_username_time ON authentication_attempts(username, attempt_timestamp)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_success ON authentication_attempts(success)");
             
             // Create transaction_anomalies table
             String createTxTable = """
@@ -68,13 +70,13 @@ public class SecurityEventLogger {
                     original_amount DECIMAL(10,2),
                     modified_amount DECIMAL(10,2),
                     anomaly_details TEXT,
-                    detection_timestamp TIMESTAMP NOT NULL,
-                    INDEX idx_anomaly_type (anomaly_type),
-                    INDEX idx_username (username)
+                    detection_timestamp TIMESTAMP NOT NULL
                 );
             """;
             
             stmt.execute(createTxTable);
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_anomaly_type ON transaction_anomalies(anomaly_type)");
+            stmt.execute("CREATE INDEX IF NOT EXISTS idx_tx_username ON transaction_anomalies(username)");
             
             logger.info("Security events database initialized successfully");
             
