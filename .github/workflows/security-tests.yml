@@ -16,7 +16,7 @@ env:
   JIRA_URL: ${{ secrets.JIRA_URL }}
   JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
   JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-  JIRA_PROJECT_KEY: 'SEC'
+  JIRA_PROJECT_KEY: 'KAN'
 
 jobs:
   build:

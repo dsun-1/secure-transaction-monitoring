@@ -38,15 +38,13 @@ class JiraIncidentTicketGenerator:
                 'project': {'key': self.project_key},
                 'summary': f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}",
                 'description': description,
-                'issuetype': {'name': 'Bug'},
+                'issuetype': {'name': 'Task'},  # Changed from 'Bug' to 'Task' for Kanban
                 'priority': {'name': priority},
                 'labels': ['security', 'automated', incident['type'].lower()]
             }
         }
         
-        # Add custom fields if they exist in your JIRA instance
-        if 'username' in incident:
-            issue_data['fields']['customfield_10001'] = incident['username']
+        # Note: Custom fields removed for better compatibility across JIRA instances
         
         try:
             response = requests.post(
