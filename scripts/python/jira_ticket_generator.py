@@ -147,17 +147,30 @@ h3. Remediation Status
         return created_tickets
 
 def main():
-    # Configuration (should be loaded from environment variables or config file)
-    JIRA_URL = "https://your-domain.atlassian.net"
-    JIRA_USERNAME = "your-email@example.com"
-    JIRA_API_TOKEN = "your-api-token"
-    PROJECT_KEY = "SEC"
+    import os
+    
+    # Load configuration from environment variables
+    JIRA_URL = os.getenv('JIRA_URL')
+    JIRA_USERNAME = os.getenv('JIRA_USERNAME')
+    JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN')
+    PROJECT_KEY = os.getenv('JIRA_PROJECT_KEY', 'KAN')
+    
+    # Validate required environment variables
+    if not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN]):
+        print("ERROR: Missing required environment variables:")
+        print("  - JIRA_URL")
+        print("  - JIRA_USERNAME")
+        print("  - JIRA_API_TOKEN")
+        sys.exit(1)
     
     if len(sys.argv) < 2:
         print("Usage: python jira_ticket_generator.py <incident_report.json>")
         sys.exit(1)
     
     report_file = sys.argv[1]
+    
+    print(f"Connecting to JIRA: {JIRA_URL}")
+    print(f"Project: {PROJECT_KEY}")
     
     generator = JiraIncidentTicketGenerator(JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN, PROJECT_KEY)
     created_tickets = generator.process_incident_report(report_file)

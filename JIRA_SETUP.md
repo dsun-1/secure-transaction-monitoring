@@ -46,17 +46,21 @@ cd scripts\python
 
 # Set environment variables (replace with your values)
 $env:JIRA_URL="https://secure-transaction.atlassian.net"
-$env:JIRA_USERNAME="your-email@example.com"
+$env:JIRA_USERNAME="darshsundar007@gmail.com"
 $env:JIRA_API_TOKEN="your-api-token-here"
+$env:JIRA_PROJECT_KEY="KAN"  # Your project key
 
-# Run test
+# Test with single ticket
 python test_jira_integration.py
+
+# Or test with full report
+python jira_ticket_generator.py sample_incident_report.json
 ```
 
 **Expected output:**
 ```
-✅ SUCCESS! Ticket created: SEC-1
-🔗 View it at: https://secure-transaction.atlassian.net/browse/SEC-1
+✅ SUCCESS! Ticket created: KAN-1
+🔗 View it at: https://secure-transaction.atlassian.net/browse/KAN-1
 🎉 JIRA integration is working correctly!
 ```
 
