@@ -48,10 +48,12 @@ jobs:
       - name: Start application in background
         run: |
           cd ecommerce-app
-          mvn spring-boot:run &
-          # Wait for application to start
-          sleep 30
-          echo "Application started"
+          nohup mvn spring-boot:run > app.log 2>&1 &
+          echo $! > app.pid
+          sleep 40
+          # Verify app is running
+          curl -f http://localhost:8080 || (cat app.log && exit 1)
+          echo "Application started successfully"
       
       - name: Run security tests
         run: |
@@ -60,7 +62,13 @@ jobs:
           echo "Security tests completed"
       
       - name: Stop application
+        if: always()
         run: |
+          if [ -f ecommerce-app/app.pid ]; then
+            kill $(cat ecommerce-app/app.pid) || true
+            sleep 5
+          fi
+          # Force kill any remaining processes
           pkill -f spring-boot:run || true
       
       - name: Analyze security events
@@ -77,11 +85,13 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
         run: |
           cd scripts/python
-          if [ -f "incident_report.json" ]; then
-            python jira_ticket_generator.py
-            echo "JIRA tickets created successfully"
+          REPORT_FILE=$(ls -t security_incident_report_*.json 2>/dev/null | head -1)
+          if [ -n "$REPORT_FILE" ]; then
+            echo "Found incident report: $REPORT_FILE"
+            python jira_ticket_generator.py "$REPORT_FILE"
+            echo "✅ JIRA tickets created successfully"
           else
-            echo "No incident report found"
+            echo "⚠️ No incident report found - no security incidents detected"
           fi
       
       - name: Upload incident report
@@ -89,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-incident-report
-          path: scripts/python/incident_report.json
+          path: scripts/python/security_incident_report_*.json
           retention-days: 90
       
       - name: Upload security event database
