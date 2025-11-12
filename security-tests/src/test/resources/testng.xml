@@ -80,9 +80,4 @@
         </classes>
     </test>
 
-    <test name="OWASP A10 - SSRF">
-        <classes>
-        </classes>
-    </test>
-
 </suite>
