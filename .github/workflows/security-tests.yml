@@ -133,7 +133,7 @@ jobs:
         id: analyzer
         run: |
           cd scripts/python
-          python security_analyzer.py
+          python security_analyzer_h2.py
         continue-on-error: true
       
       - name: Upload Incident Report

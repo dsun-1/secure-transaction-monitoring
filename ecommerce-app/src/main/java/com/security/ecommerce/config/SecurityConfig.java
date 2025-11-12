@@ -42,7 +42,6 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/cart/**", "/api/**")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)
