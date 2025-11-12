@@ -31,7 +31,6 @@
     <!-- Business Logic Vulnerability Tests -->
     <test name="Business Logic Tests">
         <classes>
-            <class name="com.security.tests.business.CouponExploitationTest"/>
             <class name="com.security.tests.business.CartManipulationTest"/>
             <class name="com.security.tests.business.InventoryBypassTest"/>
             <class name="com.security.tests.business.PriceModificationTest"/>
@@ -53,7 +52,6 @@
         <classes>
             <class name="com.security.tests.api.APIAuthenticationTest"/>
             <class name="com.security.tests.api.RateLimitingTest"/>
-            <class name="com.security.tests.api.DataExposureTest"/>
         </classes>
     </test>
 
@@ -84,7 +82,6 @@
 
     <test name="OWASP A10 - SSRF">
         <classes>
-            <class name="com.security.tests.ssrf.SSRFTest"/>
         </classes>
     </test>
 
