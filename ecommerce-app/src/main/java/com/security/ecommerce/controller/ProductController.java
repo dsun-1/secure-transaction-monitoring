@@ -20,7 +20,12 @@ public class ProductController {
     public String listProducts(Model model) {
         List<Product> products = productService.getAllProducts();
         model.addAttribute("products", products);
-        return "products";
+        return "index";
+    }
+    
+    @GetMapping("/")
+    public String home(Model model) {
+        return listProducts(model);
     }
 
     @GetMapping("/product/{id}")

@@ -31,43 +31,36 @@ public class CartController {
     }
 
     @PostMapping("/add")
-    @ResponseBody
     public String addToCart(@RequestParam Long productId,
                            @RequestParam(defaultValue = "1") Integer quantity,
                            HttpSession session) {
         String sessionId = session.getId();
-        CartItem item = cartService.addToCart(sessionId, productId, quantity);
+        cartService.addToCart(sessionId, productId, quantity);
         
-        if (item != null) {
-            return "success";
-        }
-        return "error";
+        return "redirect:/products";
     }
 
     @PostMapping("/update")
-    @ResponseBody
     public String updateCart(@RequestParam Long cartItemId,
                             @RequestParam Integer quantity,
                             HttpSession session) {
         String sessionId = session.getId();
         cartService.updateQuantity(sessionId, cartItemId, quantity);
-        return "success";
+        return "redirect:/cart";
     }
 
     @PostMapping("/remove")
-    @ResponseBody
     public String removeFromCart(@RequestParam Long cartItemId,
                                 HttpSession session) {
         String sessionId = session.getId();
         cartService.removeFromCart(sessionId, cartItemId);
-        return "success";
+        return "redirect:/cart";
     }
 
     @PostMapping("/clear")
-    @ResponseBody
     public String clearCart(HttpSession session) {
         String sessionId = session.getId();
         cartService.clearCart(sessionId);
-        return "success";
+        return "redirect:/cart";
     }
 }
