@@ -24,7 +24,7 @@ public class SQLInjectionTest extends BaseTest {
         for (String payload : sqlPayloads) {
             WebElement username = driver.findElement(By.id("username"));
             WebElement password = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.id("loginButton"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
             username.clear();
             username.sendKeys(payload);

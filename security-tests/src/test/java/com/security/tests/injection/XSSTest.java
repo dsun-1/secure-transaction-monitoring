@@ -21,7 +21,7 @@ public class XSSTest extends BaseTest {
         username.sendKeys(xssPayload);
         password.sendKeys("password");
         
-        WebElement loginButton = driver.findElement(By.id("loginButton"));
+        WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
         loginButton.click();
         
         // Page source should not contain unescaped script tag

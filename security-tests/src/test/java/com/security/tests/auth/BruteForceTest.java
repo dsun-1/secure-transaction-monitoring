@@ -23,7 +23,7 @@ public class BruteForceTest extends BaseTest {
         for (int i = 1; i <= attemptCount; i++) {
             WebElement usernameField = driver.findElement(By.id("username"));
             WebElement passwordField = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.id("loginButton"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
             usernameField.clear();
             usernameField.sendKeys(testUsername);
@@ -70,7 +70,7 @@ public class BruteForceTest extends BaseTest {
             
             WebElement usernameField = driver.findElement(By.id("username"));
             WebElement passwordField = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.id("loginButton"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
             usernameField.sendKeys(testUsername);
             passwordField.sendKeys("attempt" + i);
@@ -105,7 +105,7 @@ public class BruteForceTest extends BaseTest {
             
             WebElement usernameField = driver.findElement(By.id("username"));
             WebElement passwordField = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.id("loginButton"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
             usernameField.sendKeys(credential[0]);
             passwordField.sendKeys(credential[1]);

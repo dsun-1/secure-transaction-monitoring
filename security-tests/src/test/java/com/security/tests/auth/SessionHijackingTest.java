@@ -18,7 +18,7 @@ public class SessionHijackingTest extends BaseTest {
         navigateToUrl("/login");
         driver.findElement(By.id("username")).sendKeys("testuser");
         driver.findElement(By.id("password")).sendKeys("password123");
-        driver.findElement(By.id("loginButton")).click();
+        driver.findElement(By.xpath("//button[@type='submit']")).click();
         
         // Capture session cookie
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
@@ -47,7 +47,7 @@ public class SessionHijackingTest extends BaseTest {
         navigateToUrl("/login");
         driver.findElement(By.id("username")).sendKeys("testuser");
         driver.findElement(By.id("password")).sendKeys("password123");
-        driver.findElement(By.id("loginButton")).click();
+        driver.findElement(By.xpath("//button[@type='submit']")).click();
         
         // Capture session cookie
         Cookie oldSessionCookie = driver.manage().getCookieNamed("JSESSIONID");
