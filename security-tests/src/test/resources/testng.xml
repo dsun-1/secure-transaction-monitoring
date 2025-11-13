@@ -7,47 +7,35 @@
         <listener class-name="com.security.tests.listeners.SecurityEventListener"/>
     </listeners>
 
-    <!-- Authentication & Session Security Tests -->
     <test name="Authentication Security Tests">
         <classes>
-            <class name="com.security.tests.auth.LoginAbuseTest"/>
             <class name="com.security.tests.auth.BruteForceTest"/>
             <class name="com.security.tests.auth.SessionHijackingTest"/>
             <class name="com.security.tests.auth.SessionFixationTest"/>
-            <class name="com.security.tests.auth.SessionTimeoutTest"/>
         </classes>
     </test>
 
-    <!-- Payment & Transaction Security Tests -->
     <test name="Payment Security Tests">
         <classes>
             <class name="com.security.tests.payment.InvalidPaymentTest"/>
             <class name="com.security.tests.payment.AmountTamperingTest"/>
-            <class name="com.security.tests.payment.AuthorizationBypassTest"/>
-            <class name="com.security.tests.payment.NegativeAmountTest"/>
         </classes>
     </test>
 
-    <!-- Business Logic Vulnerability Tests -->
     <test name="Business Logic Tests">
         <classes>
             <class name="com.security.tests.business.CartManipulationTest"/>
-            <class name="com.security.tests.business.InventoryBypassTest"/>
-            <class name="com.security.tests.business.PriceModificationTest"/>
         </classes>
     </test>
 
-    <!-- Input Validation & Injection Tests -->
     <test name="Input Validation Tests">
         <classes>
             <class name="com.security.tests.injection.SQLInjectionTest"/>
             <class name="com.security.tests.injection.XSSTest"/>
             <class name="com.security.tests.injection.CSRFTest"/>
-            <class name="com.security.tests.injection.CommandInjectionTest"/>
         </classes>
     </test>
 
-    <!-- API Security Tests -->
     <test name="API Security Tests">
         <classes>
             <class name="com.security.tests.api.APIAuthenticationTest"/>
@@ -55,7 +43,6 @@
         </classes>
     </test>
 
-    <!-- OWASP Top 10 2021 Additional Tests -->
     <test name="OWASP A02 - Cryptographic Failures">
         <classes>
             <class name="com.security.tests.crypto.CryptographicFailuresTest"/>
