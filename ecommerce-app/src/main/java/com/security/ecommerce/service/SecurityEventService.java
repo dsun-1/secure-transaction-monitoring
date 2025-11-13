@@ -20,8 +20,10 @@ public class SecurityEventService {
     @Autowired
     private SecurityEventRepository securityEventRepository;
     
-    @Autowired(required = false)
-    private SiemIntegrationService siemIntegrationService;
+    //
+    // --- ERROR REMOVED ---
+    // Removed the @Autowired property for SiemIntegrationService
+    //
     
     public SecurityEvent logEvent(SecurityEvent event) {
         if (event.getTimestamp() == null) {
@@ -31,10 +33,10 @@ public class SecurityEventService {
         logger.info("Security Event Logged: {} - {} - {}", 
             event.getEventType(), event.getSeverity(), event.getDescription());
         
-        // Send to SIEM if available
-        if (siemIntegrationService != null) {
-            siemIntegrationService.sendToSiem(saved);
-        }
+        //
+        // --- ERROR REMOVED ---
+        // Removed the "if (siemIntegrationService != null)" block
+        //
         
         return saved;
     }
