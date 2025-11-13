@@ -21,8 +21,8 @@ public class SecurityEventService {
     private SecurityEventRepository securityEventRepository;
     
     //
-    // --- ERROR REMOVED ---
-    // Removed the @Autowired property for SiemIntegrationService
+    // --- FIX ---
+    // Removed the @Autowired property for the deleted SiemIntegrationService
     //
     
     public SecurityEvent logEvent(SecurityEvent event) {
@@ -34,7 +34,7 @@ public class SecurityEventService {
             event.getEventType(), event.getSeverity(), event.getDescription());
         
         //
-        // --- ERROR REMOVED ---
+        // --- FIX ---
         // Removed the "if (siemIntegrationService != null)" block
         //
         
