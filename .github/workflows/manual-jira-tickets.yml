@@ -85,8 +85,9 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
         run: |
           cd scripts/python
-          REPORT_FILE=$(ls -t security_incident_report_*.json 2>/dev/null | head -1)
-          if [ -n "$REPORT_FILE" ]; then
+          # --- FIX: Changed REPORT_FILE to static filename ---
+          REPORT_FILE="siem_incident_report.json"
+          if [ -f "$REPORT_FILE" ]; then
             echo "Found incident report: $REPORT_FILE"
             python jira_ticket_generator.py "$REPORT_FILE"
             echo "✅ JIRA tickets created successfully"
@@ -99,7 +100,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-incident-report
-          path: scripts/python/security_incident_report_*.json
+          # --- FIX: Changed path to static filename ---
+          path: scripts/python/siem_incident_report.json
           retention-days: 90
       
       - name: Upload security event database

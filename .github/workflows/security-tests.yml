@@ -141,7 +141,8 @@ jobs:
         if: always()
         with:
           name: incident-report
-          path: scripts/python/security_incident_report_*.json
+          # --- FIX: Changed path to static filename ---
+          path: scripts/python/siem_incident_report.json
       
       - name: Create JIRA Tickets for Incidents
         if: always()
@@ -152,8 +153,9 @@ jobs:
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
         run: |
           cd scripts/python
-          REPORT_FILE=$(ls -t security_incident_report_*.json 2>/dev/null | head -1)
-          if [ -n "$REPORT_FILE" ]; then
+          # --- FIX: Changed REPORT_FILE to static filename ---
+          REPORT_FILE="siem_incident_report.json"
+          if [ -f "$REPORT_FILE" ]; then
             python jira_ticket_generator.py "$REPORT_FILE"
           else
             echo "No incident report found to process"
@@ -240,8 +242,9 @@ jobs:
           
           echo "" >> final-report/REPORT.md
           echo "## Detected Incidents" >> final-report/REPORT.md
-          if [ -f incident-report/security_incident_report_*.json ]; then
-            INCIDENT_FILE=$(ls incident-report/security_incident_report_*.json | head -1)
+          # --- FIX: Changed to static filename ---
+          if [ -f incident-report/siem_incident_report.json ]; then
+            INCIDENT_FILE="incident-report/siem_incident_report.json"
             python3 -c "import json; data = json.load(open('$INCIDENT_FILE')); print(f\"- Total Incidents: {data['total_incidents']}\"); print(f\"- High Severity: {data['high_severity_count']}\"); print(f\"- Medium Severity: {data['medium_severity_count']}\")" >> final-report/REPORT.md
           fi
           
@@ -273,8 +276,9 @@ jobs:
       
       - name: Fail if High-Severity Incidents Found
         run: |
-          if [ -f incident-report/security_incident_report_*.json ]; then
-            INCIDENT_FILE=$(ls incident-report/security_incident_report_*.json | head -1)
+          # --- FIX: Changed to static filename ---
+          if [ -f incident-report/siem_incident_report.json ]; then
+            INCIDENT_FILE="incident-report/siem_incident_report.json"
             HIGH_COUNT=$(python3 -c "import json; data = json.load(open('$INCIDENT_FILE')); print(data['high_severity_count'])")
             if [ "$HIGH_COUNT" -gt 0 ]; then
               echo "❌ Found $HIGH_COUNT high-severity security incidents!"

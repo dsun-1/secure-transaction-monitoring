@@ -11,7 +11,8 @@ import sys
 import os
 
 class SecurityEventAnalyzer:
-    def __init__(self, db_path='./data/security-events'):
+    # --- FIX 4: Updated database path to correct relative path from workflow ---
+    def __init__(self, db_path='../../ecommerce-app/data/security-events'):
         self.db_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         self.db_user = "sa"
         self.db_password = ""
@@ -243,8 +244,8 @@ class SecurityEventAnalyzer:
             print("\n⚠️  CRITICAL: High-severity incidents require immediate attention!")
         
         # Save detailed report
-        os.makedirs('./reports', exist_ok=True)
-        report_file = f"./reports/security_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        # --- FIX 3: Removed os.makedirs and changed filename to static name ---
+        report_file = "siem_incident_report.json"
         
         with open(report_file, 'w') as f:
             json.dump({
@@ -256,7 +257,7 @@ class SecurityEventAnalyzer:
                 'high_severity_events': high_sev
             }, f, indent=2)
         
-        print(f"\nDetailed report saved to: {report_file}")
+        print(f"\nDetailed report saved to: {os.path.abspath(report_file)}")
         
         return all_incidents
 
