@@ -3,31 +3,35 @@ package com.security.ecommerce.service;
 import com.security.ecommerce.model.User;
 import com.security.ecommerce.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-// Use fully qualified name for org.springframework.security.core.userdetails.User
-
-@Service
-@Transactional
 public class UserService implements UserDetailsService {
+    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
+            // --- FIX: Check for locked account ---
+            User lockedUser = userRepository.findByUsername(username).orElse(null);
+            if (lockedUser != null && lockedUser.isAccountLocked()) {
+                throw new UsernameNotFoundException("User account is locked");
+            }
+            // ---
             throw new UsernameNotFoundException("User not found: " + username);
         }
-    return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
-        .password(user.getPassword())
-        .roles(user.getRole())
-        .disabled(!user.isActive())
-        .build();
+        return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
+            .password(user.getPassword())
+            .roles(user.getRole())
+            .disabled(!user.isActive())
+            .accountLocked(user.isAccountLocked()) // <-- Pass lock status to Spring Security
+            .build();
     }
 
     @Autowired
@@ -35,6 +39,16 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    // --- FIX: Added method to handle failed login attempts ---
+    public void incrementFailedAttempts(String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user != null) {
+            user.incrementFailedAttempts();
+            userRepository.save(user);
+        }
+    }
+    // ---
 
     public User authenticate(String username, String password) {
         User user = userRepository.findByUsername(username).orElse(null);

@@ -9,10 +9,10 @@ This README gives a quick way to build, run, and test the project locally and ex
 - `ecommerce-app/` — Spring Boot application (Thymeleaf UI, H2 DB).
 - `security-tests/` — TestNG security tests targeting the application.
 - `scripts/` — Helper scripts (Python & PowerShell) for alerts, JIRA ticket creation, and monitoring.
-- `.github/workflows/` — CI workflows for running tests and creating JIRA tickets.
+- `.github/workflows/` — CI workflows forgi running tests and creating JIRA tickets.
 
 ## Prerequisites
-
+ 
 - Java 21 (the project is set up for Java 21 / Spring Boot 3.x)
 - Maven 3.8+
 - (Optional) Python 3.9+ to run Python scripts in `scripts/python`

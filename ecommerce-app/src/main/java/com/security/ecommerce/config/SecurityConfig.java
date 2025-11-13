@@ -1,5 +1,7 @@
 package com.security.ecommerce.config;
 
+import com.security.ecommerce.service.SecurityEventService;
+import com.security.ecommerce.service.UserService; // <-- 1. Import UserService
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,19 +9,21 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import com.security.ecommerce.service.SecurityEventService;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final SecurityEventService securityEventService;
+    private final UserService userService; // <-- 2. Add field for UserService
 
-    public SecurityConfig(SecurityEventService securityEventService) {
+    // 3. Inject UserService in the constructor
+    public SecurityConfig(SecurityEventService securityEventService, UserService userService) {
         this.securityEventService = securityEventService;
+        this.userService = userService;
     }
 
     @Bean
@@ -39,28 +43,19 @@ public class SecurityConfig {
             String username = request.getParameter("username");
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
+            
+            // Log the event
             securityEventService.logAuthenticationAttempt(username, ipAddress, false, userAgent);
+            
+            // --- FIX: 4. Add call to increment failed attempts ---
+            if (username != null) {
+                userService.incrementFailedAttempts(username);
+            }
+            // ---
+
             response.sendRedirect("/login?error=true");
         };
     }
-package com.security.ecommerce.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-
-/**
- * Security configuration for the e-commerce application
- * Implements security controls for authentication, authorization, and CSRF protection
- */
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

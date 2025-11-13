@@ -33,7 +33,7 @@ public class SecurityMisconfigurationTest extends BaseTest {
 
     @Test(description = "OWASP A05 - Test for default credentials")
     public void testDefaultCredentials() {
-        driver.get(baseUrl);
+        driver.get(baseUrl + "/login"); // <-- Navigate to login page
         
         // Try common default credentials
         String[][] defaultCreds = {
@@ -44,18 +44,23 @@ public class SecurityMisconfigurationTest extends BaseTest {
         };
         
         for (String[] cred : defaultCreds) {
-            driver.findElement(By.id("username")).clear();
-            driver.findElement(By.id("username")).sendKeys(cred[0]);
-            driver.findElement(By.id("password")).clear();
-            driver.findElement(By.id("password")).sendKeys(cred[1]);
-            driver.findElement(By.id("login-btn")).click();
+            driver.findElement(By.name("username")).clear(); // <-- Use 'name' from login.html
+            driver.findElement(By.name("username")).sendKeys(cred[0]);
+            driver.findElement(By.name("password")).clear(); // <-- Use 'name' from login.html
+            driver.findElement(By.name("password")).sendKeys(cred[1]);
+            
+            // --- FIX: Changed selector from By.id("login-btn") to By.xpath ---
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
             
             // Should NOT successfully log in with default credentials
             String currentUrl = driver.getCurrentUrl();
-            assertFalse(currentUrl.contains("/dashboard") || currentUrl.contains("/home"),
+            assertFalse(currentUrl.contains("/dashboard") || currentUrl.contains("/home") || currentUrl.contains("/checkout"),
                 "Default credentials " + cred[0] + "/" + cred[1] + " should not work");
             
-            driver.get(baseUrl); // Reset
+            // Stay on the login page for the next attempt
+            if (!currentUrl.contains("/login")) {
+                 driver.get(baseUrl + "/login"); // Reset if redirected
+            }
         }
         
         logSecurityEvent("DEFAULT_CREDENTIALS_CHECK", "INFO", 
@@ -107,7 +112,7 @@ public class SecurityMisconfigurationTest extends BaseTest {
             "/administrator",
             "/manage",
             "/console",
-            "/actuator"
+            "/actuator" // Spring Boot actuator
         };
         
         for (String adminUrl : adminUrls) {
@@ -115,7 +120,7 @@ public class SecurityMisconfigurationTest extends BaseTest {
             
             // Should require authentication or return 404, not expose admin panel
             String pageSource = driver.getPageSource();
-            assertFalse(pageSource.contains("Admin Panel") || pageSource.contains("Management Console"),
+            assertFalse(pageSource.contains("Admin Panel") || pageSource.contains("Management Console") || pageSource.contains("actuator/"),
                 "Admin interface at " + adminUrl + " should not be publicly accessible");
         }
         
@@ -148,7 +153,7 @@ public class SecurityMisconfigurationTest extends BaseTest {
         
         // Verify the app responds properly to GET
         String pageTitle = driver.getTitle();
-        assertNotNull(pageTitle, "Application should respond to GET requests");
+        assertTrue(pageTitle != null && !pageTitle.isEmpty(), "Application should respond to GET requests");
         
         logSecurityEvent("HTTP_METHODS_CHECK", "INFO", 
             "Checked HTTP methods configuration");
