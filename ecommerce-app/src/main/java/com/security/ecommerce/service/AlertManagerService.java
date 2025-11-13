@@ -18,6 +18,18 @@ import java.time.format.DateTimeFormatter;
 public class AlertManagerService {
     
     private static final Logger logger = LoggerFactory.getLogger(AlertManagerService.class);
+
+        @Value("${alert.email.recipients}")
+        private String emailRecipients;
+
+        @Value("${alert.email.from:#{null}}")
+        private String emailFrom;
+
+        private final org.springframework.mail.javamail.JavaMailSender mailSender;
+
+        public AlertManagerService(org.springframework.mail.javamail.JavaMailSender mailSender) {
+            this.mailSender = mailSender;
+        }
     
     @Value("${alert.slack.enabled:false}")
     private boolean slackEnabled;
@@ -58,8 +70,19 @@ public class AlertManagerService {
     }
     
     private void sendEmailAlert(String message, SecurityEvent event) {
-        // TODO: Implement email sending
-        logger.info("📧 Email alert would be sent: {}", event.getEventType());
+        try {
+            org.springframework.mail.SimpleMailMessage mailMessage = new org.springframework.mail.SimpleMailMessage();
+            mailMessage.setTo(emailRecipients.split(","));
+            mailMessage.setSubject("Security Alert: " + event.getEventType());
+            mailMessage.setText(message);
+            if (emailFrom != null && !emailFrom.isEmpty()) {
+                mailMessage.setFrom(emailFrom);
+            }
+            mailSender.send(mailMessage);
+            logger.info("📧 Email alert sent for event: {}", event.getEventType());
+        } catch (Exception ex) {
+            logger.error("Failed to send email alert: {}", ex.getMessage(), ex);
+        }
     }
     
     private void sendPagerDutyAlert(String message, SecurityEvent event) {

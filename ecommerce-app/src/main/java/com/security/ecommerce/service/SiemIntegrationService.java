@@ -31,6 +31,17 @@ public class SiemIntegrationService {
     @Value("${siem.splunk.url:}")
     private String splunkUrl;
     
+    @Value("${jira.enabled:false}")
+    private boolean jiraEnabled;
+    @Value("${jira.url:}")
+    private String jiraUrl;
+    @Value("${jira.username:}")
+    private String jiraUsername;
+    @Value("${jira.apiToken:}")
+    private String jiraApiToken;
+    @Value("${jira.projectKey:}")
+    private String jiraProjectKey;
+
     private final AlertManagerService alertManager;
     
     public SiemIntegrationService(AlertManagerService alertManager) {
@@ -48,6 +59,10 @@ public class SiemIntegrationService {
         
         if (splunkEnabled) {
             sendToSplunk(event);
+        }
+        
+        if (jiraEnabled) {
+            createJiraTicket(event);
         }
         
         // Check if event requires immediate alerting
@@ -72,6 +87,37 @@ public class SiemIntegrationService {
             // TODO: Implement actual HTTP POST to Splunk HEC
         } catch (Exception e) {
             logger.error("Failed to send event to Splunk: {}", e.getMessage());
+        }
+    }
+    
+    private void createJiraTicket(SecurityEvent event) {
+        if (!jiraEnabled || jiraUrl.isEmpty() || jiraUsername.isEmpty() || jiraApiToken.isEmpty() || jiraProjectKey.isEmpty()) {
+            logger.info("JIRA integration not configured or disabled.");
+            return;
+        }
+        try {
+            String json = String.format("{\"fields\":{\"project\":{\"key\":\"%s\"},\"summary\":\"%s\",\"description\":\"%s\",\"issuetype\":{\"name\":\"Task\"}}}",
+                jiraProjectKey,
+                event.getEventType() + " - " + event.getSeverity(),
+                event.getDescription());
+            java.net.URL url = new java.net.URL(jiraUrl + "/rest/api/2/issue");
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            String auth = java.util.Base64.getEncoder().encodeToString((jiraUsername + ":" + jiraApiToken).getBytes());
+            conn.setRequestProperty("Authorization", "Basic " + auth);
+            conn.setDoOutput(true);
+            try (java.io.OutputStream os = conn.getOutputStream()) {
+                os.write(json.getBytes());
+            }
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 201) {
+                logger.info("JIRA ticket created for event: {}", event.getEventType());
+            } else {
+                logger.warn("Failed to create JIRA ticket. Response code: {}", responseCode);
+            }
+        } catch (Exception e) {
+            logger.error("Error creating JIRA ticket: {}", e.getMessage());
         }
     }
     
