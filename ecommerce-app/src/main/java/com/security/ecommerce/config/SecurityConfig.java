@@ -1,7 +1,7 @@
 package com.security.ecommerce.config;
 
 import com.security.ecommerce.service.SecurityEventService;
-import com.security.ecommerce.service.UserService; // <-- 1. Import UserService
+import com.security.ecommerce.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,9 +16,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 public class SecurityConfig {
 
     private final SecurityEventService securityEventService;
-    private final UserService userService; // <-- 2. Add field for UserService
+    private final UserService userService;
 
-    // 3. Inject UserService in the constructor
     public SecurityConfig(SecurityEventService securityEventService, UserService userService) {
         this.securityEventService = securityEventService;
         this.userService = userService;
@@ -42,14 +41,11 @@ public class SecurityConfig {
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             
-            // Log the event
             securityEventService.logAuthenticationAttempt(username, ipAddress, false, userAgent);
             
-            // --- FIX: 4. Add call to increment failed attempts ---
             if (username != null) {
                 userService.incrementFailedAttempts(username);
             }
-            // ---
 
             response.sendRedirect("/login?error=true");
         };
@@ -59,7 +55,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/register", "/h2-console/**", "/css/**", "/js/**", 
+                // --- FIX: Added "/login" and "/error" to the permitAll list ---
+                .requestMatchers("/", "/login", "/register", "/error", "/h2-console/**", "/css/**", "/js/**", 
                                "/products", "/product/**", "/cart/**", "/api/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
@@ -86,10 +83,9 @@ public class SecurityConfig {
                 .maxSessionsPreventsLogin(false)
             );
 
-        // H2 Console access (disable for production)
+        // H2 Console access
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();
     }
-
 }
