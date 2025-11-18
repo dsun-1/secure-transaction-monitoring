@@ -18,8 +18,9 @@ public class BruteForceTest extends BaseTest {
         
         String testUsername = "admin";
         String wrongPassword = "wrongpassword";
-        int attemptCount = 10;
+        int attemptCount = 10; // More than the 5-attempt lockout threshold
         
+        // 1. Simulate failed login attempts to trigger the account lockout
         for (int i = 1; i <= attemptCount; i++) {
             WebElement usernameField = driver.findElement(By.id("username"));
             WebElement passwordField = driver.findElement(By.id("password"));
@@ -46,17 +47,30 @@ public class BruteForceTest extends BaseTest {
             }
         }
         
-        // After multiple failures, account should be locked or CAPTCHA should appear
-        boolean isProtected = driver.getPageSource().contains("Too many login attempts") ||
-                             driver.getPageSource().contains("Account locked") ||
-                             driver.findElements(By.className("captcha")).size() > 0;
+        // --- FIX START: Replace faulty page content check with functional security check ---
+
+        // 2. Attempt a final login with the correct credentials (admin/admin123)
+        navigateToUrl("/login");
+        WebElement usernameField = driver.findElement(By.id("username"));
+        WebElement passwordField = driver.findElement(By.id("password"));
+        WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
         
-        Assert.assertTrue(isProtected, 
-            "System should implement brute force protection after " + attemptCount + " failed attempts");
+        usernameField.clear();
+        usernameField.sendKeys(testUsername);
+        passwordField.clear();
+        passwordField.sendKeys("admin123"); // The correct password for 'admin'
+        loginButton.click();
         
-        // Log security event
-        logSecurityEvent("BRUTE_FORCE_DETECTED", "HIGH", 
-            attemptCount + " rapid failed login attempts detected from same IP for user: " + testUsername);
+        // 3. Assertion: Verify the login FAILED (i.e., we are still on the login page)
+        String currentUrl = driver.getCurrentUrl();
+        Assert.assertTrue(currentUrl.contains("/login") || currentUrl.contains("?error"),
+            "Brute force protection failed: Locked account was able to successfully log in.");
+        
+        // Log security event for successful *prevention*
+        logSecurityEvent("BRUTE_FORCE_PREVENTION_SUCCESS", "HIGH", 
+            "Account lockout successfully prevented correct login after " + attemptCount + " failed attempts for user: " + testUsername);
+        
+        // --- FIX END ---
     }
     
     @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
