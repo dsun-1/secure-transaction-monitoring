@@ -95,7 +95,7 @@
                     <systemPropertyVariables>
                         <baseUrl>http://localhost:8080</baseUrl>
                         <browser>chrome</browser>
-                        <headless>true</headless>
+                        <headless>false</headless>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
