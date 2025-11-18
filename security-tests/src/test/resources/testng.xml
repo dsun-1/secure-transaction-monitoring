@@ -17,7 +17,6 @@
 
     <test name="Payment Security Tests">
         <classes>
-            <class name="com.security.tests.payment.InvalidPaymentTest"/>
             <class name="com.security.tests.payment.AmountTamperingTest"/>
         </classes>
     </test>

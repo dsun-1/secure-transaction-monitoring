@@ -1,5 +1,5 @@
 package com.security.tests.base;
-
+import java.time.Duration;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -62,6 +62,7 @@ public class BaseTest {
         }
         
         driver.manage().window().maximize();
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
         eventLogger = new SecurityEventLogger();
     }
     
