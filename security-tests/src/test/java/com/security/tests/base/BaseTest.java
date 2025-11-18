@@ -62,7 +62,13 @@ public class BaseTest {
         }
         
         driver.manage().window().maximize();
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(3));
+        
+        // FIX 1: Increase implicit wait to 20 seconds (wait for element discovery)
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+        
+        // FIX 2: Set Page Load Timeout to 60 seconds (wait for page navigation to complete)
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
+        
         eventLogger = new SecurityEventLogger();
     }
     
