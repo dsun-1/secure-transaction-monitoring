@@ -2,10 +2,11 @@ package com.security.tests.auth;
 
 import com.security.tests.base.BaseTest;
 import com.security.tests.utils.SecurityEvent;
+import org.openqa.selenium.By;                            // <--- ADDED THIS IMPORT
 import org.openqa.selenium.Cookie;
-import org.openqa.selenium.support.ui.ExpectedConditions; // Import this
-import org.openqa.selenium.support.ui.WebDriverWait;     // Import this
-import java.time.Duration;                               // Import this
+import org.openqa.selenium.support.ui.ExpectedConditions; 
+import org.openqa.selenium.support.ui.WebDriverWait;     
+import java.time.Duration;                               
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -38,7 +39,6 @@ public class SessionFixationTest extends BaseTest {
         Assert.assertNotEquals(sessionIdAfter, sessionIdBefore,
             "Session ID should change after login to prevent session fixation");
             
-        // ... (Keep your existing logging code below) ...
         SecurityEvent event = SecurityEvent.createHighSeverityEvent(
             "SESSION_FIXATION_TEST",
             "test_user",
