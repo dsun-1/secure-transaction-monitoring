@@ -55,12 +55,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // REMOVED "/api/**" from this list to secure the API
+                // FIX: Removed "/api/**" from this list so it defaults to authenticated() below
                 .requestMatchers("/", "/login", "/register", "/error", "/h2-console/**", "/css/**", "/js/**", 
                                "/products", "/product/**", "/cart/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated() // This now correctly protects /api/**
+                .anyRequest().authenticated()
             )
+            // ... rest of the code remains the same ...
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/perform_login")
