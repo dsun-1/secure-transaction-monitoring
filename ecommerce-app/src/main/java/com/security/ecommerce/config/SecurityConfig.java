@@ -55,11 +55,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // --- FIX: Added "/login" and "/error" to the permitAll list ---
+                // REMOVED "/api/**" from this list to secure the API
                 .requestMatchers("/", "/login", "/register", "/error", "/h2-console/**", "/css/**", "/js/**", 
-                               "/products", "/product/**", "/cart/**", "/api/**").permitAll()
+                               "/products", "/product/**", "/cart/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .anyRequest().authenticated() // This now correctly protects /api/**
             )
             .formLogin(form -> form
                 .loginPage("/login")

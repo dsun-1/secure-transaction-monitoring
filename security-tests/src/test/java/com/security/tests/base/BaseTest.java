@@ -20,20 +20,24 @@ import com.security.tests.utils.ConfigReader;
 public class BaseTest {
     
     protected WebDriver driver;
-    protected String baseUrl;
+    // FIX: Initialize inline to guarantee it is never null
+    protected String baseUrl = "http://localhost:8080"; 
     protected SecurityEventLogger eventLogger;
     
     @BeforeSuite
     public void suiteSetup() {
         // Initialize security event database
         SecurityEventLogger.initializeDatabase();
-        
-        // Load configuration
-        baseUrl = System.getProperty("baseUrl", "http://localhost:8080");
     }
     
     @BeforeMethod
     public void setUp() {
+        // Check for override from system property (e.g., from Maven command line)
+        String propUrl = System.getProperty("baseUrl");
+        if (propUrl != null && !propUrl.isEmpty()) {
+            this.baseUrl = propUrl;
+        }
+
         String browser = System.getProperty("browser", "chrome").toLowerCase();
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
         
@@ -57,16 +61,18 @@ public class BaseTest {
                 chromeOptions.addArguments("--no-sandbox");
                 chromeOptions.addArguments("--disable-dev-shm-usage");
                 chromeOptions.addArguments("--disable-gpu");
+                // FIX: Added to prevent connection issues with newer Chrome versions
+                chromeOptions.addArguments("--remote-allow-origins=*");
                 driver = new ChromeDriver(chromeOptions);
                 break;
         }
         
         driver.manage().window().maximize();
         
-        // FIX 1: Increase implicit wait to 20 seconds (wait for element discovery)
+        // FIX: Implicit wait (for elements)
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
         
-        // FIX 2: Set Page Load Timeout to 60 seconds (wait for page navigation to complete)
+        // FIX: Page Load Timeout (for navigation to complete)
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         
         eventLogger = new SecurityEventLogger();
@@ -80,9 +86,6 @@ public class BaseTest {
     }
     
     protected void navigateToUrl(String path) {
-        if (baseUrl == null || baseUrl.isEmpty()) {
-            baseUrl = "http://localhost:8080";
-        }
         driver.get(baseUrl + path);
     }
     

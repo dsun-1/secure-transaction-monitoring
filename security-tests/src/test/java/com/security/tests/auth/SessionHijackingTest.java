@@ -53,9 +53,14 @@ public class SessionHijackingTest extends BaseTest {
         Cookie oldSessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         String oldSessionId = oldSessionCookie != null ? oldSessionCookie.getValue() : "";
         
+        // --- FIX: Navigate to products page which has the logout button ---
+        navigateToUrl("/products"); 
+        // ----------------------------------------------------------------
+        
         // Logout
         driver.findElement(By.id("logoutButton")).click();
         
+        // ... (Rest of the test remains the same) ...
         // Try to reuse old session
         if (oldSessionCookie != null) {
             driver.manage().addCookie(oldSessionCookie);
