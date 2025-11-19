@@ -1,70 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
-<suite name="Security Test Suite" parallel="classes" thread-count="3">
+<suite name="Security Test Suite">
     
     <listeners>
         <listener class-name="com.security.tests.listeners.TestListener"/>
         <listener class-name="com.security.tests.listeners.SecurityEventListener"/>
     </listeners>
 
-    <test name="Authentication Security Tests">
-        <classes>
-            <class name="com.security.tests.auth.BruteForceTest"/>
-            <class name="com.security.tests.auth.SessionHijackingTest"/>
-            <class name="com.security.tests.auth.SessionFixationTest"/>
-        </classes>
-    </test>
-
-    <test name="Payment Security Tests">
-        <classes>
-            <class name="com.security.tests.payment.AmountTamperingTest"/>
-        </classes>
-    </test>
-
-    <test name="Business Logic Tests">
-        <classes>
-            <class name="com.security.tests.business.CartManipulationTest"/>
-        </classes>
-    </test>
-
-    <test name="Input Validation Tests">
-        <classes>
-            <class name="com.security.tests.injection.SQLInjectionTest"/>
-            <class name="com.security.tests.injection.XSSTest"/>
-            <class name="com.security.tests.injection.CSRFTest"/>
-        </classes>
-    </test>
-
-    <test name="API Security Tests">
+    <test name="Functional Security Tests">
         <classes>
             <class name="com.security.tests.api.APIAuthenticationTest"/>
             <class name="com.security.tests.api.RateLimitingTest"/>
-        </classes>
-    </test>
-
-    <test name="OWASP A02 - Cryptographic Failures">
-        <classes>
+            <class name="com.security.tests.auth.SessionFixationTest"/>
+            <class name="com.security.tests.auth.SessionHijackingTest"/>
+            <class name="com.security.tests.payment.AmountTamperingTest"/>
+            <class name="com.security.tests.business.CartManipulationTest"/>
+            <class name="com.security.tests.injection.SQLInjectionTest"/>
+            <class name="com.security.tests.injection.XSSTest"/>
+            <class name="com.security.tests.injection.CSRFTest"/>
             <class name="com.security.tests.crypto.CryptographicFailuresTest"/>
-        </classes>
-    </test>
-
-    <test name="OWASP A05 - Security Misconfiguration">
-        <classes>
             <class name="com.security.tests.config.SecurityMisconfigurationTest"/>
-        </classes>
-    </test>
-
-    <test name="OWASP A06 - Vulnerable Components">
-        <classes>
             <class name="com.security.tests.components.VulnerableComponentsTest"/>
-        </classes>
-    </test>
-
-    <test name="OWASP A08 - Software Integrity">
-        <classes>
             <class name="com.security.tests.integrity.SoftwareIntegrityTest"/>
         </classes>
     </test>
 
-</suite>
+    <test name="Destructive Tests">
+        <classes>
+            <class name="com.security.tests.auth.BruteForceTest"/>
+        </classes>
+    </test>
 
+</suite>

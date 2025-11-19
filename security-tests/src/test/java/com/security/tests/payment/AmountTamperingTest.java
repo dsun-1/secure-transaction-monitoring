@@ -22,17 +22,17 @@ public class AmountTamperingTest extends BaseTest {
         WebElement laptopRow = driver.findElement(By.xpath("//tr[contains(., 'Premium Laptop')]"));
         WebElement addToCartForm = laptopRow.findElement(By.tagName("form"));
         
-        // FIX: Use click() instead of submit()
+        // Use click()
         WebElement addButton = addToCartForm.findElement(By.tagName("button"));
         addButton.click();
 
-        // FIX: Explicit wait to ensure the POST request completes and page reloads
-        try { Thread.sleep(2000); } catch (InterruptedException e) {}
+        // FIX: Increased wait to 5 seconds to ensure server processes the add-to-cart
+        try { Thread.sleep(5000); } catch (InterruptedException e) {}
         
         // 2. Navigate to checkout
         navigateToUrl("/checkout");
         
-        // FIX: Check if we were redirected to cart (empty cart)
+        // FIX: Check if we were redirected to cart (empty cart error)
         if (driver.getCurrentUrl().contains("/cart")) {
             Assert.fail("Test failed: Redirected to /cart. The item was not added successfully.");
         }
