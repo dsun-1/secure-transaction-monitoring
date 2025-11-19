@@ -3,6 +3,9 @@ package com.security.tests.auth;
 import com.security.tests.base.BaseTest;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -19,6 +22,10 @@ public class SessionHijackingTest extends BaseTest {
         driver.findElement(By.id("username")).sendKeys("testuser");
         driver.findElement(By.id("password")).sendKeys("password123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
+        
+        // FIX: Wait for login to complete (redirect away from login page)
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+            .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
         
         // Capture session cookie
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
@@ -49,18 +56,24 @@ public class SessionHijackingTest extends BaseTest {
         driver.findElement(By.id("password")).sendKeys("password123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
         
+        // Wait for login
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+            .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+
         // Capture session cookie
         Cookie oldSessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         String oldSessionId = oldSessionCookie != null ? oldSessionCookie.getValue() : "";
         
-        // --- FIX: Navigate to products page which has the logout button ---
+        // Navigate to products page which has the logout button
         navigateToUrl("/products"); 
-        // ----------------------------------------------------------------
         
         // Logout
         driver.findElement(By.id("logoutButton")).click();
         
-        // ... (Rest of the test remains the same) ...
+        // Wait for logout redirect
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+            .until(ExpectedConditions.urlContains("/login"));
+
         // Try to reuse old session
         if (oldSessionCookie != null) {
             driver.manage().addCookie(oldSessionCookie);

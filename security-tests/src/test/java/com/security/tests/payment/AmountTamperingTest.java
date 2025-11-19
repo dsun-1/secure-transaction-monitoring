@@ -22,21 +22,22 @@ public class AmountTamperingTest extends BaseTest {
         WebElement laptopRow = driver.findElement(By.xpath("//tr[contains(., 'Premium Laptop')]"));
         WebElement addToCartForm = laptopRow.findElement(By.tagName("form"));
         
-        // FIX: Use click() instead of submit() and find the specific button
-        // click() is better at waiting for the action to be acknowledged by the browser
+        // FIX: Use click() instead of submit()
         WebElement addButton = addToCartForm.findElement(By.tagName("button"));
         addButton.click();
 
-        // FIX: Wait slightly or verify we are redirected before moving on
-        // The controller redirects to /products, so we just check we are still there/reloaded
-        // A simple Thread.sleep is acceptable here to ensure the POST completes in the local env
-        try { Thread.sleep(1000); } catch (InterruptedException e) {}
+        // FIX: Explicit wait to ensure the POST request completes and page reloads
+        try { Thread.sleep(2000); } catch (InterruptedException e) {}
         
         // 2. Navigate to checkout
         navigateToUrl("/checkout");
         
+        // FIX: Check if we were redirected to cart (empty cart)
+        if (driver.getCurrentUrl().contains("/cart")) {
+            Assert.fail("Test failed: Redirected to /cart. The item was not added successfully.");
+        }
+        
         // 3. Capture original total and verify it's correct
-        // If this fails now, it means the cart is genuinely empty (logic error), not a race condition
         WebElement totalElement = driver.findElement(By.xpath("//div[@class='total']/span"));
         String originalTotal = totalElement.getText();
         Assert.assertEquals(originalTotal, "999.99", "Original price should be 999.99");

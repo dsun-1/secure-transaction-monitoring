@@ -2,11 +2,11 @@ package com.security.tests.auth;
 
 import com.security.tests.base.BaseTest;
 import com.security.tests.utils.SecurityEvent;
-import org.openqa.selenium.By;                            // <--- ADDED THIS IMPORT
+import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
-import org.openqa.selenium.support.ui.ExpectedConditions; 
-import org.openqa.selenium.support.ui.WebDriverWait;     
-import java.time.Duration;                               
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -26,9 +26,12 @@ public class SessionFixationTest extends BaseTest {
         driver.findElement(By.id("password")).sendKeys("password123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
         
-        // FIX: Wait for redirect to checkout to ensure session is created
+        // FIX: Wait for redirect to checkout OR cart (empty cart redirects to /cart)
         new WebDriverWait(driver, Duration.ofSeconds(10))
-            .until(ExpectedConditions.urlContains("/checkout"));
+            .until(ExpectedConditions.or(
+                ExpectedConditions.urlContains("/checkout"),
+                ExpectedConditions.urlContains("/cart")
+            ));
 
         // Get session ID after login
         Cookie sessionAfter = driver.manage().getCookieNamed("JSESSIONID");
