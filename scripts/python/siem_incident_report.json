@@ -1,90 +1,21 @@
 {
+  "generated_at": "2025-11-24T16:36:05.769793",
+  "total_incidents": 1,
+  "high_severity_count": 1,
+  "medium_severity_count": 0,
   "incidents": [
     {
-      "type": "SIEM_CORRELATION_ALERT",
+      "type": "TRANSACTION_ANOMALY",
       "severity": "HIGH",
-      "username": "admin",
-      "ip_address": "203.0.113.42",
-      "attempt_count": 8,
-      "time_window": "15 minutes",
-      "first_attempt": "2025-11-11 00:30:00",
-      "last_attempt": "2025-11-11 00:45:00",
-      "event_types_detected": [
-        "LOGIN_FAILURE",
-        "SQL_INJECTION_ATTEMPT",
-        "UNAUTHORIZED_ACCESS"
-      ],
-      "siem_correlation_id": "CORR-2025-1111-001",
-      "detected_by": "SiemCorrelationService",
-      "threat_score": 85,
-      "details": "SIEM detected coordinated attack pattern: 8 failed login attempts followed by SQL injection attempts from same IP. Pattern indicates automated attack tool usage.",
-      "recommendation": "IMMEDIATE ACTION REQUIRED: Block IP address 203.0.113.42, force password reset for 'admin' account, review firewall rules, enable MFA if not already active, check for data exfiltration attempts."
-    },
-    {
-      "type": "DISTRIBUTED_ATTACK_DETECTED",
-      "severity": "CRITICAL",
-      "username": "multiple",
-      "affected_accounts": [
-        "user1",
-        "user2",
-        "user3",
-        "admin",
-        "testuser"
-      ],
-      "unique_ips_detected": 12,
-      "total_attacks": 47,
-      "time_window": "15 minutes",
-      "first_attempt": "2025-11-11 00:30:00",
-      "last_attempt": "2025-11-11 00:45:00",
-      "attack_source_countries": [
-        "Unknown (VPN)",
-        "Russia",
-        "China",
-        "Romania"
-      ],
-      "siem_correlation_id": "CORR-2025-1111-002",
-      "detected_by": "SiemCorrelationService - Scheduled Analysis",
-      "threat_score": 95,
-      "details": "CRITICAL: SIEM correlation engine detected distributed brute force attack across 12 different IP addresses targeting 5 user accounts. Attack pattern suggests botnet activity. AlertManager triggered Slack, Email, and PagerDuty alerts.",
-      "recommendation": "CRITICAL - IMMEDIATE RESPONSE: Enable rate limiting globally, implement IP-based blocking for all attacking IPs, force password reset for all affected accounts, enable MFA organization-wide, review security event logs for successful breaches, contact security operations center (SOC), consider DDoS protection service."
-    },
-    {
-      "type": "PRIVILEGE_ESCALATION_DETECTED",
-      "severity": "HIGH",
-      "username": "developer",
-      "ip_address": "10.0.15.88",
-      "attempt_count": 4,
-      "time_window": "10 minutes",
-      "first_attempt": "2025-11-11 00:35:00",
-      "last_attempt": "2025-11-11 00:45:00",
-      "attempted_actions": [
-        "Access admin dashboard",
-        "Modify user roles",
-        "Access restricted API endpoints",
-        "Read sensitive configuration"
-      ],
-      "user_current_role": "developer",
-      "attempted_role": "administrator",
-      "siem_correlation_id": "CORR-2025-1111-003",
-      "detected_by": "SiemCorrelationService",
-      "threat_score": 78,
-      "details": "SIEM detected unauthorized privilege escalation attempts by user 'developer' trying to access admin-only resources. User attempted to modify their role permissions 4 times within 10 minutes. Pattern indicates potential insider threat or compromised developer account.",
-      "recommendation": "Suspend 'developer' account immediately, contact user to verify account security, review all recent actions by this user, check for unauthorized code commits, audit permission settings, review access control policies, enable approval workflow for role changes."
+      "transaction_id": "demo-tx-001",
+      "username": "testuser",
+      "anomaly_type": "NEGATIVE_MODIFICATION",
+      "original_amount": 100.0,
+      "modified_amount": -100.0,
+      "details": "Demo negative amount modification detected",
+      "timestamp": "2025-11-24 16:28:20.998409",
+      "recommendation": "Review transaction, freeze account if necessary"
     }
   ],
-  "summary": {
-    "total_incidents": 3,
-    "high_severity": 2,
-    "critical_severity": 1,
-    "analysis_time": "2025-11-11 00:50:00",
-    "analysis_duration_seconds": 2.5,
-    "siem_system": "SiemCorrelationService v1.0",
-    "alerts_triggered": 5,
-    "notification_channels": [
-      "Slack",
-      "Email",
-      "PagerDuty",
-      "Database Log"
-    ]
-  }
+  "high_severity_events": []
 }

@@ -15,6 +15,16 @@ public class AmountTamperingTest extends BaseTest {
     
     @Test(priority = 1, description = "Test client-side price modification via DOM manipulation")
     public void testClientSidePriceModification() {
+        // --- FIX: Login first because /checkout requires authentication ---
+        navigateToUrl("/login");
+        driver.findElement(By.id("username")).sendKeys("testuser");
+        driver.findElement(By.id("password")).sendKeys("password123");
+        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        
+        // Wait briefly for login redirect to complete (optional but safer)
+        try { Thread.sleep(1000); } catch (InterruptedException e) {}
+        // ---------------------------------------------------------------
+
         // 1. Add "Premium Laptop" (ID 1, Price 999.99) to cart
         navigateToUrl("/products");
         
@@ -27,7 +37,7 @@ public class AmountTamperingTest extends BaseTest {
         addButton.click();
 
         // FIX: Increased wait to 5 seconds to ensure server processes the add-to-cart
-        try { Thread.sleep(5000); } catch (InterruptedException e) {}
+        try { Thread.sleep(2000); } catch (InterruptedException e) {}
         
         // 2. Navigate to checkout
         navigateToUrl("/checkout");
@@ -59,9 +69,10 @@ public class AmountTamperingTest extends BaseTest {
         driver.findElement(By.xpath("//button[@type='submit']")).click();
         
         // 6. Verify that the server ignored the tampered price and processed successfully
+        // Note: Successful payment redirects to confirmation
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("/confirmation"), 
-            "Should be redirected to confirmation page on successful (and secure) checkout");
+            "Should be redirected to confirmation page on successful (and secure) checkout. Current URL: " + currentUrl);
         
         // 7. Verify no error message is present
         boolean hasErrorMessage = driver.getPageSource().contains("Price mismatch") ||
