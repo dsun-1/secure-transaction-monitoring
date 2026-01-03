@@ -78,6 +78,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/h2-console/**")
             )
             .sessionManagement(session -> session
                 .maximumSessions(1)

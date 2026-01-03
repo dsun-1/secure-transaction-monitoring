@@ -18,25 +18,53 @@ public class DataInitializer {
                                     PasswordEncoder passwordEncoder) {
         return args -> {
             // Create test users if they don't exist
-            if (!userRepository.existsByUsername("testuser")) {
-                User user = new User();
-                user.setUsername("testuser");
-                user.setEmail("test@example.com");
-                user.setPassword(passwordEncoder.encode("password123"));
-                user.setRole("USER");
-                user.setActive(true);
-                userRepository.save(user);
+            User testUser = userRepository.findByUsername("testuser").orElse(null);
+            if (testUser == null) {
+                testUser = new User();
+                testUser.setUsername("testuser");
+                testUser.setEmail("test@example.com");
+                testUser.setPassword(passwordEncoder.encode("password123"));
+                testUser.setRole("USER");
+                testUser.setActive(true);
+            } else {
+                testUser.resetFailedAttempts();
+                testUser.setAccountNonLocked(true);
+                testUser.setAccountLockedUntil(null);
+                testUser.setActive(true);
             }
-            
-            if (!userRepository.existsByUsername("admin")) {
-                User admin = new User();
+            userRepository.save(testUser);
+
+            User admin = userRepository.findByUsername("admin").orElse(null);
+            if (admin == null) {
+                admin = new User();
                 admin.setUsername("admin");
                 admin.setEmail("admin@example.com");
                 admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setRole("ADMIN");
                 admin.setActive(true);
-                userRepository.save(admin);
+            } else {
+                admin.resetFailedAttempts();
+                admin.setAccountNonLocked(true);
+                admin.setAccountLockedUntil(null);
+                admin.setActive(true);
             }
+            userRepository.save(admin);
+
+            User paymentUser = userRepository.findByUsername("paymentuser").orElse(null);
+            if (paymentUser == null) {
+                paymentUser = new User();
+                paymentUser.setUsername("paymentuser");
+                paymentUser.setEmail("paymentuser@example.com");
+                paymentUser.setPassword(passwordEncoder.encode("Paym3nt@123"));
+                paymentUser.setRole("USER");
+                paymentUser.setActive(true);
+            } else {
+                paymentUser.resetFailedAttempts();
+                paymentUser.setAccountNonLocked(true);
+                paymentUser.setAccountLockedUntil(null);
+                paymentUser.setActive(true);
+            }
+            userRepository.save(paymentUser);
             
             // Create sample products
             if (productRepository.count() == 0) {

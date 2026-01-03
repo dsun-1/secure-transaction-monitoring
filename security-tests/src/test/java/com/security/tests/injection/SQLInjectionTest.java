@@ -4,14 +4,18 @@ import com.security.tests.base.BaseTest;
 import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
 
 public class SQLInjectionTest extends BaseTest {
     
     @Test(description = "Test SQL injection in login form")
     public void testSQLInjectionLogin() {
-        navigateToUrl("/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         // Try SQL injection payloads
         String[] sqlPayloads = {
@@ -22,7 +26,8 @@ public class SQLInjectionTest extends BaseTest {
         };
         
         for (String payload : sqlPayloads) {
-            WebElement username = driver.findElement(By.id("username"));
+            navigateToUrl("/login");
+            WebElement username = wait.until(ExpectedConditions.elementToBeClickable(By.id("username")));
             WebElement password = driver.findElement(By.id("password"));
             WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
@@ -33,6 +38,7 @@ public class SQLInjectionTest extends BaseTest {
             loginButton.click();
             
             // Should not be able to bypass login
+            wait.until(ExpectedConditions.urlContains("/login"));
             String currentUrl = driver.getCurrentUrl();
             Assert.assertTrue(currentUrl.contains("/login"), 
                 "SQL injection should not bypass authentication");

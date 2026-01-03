@@ -31,7 +31,7 @@
         <tr th:each="item : ${cartItems}">
             <td th:text="${item.product.name}"></td>
             <td th:text="${item.quantity}"></td>
-            <td th:text="${''$'' + (item.product.price * item.quantity)}"></td>
+            <td th:text="${'$' + (item.product.price * item.quantity)}"></td>
         </tr>
     </table>
     

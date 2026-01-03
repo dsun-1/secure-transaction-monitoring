@@ -4,15 +4,24 @@ A small demo platform for testing security monitoring, SIEM integrations, and al
 
 This README gives a quick way to build, run, and test the project locally and explains the main configuration points (JIRA, email, Slack, PagerDuty, and SIEM integrations).
 
+## Resume-aligned summary (Oct 2025)
+
+- Built an end-to-end security monitoring system demonstrating attack -> detection -> analysis -> response workflows.
+- Designed a Spring Boot e-commerce application backed by an H2 security-events database for live forensic inspection.
+- Created a TestNG/Selenium automation suite that simulates credential-stuffing and brute-force attacks against the application.
+- Implemented a Python-based SIEM engine that analyzes logs, detects suspicious patterns (for example, >5 failed logins), and generates structured JSON incident reports.
+- Automated JIRA incident creation using API integrations to illustrate security-operations escalation flows.
+- Presented system operation through VS Code using integrated terminals, database clients, and scripted workflows (see `docs/vscode-demo.md`).
+
 ## Contents
 
-- `ecommerce-app/` — Spring Boot application (Thymeleaf UI, H2 DB).
-- `security-tests/` — TestNG security tests targeting the application.
-- `scripts/` — Helper scripts (Python & PowerShell) for alerts, JIRA ticket creation, and monitoring.
-- `.github/workflows/` — CI workflows forgi running tests and creating JIRA tickets.
+- `ecommerce-app/` - Spring Boot application (Thymeleaf UI, H2 DB).
+- `security-tests/` - TestNG security tests targeting the application.
+- `scripts/` - Helper scripts (Python & PowerShell) for alerts, JIRA ticket creation, and monitoring.
+- `.github/workflows/` - CI workflows for running tests and creating JIRA tickets.
 
 ## Prerequisites
- 
+
 - Java 21 (the project is set up for Java 21 / Spring Boot 3.x)
 - Maven 3.8+
 - (Optional) Python 3.9+ to run Python scripts in `scripts/python`
@@ -63,13 +72,13 @@ Sensitive values should not be stored in version control. Instead use environmen
 
 Important settings used by the project and CI workflows:
 
-- `JIRA_URL` — JIRA base URL
-- `JIRA_USERNAME` — JIRA account email used for API requests (also used as sender for email alerts)
-- `JIRA_API_TOKEN` — API token for the JIRA user
-- `alert.email.recipients` — Comma-separated list of recipients for security alert emails
-- `alert.email.from` — Sender address; CI/workflows set this from `${JIRA_USERNAME}` by default
-- `alert.slack.webhook` — Slack incoming webhook URL (if enabling Slack alerts)
-- `alert.pagerduty.token` — PagerDuty API token (if enabling PagerDuty)
+- `JIRA_URL` - JIRA base URL
+- `JIRA_USERNAME` - JIRA account email used for API requests (also used as sender for email alerts)
+- `JIRA_API_TOKEN` - API token for the JIRA user
+- `alert.email.recipients` - Comma-separated list of recipients for security alert emails
+- `alert.email.from` - Sender address; CI/workflows set this from `${JIRA_USERNAME}` by default
+- `alert.slack.webhook` - Slack incoming webhook URL (if enabling Slack alerts)
+- `alert.pagerduty.token` - PagerDuty API token (if enabling PagerDuty)
 
 In local development you can set these in your shell or in your IDE run configuration. Example (PowerShell):
 
@@ -83,7 +92,7 @@ $env:JIRA_API_TOKEN = 'REDACTED'
 
 - The `AlertManagerService` handles Slack, Email, and PagerDuty alerts. Email sending uses Spring Boot Mail. The sender address is read from `alert.email.from` and in CI is set from the `JIRA_USERNAME` secret.
 - `SiemIntegrationService` will create JIRA tickets for SIEM events when enabled.
-- Slack and PagerDuty features are scaffolded with TODOs — see `AlertManagerService.java` if you want to enable or complete them.
+- Slack and PagerDuty features are scaffolded with TODOs - see `AlertManagerService.java` if you want to enable or complete them.
 
 ## Development notes
 
@@ -100,10 +109,8 @@ $env:JIRA_API_TOKEN = 'REDACTED'
 ## Next steps / TODOs
 
 - Implement Slack and PagerDuty integrations in `AlertManagerService` (currently TODO).
-- Add more concrete integration tests that exercise the SIEM → JIRA flow end-to-end.
+- Add more concrete integration tests that exercise the SIEM -> JIRA flow end-to-end.
 
 ## License
 
 This repository uses the project license in the repo (if present). If none is present, treat this code as internal/demo.
-
--

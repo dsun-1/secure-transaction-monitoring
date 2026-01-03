@@ -13,6 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -32,7 +35,10 @@ public class CheckoutController {
     @GetMapping("/checkout")
     public String checkoutPage(HttpSession session, Model model) {
         String sessionId = session.getId();
-        Long userId = (Long) session.getAttribute("userId");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null
+            && authentication.isAuthenticated()
+            && !(authentication instanceof AnonymousAuthenticationToken);
         
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
         BigDecimal total = cartService.getCartTotal(sessionId);
@@ -44,7 +50,7 @@ public class CheckoutController {
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("total", total);
         
-        if (userId != null) {
+        if (isAuthenticated) {
             // User is logged in - could pre-fill shipping info
             model.addAttribute("loggedIn", true);
         }
@@ -62,8 +68,8 @@ public class CheckoutController {
                                   Model model) {
         
         String sessionId = session.getId();
-        Long userId = (Long) session.getAttribute("userId");
-        String username = (String) session.getAttribute("username");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication != null ? authentication.getName() : null;
         
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
         BigDecimal total = cartService.getCartTotal(sessionId);
@@ -81,10 +87,7 @@ public class CheckoutController {
         }
         
         // Create transaction
-        User user = null;
-        if (userId != null) {
-            user = userService.findByUsername(username);
-        }
+        User user = username != null ? userService.findByUsername(username) : null;
         
         try {
             Transaction transaction = transactionService.createTransaction(

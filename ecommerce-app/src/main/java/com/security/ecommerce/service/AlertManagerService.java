@@ -3,6 +3,7 @@ package com.security.ecommerce.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,14 +26,18 @@ public class AlertManagerService {
     @Value("${alert.email.from:alerts@example.com}")
     private String emailFrom;
 
-    public AlertManagerService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public AlertManagerService(ObjectProvider<JavaMailSender> mailSenderProvider) {
+        this.mailSender = mailSenderProvider.getIfAvailable();
     }
 
     /**
      * Send a simple email alert. Logs debug information for troubleshooting.
      */
     public boolean sendEmailAlert(String subject, String body) {
+        if (mailSender == null) {
+            logger.warn("Email alerts are disabled because no JavaMailSender bean is configured.");
+            return false;
+        }
         List<String> recipients = Arrays.asList(emailRecipients.split(","));
         logger.debug("Preparing to send alert email from=%s to=%s", emailFrom, emailRecipients);
 

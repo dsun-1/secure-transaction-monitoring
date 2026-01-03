@@ -1,8 +1,4 @@
-"""
-Enhanced Security Event Pattern Analyzer with H2 JDBC Connection
-Analyzes authentication events, failed logins, and transaction anomalies
-Adds robust logging and tolerance for missing schema columns to support demo runs.
-"""
+
 
 import logging
 import jaydebeapi

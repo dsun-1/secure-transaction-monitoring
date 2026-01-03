@@ -2,8 +2,12 @@ package com.security.tests.config;
 
 import com.security.tests.base.BaseTest;
 import org.openqa.selenium.By;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
+
+import java.time.Duration;
 
 /**
  * OWASP A05:2021 - Security Misconfiguration
@@ -33,7 +37,7 @@ public class SecurityMisconfigurationTest extends BaseTest {
 
     @Test(description = "OWASP A05 - Test for default credentials")
     public void testDefaultCredentials() {
-        driver.get(baseUrl + "/login"); // <-- Navigate to login page
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         // Try common default credentials
         String[][] defaultCreds = {
@@ -44,9 +48,10 @@ public class SecurityMisconfigurationTest extends BaseTest {
         };
         
         for (String[] cred : defaultCreds) {
-            driver.findElement(By.name("username")).clear(); // <-- Use 'name' from login.html
+            driver.get(baseUrl + "/login");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username"))).clear();
             driver.findElement(By.name("username")).sendKeys(cred[0]);
-            driver.findElement(By.name("password")).clear(); // <-- Use 'name' from login.html
+            driver.findElement(By.name("password")).clear();
             driver.findElement(By.name("password")).sendKeys(cred[1]);
             
             // --- FIX: Changed selector from By.id("login-btn") to By.xpath ---

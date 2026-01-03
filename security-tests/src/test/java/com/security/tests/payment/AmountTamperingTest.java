@@ -4,8 +4,12 @@ import com.security.tests.base.BaseTest;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
 
 /**
  * Tests for payment amount tampering and price modification vulnerabilities.
@@ -15,32 +19,69 @@ public class AmountTamperingTest extends BaseTest {
     
     @Test(priority = 1, description = "Test client-side price modification via DOM manipulation")
     public void testClientSidePriceModification() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         // --- FIX: Login first because /checkout requires authentication ---
         navigateToUrl("/login");
-        driver.findElement(By.id("username")).sendKeys("testuser");
-        driver.findElement(By.id("password")).sendKeys("password123");
+        driver.findElement(By.id("username")).sendKeys("paymentuser");
+        driver.findElement(By.id("password")).sendKeys("Paym3nt@123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
         
-        // Wait briefly for login redirect to complete (optional but safer)
-        try { Thread.sleep(1000); } catch (InterruptedException e) {}
+        wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
         // ---------------------------------------------------------------
 
         // 1. Add "Premium Laptop" (ID 1, Price 999.99) to cart
         navigateToUrl("/products");
         
         // Find the row for Premium Laptop
-        WebElement laptopRow = driver.findElement(By.xpath("//tr[contains(., 'Premium Laptop')]"));
+        WebElement laptopRow = wait.until(
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]"))
+        );
         WebElement addToCartForm = laptopRow.findElement(By.tagName("form"));
         
         // Use click()
         WebElement addButton = addToCartForm.findElement(By.tagName("button"));
         addButton.click();
 
-        // FIX: Increased wait to 5 seconds to ensure server processes the add-to-cart
-        try { Thread.sleep(2000); } catch (InterruptedException e) {}
+        wait.until(ExpectedConditions.urlContains("/products"));
+
+        // Verify item was added before proceeding
+        navigateToUrl("/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            // Retry once to reduce flakiness on slow redirects
+            navigateToUrl("/products");
+            laptopRow = wait.until(
+                ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]"))
+            );
+            addToCartForm = laptopRow.findElement(By.tagName("form"));
+            addButton = addToCartForm.findElement(By.tagName("button"));
+            addButton.click();
+            wait.until(ExpectedConditions.urlContains("/products"));
+
+            navigateToUrl("/cart");
+            Assert.assertFalse(driver.getPageSource().contains("Your cart is empty"),
+                "Cart is still empty after retry; add-to-cart did not persist.");
+        }
         
         // 2. Navigate to checkout
         navigateToUrl("/checkout");
+
+        if (driver.getCurrentUrl().contains("/login")) {
+            driver.findElement(By.id("username")).sendKeys("paymentuser");
+            driver.findElement(By.id("password")).sendKeys("Paym3nt@123");
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+            wait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+
+            // Re-add item since session may have changed after login
+            navigateToUrl("/products");
+            WebElement loginRetryRow = wait.until(
+                ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]"))
+            );
+            WebElement retryForm = loginRetryRow.findElement(By.tagName("form"));
+            retryForm.findElement(By.tagName("button")).click();
+            wait.until(ExpectedConditions.urlContains("/products"));
+
+            navigateToUrl("/checkout");
+        }
         
         // FIX: Check if we were redirected to cart (empty cart error)
         if (driver.getCurrentUrl().contains("/cart")) {
@@ -48,7 +89,9 @@ public class AmountTamperingTest extends BaseTest {
         }
         
         // 3. Capture original total and verify it's correct
-        WebElement totalElement = driver.findElement(By.xpath("//div[@class='total']/span"));
+        WebElement totalElement = wait.until(
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='total']/span"))
+        );
         String originalTotal = totalElement.getText();
         Assert.assertEquals(originalTotal, "999.99", "Original price should be 999.99");
         
@@ -67,12 +110,17 @@ public class AmountTamperingTest extends BaseTest {
         driver.findElement(By.name("expiryDate")).sendKeys("12/25");
         driver.findElement(By.name("cvv")).sendKeys("123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
         // 6. Verify that the server ignored the tampered price and processed successfully
-        // Note: Successful payment redirects to confirmation
+        // Note: The controller renders the confirmation view without redirecting
+        wait.until(d -> d.getPageSource().contains("Order Confirmed!") ||
+                        d.getPageSource().contains("Payment processing failed") ||
+                        d.getPageSource().contains("Invalid card number"));
+
         String currentUrl = driver.getCurrentUrl();
-        Assert.assertTrue(currentUrl.contains("/confirmation"), 
-            "Should be redirected to confirmation page on successful (and secure) checkout. Current URL: " + currentUrl);
+        boolean hasConfirmation = currentUrl.contains("/confirmation") ||
+                                  driver.getPageSource().contains("Order Confirmed!");
+        Assert.assertTrue(hasConfirmation,
+            "Checkout should render confirmation on successful (and secure) payment. Current URL: " + currentUrl);
         
         // 7. Verify no error message is present
         boolean hasErrorMessage = driver.getPageSource().contains("Price mismatch") ||
@@ -89,7 +137,7 @@ public class AmountTamperingTest extends BaseTest {
         // 9. Log the successful *prevention*
         eventLogger.logTransactionAnomaly(
             "TEST-TX-" + System.currentTimeMillis(),
-            "testuser",
+            "paymentuser",
             "PRICE_TAMPERING_PREVENTION_TEST",
             Double.parseDouble(originalTotal),
             tamperedPrice,
@@ -104,7 +152,7 @@ public class AmountTamperingTest extends BaseTest {
         
         eventLogger.logTransactionAnomaly(
             "TEST-TX-NEG-" + System.currentTimeMillis(),
-            "testuser",
+            "paymentuser",
             "NEGATIVE_AMOUNT_ATTEMPT",
             100.0,
             -100.0,
@@ -118,7 +166,7 @@ public class AmountTamperingTest extends BaseTest {
     public void testDecimalPrecisionAttack() {
         eventLogger.logTransactionAnomaly(
             "TEST-TX-DECIMAL-" + System.currentTimeMillis(),
-            "testuser",
+            "paymentuser",
             "DECIMAL_MANIPULATION",
             99.99,
             0.0000001,
@@ -133,6 +181,6 @@ public class AmountTamperingTest extends BaseTest {
         navigateToUrl("/products?currency=USD");
         // Log potential currency arbitrage attempt
         logSecurityEvent("CURRENCY_MANIPULATION_ATTEMPT", "MEDIUM",
-            "Currency conversion bypass - Attempted to exploit currency conversion in checkout process for user: testuser");
+            "Currency conversion bypass - Attempted to exploit currency conversion in checkout process for user: paymentuser");
     }
 }
