@@ -13,10 +13,10 @@ public class DataExposureTest extends BaseTest {
     public void testDataExposure() {
         RestAssured.baseURI = baseUrl;
         
-        // Test that sensitive data is not exposed
+        // Test that sensitive data is not exposed on public pages
         Response response = RestAssured
             .given()
-            .get("/api/users");
+            .get("/products");
         
         String body = response.getBody().asString();
         

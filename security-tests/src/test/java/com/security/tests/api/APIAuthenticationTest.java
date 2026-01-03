@@ -18,7 +18,7 @@ public class APIAuthenticationTest extends BaseTest {
         Response response = RestAssured
             .given()
             .config(RestAssured.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
-            .get("/api/transactions");
+            .get("/api/security/events");
         
         // API should require authentication (401) or redirect to login (302)
         // A 200 OK here means we accidentally followed the redirect to the login page

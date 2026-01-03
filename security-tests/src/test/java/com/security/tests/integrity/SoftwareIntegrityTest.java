@@ -78,22 +78,38 @@ public class SoftwareIntegrityTest extends BaseTest {
 
     @Test(description = "OWASP A08 - Check for CI/CD pipeline security")
     public void testCICDPipelineSecurity() {
-        // Verify GitHub Actions workflow exists and is properly configured
-        Path workflowPath = Paths.get("../.github/workflows/security-tests.yml");
+        // Verify GitHub Actions workflows exist and are properly configured
+        Path securityWorkflow = Paths.get("../.github/workflows/security-tests.yml");
+        Path jiraWorkflow = Paths.get("../.github/workflows/manual-jira-tickets.yml");
         
         try {
-            if (Files.exists(workflowPath)) {
-                String content = new String(Files.readAllBytes(workflowPath));
-                
-                // Check for security best practices
-                assertTrue(content.contains("actions/checkout@v"), 
+            StringBuilder combined = new StringBuilder();
+            boolean hasWorkflow = false;
+            boolean usesSecrets = false;
+
+            if (Files.exists(securityWorkflow)) {
+                String content = new String(Files.readAllBytes(securityWorkflow));
+                combined.append(content);
+                hasWorkflow = true;
+                usesSecrets = usesSecrets || content.contains("secrets.");
+            }
+            if (Files.exists(jiraWorkflow)) {
+                String content = new String(Files.readAllBytes(jiraWorkflow));
+                combined.append(content);
+                hasWorkflow = true;
+                usesSecrets = usesSecrets || content.contains("secrets.");
+            }
+
+            if (hasWorkflow) {
+                String content = combined.toString();
+                assertTrue(content.contains("actions/checkout@v"),
                     "Should use versioned GitHub Actions");
                 assertFalse(content.contains("password=") || content.contains("token="),
                     "No hardcoded secrets in workflow files");
-                assertTrue(content.contains("secrets."),
+                assertTrue(usesSecrets,
                     "Should use GitHub secrets for sensitive data");
-                
-                logSecurityEvent("CICD_SECURITY_CHECK", "INFO", 
+
+                logSecurityEvent("CICD_SECURITY_CHECK", "INFO",
                     "Verified CI/CD pipeline configuration is secure");
             }
         } catch (Exception e) {

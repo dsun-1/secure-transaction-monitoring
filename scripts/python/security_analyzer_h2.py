@@ -2,7 +2,6 @@
 
 import logging
 import jaydebeapi
-import pandas as pd
 from datetime import datetime, timedelta
 import json
 import sys
@@ -232,7 +231,16 @@ class SecurityEventAnalyzer:
             logger.error("Failed to connect to DB for high severity event retrieval: %s", e)
             return []
 
-        query = f"""
+        primary_query = f"""
+            SELECT event_type, username, ip_address, severity,
+                   description, additional_data, timestamp
+            FROM security_events
+            WHERE severity = 'HIGH'
+              AND timestamp > DATEADD('HOUR', -{hours}, CURRENT_TIMESTAMP())
+            ORDER BY timestamp DESC
+        """
+
+        legacy_query = f"""
             SELECT event_type, username, ip_address, severity,
                    event_details, suspected_threat, timestamp
             FROM security_events
@@ -241,63 +249,77 @@ class SecurityEventAnalyzer:
             ORDER BY timestamp DESC
         """
 
+        minimal_query = f"""
+            SELECT event_type, username, ip_address, severity, timestamp
+            FROM security_events
+            WHERE severity = 'HIGH'
+              AND timestamp > DATEADD('HOUR', -{hours}, CURRENT_TIMESTAMP())
+            ORDER BY timestamp DESC
+        """
+
         try:
-            cursor.execute(query)
-            results = cursor.fetchall()
-        except Exception as e:
-            logger.warning("Primary high-severity query failed: %s", e)
-            # Try a fallback query without optional columns (event_details / suspected_threat)
-            try:
-                logger.info("Attempting fallback query for high-severity events without optional columns")
-                fallback_query = f"""
-                    SELECT event_type, username, ip_address, severity, timestamp
-                    FROM security_events
-                    WHERE severity = 'HIGH'
-                      AND timestamp > DATEADD('HOUR', -{hours}, CURRENT_TIMESTAMP())
-                    ORDER BY timestamp DESC
-                """
-                cursor.execute(fallback_query)
-                results = cursor.fetchall()
-                # Map rows to the expected schema with missing fields as None
-                events = []
-                for row in results:
-                    event = {
-                        'event_type': row[0],
-                        'username': row[1],
-                        'ip_address': row[2],
-                        'severity': row[3],
-                        'details': None,
-                        'suspected_threat': None,
-                        'timestamp': str(row[4])
-                    }
-                    events.append(event)
-                cursor.close()
-                conn.close()
-                logger.info("Fallback high-severity retrieval returned %d events", len(events))
-                return events
-            except Exception as e2:
-                logger.error("Fallback query also failed: %s", e2)
-                cursor.close()
-                conn.close()
-                return []
+            cursor.execute("""
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = 'SECURITY_EVENTS'
+            """)
+            columns = {row[0].upper() for row in cursor.fetchall()}
+        except Exception:
+            columns = set()
 
-        events = []
-        for row in results:
-            event = {
-                'event_type': row[0],
-                'username': row[1],
-                'ip_address': row[2],
-                'severity': row[3],
-                'details': row[4] if len(row) > 4 else None,
-                'suspected_threat': row[5] if len(row) > 5 else None,
-                'timestamp': str(row[6]) if len(row) > 6 else None
-            }
-            events.append(event)
+        try:
+            queries = []
+            if "DESCRIPTION" in columns and "ADDITIONAL_DATA" in columns:
+                queries.append(primary_query)
+            if "EVENT_DETAILS" in columns and "SUSPECTED_THREAT" in columns:
+                queries.append(legacy_query)
+            queries.append(minimal_query)
 
-        cursor.close()
-        conn.close()
-        logger.info("Retrieved %d high-severity events", len(events))
-        return events
+            for idx, query in enumerate(queries):
+                try:
+                    cursor.execute(query)
+                    results = cursor.fetchall()
+                    events = []
+                    for row in results:
+                        if len(row) >= 7:
+                            event = {
+                                'event_type': row[0],
+                                'username': row[1],
+                                'ip_address': row[2],
+                                'severity': row[3],
+                                'details': row[4],
+                                'suspected_threat': row[5],
+                                'timestamp': str(row[6])
+                            }
+                        else:
+                            event = {
+                                'event_type': row[0],
+                                'username': row[1],
+                                'ip_address': row[2],
+                                'severity': row[3],
+                                'details': None,
+                                'suspected_threat': None,
+                                'timestamp': str(row[4])
+                            }
+                        events.append(event)
+                    if idx == 0:
+                        logger.info("Retrieved %d high-severity events", len(events))
+                    elif idx == 1 and len(queries) > 1:
+                        logger.info("Retrieved %d high-severity events using legacy columns", len(events))
+                    else:
+                        logger.info("Retrieved %d high-severity events without optional columns", len(events))
+                    return events
+                except Exception as e:
+                    if idx == 0:
+                        logger.warning("Primary high-severity query failed: %s", e)
+                    elif idx == 1:
+                        logger.warning("Legacy high-severity query failed: %s", e)
+                    else:
+                        logger.error("Fallback high-severity query failed: %s", e)
+            return []
+        finally:
+            cursor.close()
+            conn.close()
     
     def generate_incident_report(self):
         """Generate comprehensive incident report"""

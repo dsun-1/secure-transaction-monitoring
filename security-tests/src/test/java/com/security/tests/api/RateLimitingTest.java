@@ -19,7 +19,7 @@ public class RateLimitingTest extends BaseTest {
         for (int i = 0; i < requestCount; i++) {
             Response response = RestAssured
                 .given()
-                .get("/api/products");
+                .get("/products");
             
             if (response.statusCode() == 429) { // Too Many Requests
                 tooManyRequestsCount++;

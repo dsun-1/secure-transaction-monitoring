@@ -58,7 +58,7 @@ jobs:
       - name: Run security tests
         run: |
           cd security-tests
-          mvn test || true
+          mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080 || true
           echo "Security tests completed"
       
       - name: Stop application

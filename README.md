@@ -91,7 +91,7 @@ $env:JIRA_API_TOKEN = 'REDACTED'
 ## Alerting & SIEM
 
 - The `AlertManagerService` handles Slack, Email, and PagerDuty alerts. Email sending uses Spring Boot Mail. The sender address is read from `alert.email.from` and in CI is set from the `JIRA_USERNAME` secret.
-- `SiemIntegrationService` will create JIRA tickets for SIEM events when enabled.
+- JIRA ticket creation is handled by `scripts/python/jira_ticket_generator.py` and the GitHub Actions workflows when configured.
 - Slack and PagerDuty features are scaffolded with TODOs - see `AlertManagerService.java` if you want to enable or complete them.
 
 ## Development notes
@@ -111,6 +111,3 @@ $env:JIRA_API_TOKEN = 'REDACTED'
 - Implement Slack and PagerDuty integrations in `AlertManagerService` (currently TODO).
 - Add more concrete integration tests that exercise the SIEM -> JIRA flow end-to-end.
 
-## License
-
-This repository uses the project license in the repo (if present). If none is present, treat this code as internal/demo.

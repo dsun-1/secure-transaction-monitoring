@@ -36,6 +36,7 @@ test-output/
 reports/
 screenshots/
 *.log
+logs/
 
 # Database
 *.db
@@ -60,6 +61,7 @@ chromedriver
 # Generated reports
 incident-response/reports/generated/*
 !incident-response/reports/generated/.gitkeep
+scripts/python/siem_incident_report.json
 
 # Fortify results
 .fortify/

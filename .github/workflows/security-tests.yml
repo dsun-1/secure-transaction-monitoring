@@ -1,1 +1,67 @@
+name: Security Tests
 
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  security-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Build ecommerce app
+        run: mvn -pl ecommerce-app -DskipTests package
+
+      - name: Start ecommerce app
+        run: |
+          cd ecommerce-app
+          nohup mvn -DskipTests spring-boot:run > app.log 2>&1 &
+          echo $! > app.pid
+          for i in {1..40}; do
+            if curl -fsS http://localhost:8080 >/dev/null; then
+              echo "Application is up"
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://localhost:8080 >/dev/null
+
+      - name: Run security tests
+        run: mvn -pl security-tests test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
+
+      - name: Stop ecommerce app
+        if: always()
+        run: |
+          if [ -f ecommerce-app/app.pid ]; then
+            kill $(cat ecommerce-app/app.pid) || true
+          fi
+          pkill -f "spring-boot:run" || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-reports
+          path: |
+            security-tests/target/ExtentReport.html
+            security-tests/target/surefire-reports
+            security-tests/target/test-output
+          if-no-files-found: ignore
+          retention-days: 30

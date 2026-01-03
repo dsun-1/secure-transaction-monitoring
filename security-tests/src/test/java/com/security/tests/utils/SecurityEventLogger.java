@@ -2,6 +2,11 @@ package com.security.tests.utils;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Locale;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,15 +17,48 @@ import org.slf4j.LoggerFactory;
 public class SecurityEventLogger {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventLogger.class);
-    private static final String DB_URL = "jdbc:h2:./data/security-events;AUTO_SERVER=TRUE";
+    private static final String DB_PATH = "../ecommerce-app/data/security-events";
+    private static final String DB_URL = "jdbc:h2:" + DB_PATH + ";AUTO_SERVER=TRUE";
     private static final String DB_USER = "sa";
     private static final String DB_PASSWORD = "";
+    private static final Set<String> ALLOWED_EVENT_TYPES = Set.of(
+        "ACCOUNT_LOCKED",
+        "AMOUNT_TAMPERING",
+        "BRUTE_FORCE_DETECTED",
+        "CART_MANIPULATION",
+        "COUPON_ABUSE",
+        "CSRF_VIOLATION",
+        "INVALID_PAYMENT",
+        "LOGIN_ATTEMPT",
+        "LOGIN_FAILURE",
+        "LOGIN_SUCCESS",
+        "LOGOUT",
+        "PASSWORD_CHANGE",
+        "PRIVILEGE_ESCALATION_ATTEMPT",
+        "SESSION_HIJACK_ATTEMPT",
+        "SQL_INJECTION_ATTEMPT",
+        "SUSPICIOUS_ACTIVITY",
+        "XSS_ATTEMPT"
+    );
+    private static final Set<String> ALLOWED_SEVERITIES = Set.of(
+        "INFO",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+    );
     
     public static void initializeDatabase() {
+        try {
+            Path dbDir = Paths.get("../ecommerce-app/data");
+            Files.createDirectories(dbDir);
+        } catch (Exception e) {
+            logger.warn("Unable to ensure H2 data directory exists: {}", e.getMessage());
+        }
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              Statement stmt = conn.createStatement()) {
             
-            // Create security_events table
+            // Create security_events table aligned with app schema
             String createTable = """
                 CREATE TABLE IF NOT EXISTS security_events (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -30,9 +68,10 @@ public class SecurityEventLogger {
                     session_id VARCHAR(255),
                     ip_address VARCHAR(45),
                     user_agent VARCHAR(500),
-                    event_details TEXT,
-                    suspected_threat VARCHAR(100),
-                    timestamp TIMESTAMP NOT NULL
+                    description TEXT,
+                    successful BOOLEAN,
+                    timestamp TIMESTAMP NOT NULL,
+                    additional_data TEXT
                 );
             """;
             
@@ -86,31 +125,154 @@ public class SecurityEventLogger {
     }
     
     public void logSecurityEvent(SecurityEvent event) {
-        String sql = """
-            INSERT INTO security_events 
-            (event_type, severity, username, session_id, ip_address, user_agent, 
-             event_details, suspected_threat, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-        
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(buildInsertSql(conn))) {
             
-            pstmt.setString(1, event.getEventType());
-            pstmt.setString(2, event.getSeverity());
+            boolean usesDescription = usesDescriptionColumns(conn);
+            String mappedEventType = mapEventType(event.getEventType());
+            String mappedSeverity = mapSeverity(event.getSeverity());
+            boolean successful = "INFO".equalsIgnoreCase(mappedSeverity)
+                || "LOW".equalsIgnoreCase(mappedSeverity);
+            String description = event.getEventDetails();
+            String additionalData = event.getSuspectedThreat();
+            if (event.getEventType() != null
+                && !mappedEventType.equals(event.getEventType().trim().toUpperCase(Locale.ROOT))) {
+                additionalData = appendAdditional(additionalData, "original_event_type=" + event.getEventType());
+            }
+            if (event.getSeverity() != null
+                && !mappedSeverity.equals(event.getSeverity().trim().toUpperCase(Locale.ROOT))) {
+                additionalData = appendAdditional(additionalData, "original_severity=" + event.getSeverity());
+            }
+            
+            pstmt.setString(1, mappedEventType);
+            pstmt.setString(2, mappedSeverity);
             pstmt.setString(3, event.getUsername());
             pstmt.setString(4, event.getSessionId());
             pstmt.setString(5, event.getIpAddress());
             pstmt.setString(6, event.getUserAgent());
-            pstmt.setString(7, event.getEventDetails());
-            pstmt.setString(8, event.getSuspectedThreat());
-            pstmt.setTimestamp(9, Timestamp.valueOf(event.getTimestamp()));
+            if (usesDescription) {
+                pstmt.setString(7, description);
+                pstmt.setBoolean(8, successful);
+                pstmt.setTimestamp(9, Timestamp.valueOf(event.getTimestamp()));
+                pstmt.setString(10, additionalData);
+            } else {
+                pstmt.setString(7, description);
+                pstmt.setString(8, additionalData);
+                pstmt.setTimestamp(9, Timestamp.valueOf(event.getTimestamp()));
+            }
             
             pstmt.executeUpdate();
             logger.debug("Logged security event: {} - {}", event.getEventType(), event.getSeverity());
             
         } catch (SQLException e) {
             logger.error("Failed to log security event", e);
+        }
+    }
+
+    private String mapEventType(String rawEventType) {
+        if (rawEventType == null || rawEventType.isBlank()) {
+            return "SUSPICIOUS_ACTIVITY";
+        }
+        String normalized = rawEventType.trim().toUpperCase(Locale.ROOT);
+        if (ALLOWED_EVENT_TYPES.contains(normalized)) {
+            return normalized;
+        }
+        if (normalized.contains("SQL")) {
+            return "SQL_INJECTION_ATTEMPT";
+        }
+        if (normalized.contains("XSS")) {
+            return "XSS_ATTEMPT";
+        }
+        if (normalized.contains("CSRF")) {
+            return "CSRF_VIOLATION";
+        }
+        if (normalized.contains("BRUTE_FORCE") || normalized.contains("CREDENTIAL")) {
+            return "BRUTE_FORCE_DETECTED";
+        }
+        if (normalized.contains("SESSION")) {
+            return "SESSION_HIJACK_ATTEMPT";
+        }
+        if (normalized.contains("CART")) {
+            return "CART_MANIPULATION";
+        }
+        if (normalized.contains("AMOUNT") || normalized.contains("PRICE")) {
+            return "AMOUNT_TAMPERING";
+        }
+        if (normalized.contains("PAYMENT")) {
+            return "INVALID_PAYMENT";
+        }
+        if (normalized.contains("PRIVILEGE")) {
+            return "PRIVILEGE_ESCALATION_ATTEMPT";
+        }
+        if (normalized.contains("PASSWORD")) {
+            return "PASSWORD_CHANGE";
+        }
+        if (normalized.contains("LOGOUT")) {
+            return "LOGOUT";
+        }
+        if (normalized.contains("LOGIN") && normalized.contains("FAIL")) {
+            return "LOGIN_FAILURE";
+        }
+        if (normalized.contains("LOGIN") && normalized.contains("SUCCESS")) {
+            return "LOGIN_SUCCESS";
+        }
+        if (normalized.contains("LOGIN")) {
+            return "LOGIN_ATTEMPT";
+        }
+        return "SUSPICIOUS_ACTIVITY";
+    }
+
+    private String mapSeverity(String rawSeverity) {
+        if (rawSeverity == null || rawSeverity.isBlank()) {
+            return "LOW";
+        }
+        String normalized = rawSeverity.trim().toUpperCase(Locale.ROOT);
+        if (ALLOWED_SEVERITIES.contains(normalized)) {
+            return normalized;
+        }
+        if ("WARN".equals(normalized) || "WARNING".equals(normalized)) {
+            return "MEDIUM";
+        }
+        return "LOW";
+    }
+
+    private String appendAdditional(String existing, String addition) {
+        if (addition == null || addition.isBlank()) {
+            return existing;
+        }
+        if (existing == null || existing.isBlank()) {
+            return addition;
+        }
+        return existing + " | " + addition;
+    }
+
+    private boolean usesDescriptionColumns(Connection conn) throws SQLException {
+        return columnExists(conn, "SECURITY_EVENTS", "DESCRIPTION")
+            && columnExists(conn, "SECURITY_EVENTS", "ADDITIONAL_DATA")
+            && columnExists(conn, "SECURITY_EVENTS", "SUCCESSFUL");
+    }
+
+    private String buildInsertSql(Connection conn) throws SQLException {
+        if (usesDescriptionColumns(conn)) {
+            return """
+                INSERT INTO security_events
+                (event_type, severity, username, session_id, ip_address, user_agent,
+                 description, successful, timestamp, additional_data)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """;
+        }
+        return """
+            INSERT INTO security_events
+            (event_type, severity, username, session_id, ip_address, user_agent,
+             event_details, suspected_threat, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+    }
+
+    private boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        DatabaseMetaData metaData = conn.getMetaData();
+        try (ResultSet rs = metaData.getColumns(null, null, tableName.toUpperCase(), columnName.toUpperCase())) {
+            return rs.next();
         }
     }
     

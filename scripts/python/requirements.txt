@@ -1,4 +1,3 @@
-pandas==2.1.4
 requests==2.31.0
 jaydebeapi==1.2.3
 JPype1==1.4.1

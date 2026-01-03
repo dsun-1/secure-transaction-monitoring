@@ -3,8 +3,13 @@ package com.security.tests.auth;
 import com.security.tests.base.BaseTest;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.time.Duration;
 
 /**
  * Tests for brute force attack detection and prevention.
@@ -77,13 +82,22 @@ public class BruteForceTest extends BaseTest {
     public void testDistributedBruteForce() {
         String testUsername = "user@example.com";
         int totalAttempts = 15;
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         for (int i = 1; i <= totalAttempts; i++) {
             driver.manage().deleteAllCookies(); // Simulate new session
             navigateToUrl("/login");
             
-            WebElement usernameField = driver.findElement(By.id("username"));
-            WebElement passwordField = driver.findElement(By.id("password"));
+            WebElement usernameField;
+            WebElement passwordField;
+            try {
+                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
+            } catch (TimeoutException e) {
+                navigateToUrl("/login");
+                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
+            }
             WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
             
             usernameField.sendKeys(testUsername);
