@@ -2,10 +2,6 @@
 
 A small demo platform for testing security monitoring, SIEM integrations, and alerting workflows. It includes a Spring Boot mock e-commerce app, security-focused test suites, and scripts to generate JIRA tickets or send alerts for detected incidents.
 
-This README gives a quick way to build, run, and test the project locally and explains the main configuration points (JIRA, email, Slack, PagerDuty, and SIEM integrations).
-
-## Resume-aligned summary (Oct 2025)
-
 - Built an end-to-end security monitoring system demonstrating attack -> detection -> analysis -> response workflows.
 - Designed a Spring Boot e-commerce application backed by an H2 security-events database for live forensic inspection.
 - Created a TestNG/Selenium automation suite that simulates credential-stuffing and brute-force attacks against the application.
