@@ -1,96 +1,64 @@
-# Secure Transaction Monitoring
+# Secure E-Commerce Transaction Monitor
 
-This is a small demo platform for security monitoring and incident response. It has a Spring Boot mock e-commerce app, a security test suite that simulates attacks, and Python scripts that analyze events and generate incident reports.
+**Secure Transaction Monitoring** is a security engineering demo platform designed to simulate, detect, and respond to cyber threats in real-time. It features a vulnerable Spring Boot MVC application, an automated attack simulation suite, and a custom SIEM analyzer.
 
-If you want the quick version: run the app, run the tests, then run the SIEM analyzer.
+## Project Overview
 
-## What this project shows
+This project demonstrates a complete **Attack → Detect → Respond** workflow:
+1.  **Attack:** Automated Selenium tests simulate OWASP Top 10 threats (Brute Force, Session Hijacking, SQL Injection).
+2.  **Detect:** The application logs security events to a structured H2 database.
+3.  **Analyze:** A Python-based SIEM analyzer queries the database to correlate events and identify anomalies.
+4.  **Respond:** Confirmed incidents are formatted for automated ticketing (JIRA integration).
 
-- End-to-end flow: attack simulation -> event logging -> detection -> report -> ticket creation.
-- A simple SIEM-style pipeline built on top of an H2 event store.
-- Automated security checks that map to OWASP Top 10 categories.
+## Tech Stack
 
-## Repo layout
+*   **Core:** Java 21, Spring Boot 3 (MVC), Spring Security
+*   **Data:** H2 Database (SQL), Jakarta Validation
+*   **Frontend:** Thymeleaf (Server-Side Rendering)
+*   **Testing:** Selenium WebDriver, TestNG
+*   **Ops:** Python (JayDeBeApi), GitHub Actions (Headless CI)
 
-- `ecommerce-app/` - Spring Boot app (Thymeleaf UI, H2 DB).
-- `security-tests/` - TestNG + Selenium security tests.
-- `scripts/` - Python/PowerShell scripts for analysis and JIRA ticket creation.
-- `.github/workflows/` - CI workflows.
+## Repository Structure
 
-## Prerequisites
+*   `ecommerce-app/` - The target application. A monolithic Spring Boot app using Thymeleaf for UI and H2 for data persistence. Implements RBAC and input validation.
+*   `security-tests/` - The attack suite. Uses Selenium and TestNG to perform black-box security testing against the running app.
+*   `scripts/python/` - The detection engine. `security_analyzer_h2.py` connects to the H2 database via JDBC to run detection logic.
+*   `.github/workflows/` - CI pipeline configuration for headless testing.
 
-- Java 21
-- Maven 3.8+
-- (Optional) Python 3.9+ for `scripts/python`
+## Quick Start (Demo Mode)
 
-## Build
+**Prerequisites:** Java 21, Maven 3.8+, Python 3.9+
 
-From the repo root:
+1.  **Start the Application:**
+    ```powershell
+    mvn -f ecommerce-app/pom.xml spring-boot:run
+    ```
+    *App runs on http://localhost:8080*
 
-```powershell
-mvn -T 1C clean package -DskipTests
-```
+2.  **Run Attack Simulation (New Terminal):**
+    ```powershell
+    mvn -f security-tests/pom.xml test
+    ```
 
-Or just run the app:
+3.  **Run SIEM Analysis:**
+    ```powershell
+    python scripts/python/security_analyzer_h2.py
+    ```
 
-```powershell
-cd ecommerce-app
-mvn spring-boot:run
-```
+## Key Features
 
-The app runs on http://localhost:8080.
+*   **Role-Based Access Control (RBAC):** Spring Security configuration ensuring strict separation between `USER` and `ADMIN` roles.
+*   **Rate Limiting:** Custom filter implementing a sliding window algorithm to block high-frequency requests (DoS protection).
+*   **Session Management:** Secure session handling that ties cart data to `JSESSIONID`, serving as the target for session hijacking simulations.
+*   **Defensive Programming:** Extensive use of `Jakarta Validation` (`@NotBlank`, `@Pattern`) to enforce data integrity at the model level.
+*   **Security Event Logging:** Custom event listeners capture authentication failures and suspicious transactions.
+*   **CI/CD Integration:** Tests are designed to run headlessly in GitHub Actions to enforce secure SDLC practices.
 
-## Run (development)
+## Configuration
 
-1. Make sure `ecommerce-app/src/main/resources/application.properties` is set the way you want.
-2. Start the app:
+Configuration is managed in `ecommerce-app/src/main/resources/application.properties`.
+The H2 database is stored in `ecommerce-app/data/security-events`.
 
-```powershell
-cd ecommerce-app
-mvn spring-boot:run
-```
+## License
+MIT
 
-## Tests
-
-Run the security test suite:
-
-```powershell
-mvn -pl security-tests test
-```
-
-CI uses `.github/workflows/security-tests.yml` to run the same tests headless.
-
-## Configuration and secrets
-
-Config lives in `ecommerce-app/src/main/resources/application.properties`.
-For secrets, use env vars or CI secrets.
-
-Common env vars:
-
-- `JIRA_URL`
-- `JIRA_USERNAME`
-- `JIRA_API_TOKEN`
-- `alert.email.recipients`
-- `alert.email.from`
-
-Example (PowerShell):
-
-```powershell
-$env:JIRA_URL = 'https://yourcompany.atlassian.net'
-$env:JIRA_USERNAME = 'alerts@example.com'
-$env:JIRA_API_TOKEN = 'REDACTED'
-```
-
-## Alerting and SIEM
-
-- `scripts/python/security_analyzer_h2.py` reads the H2 event store and generates a JSON incident report.
-- `scripts/python/jira_ticket_generator.py` can turn those incidents into JIRA tickets (dry run without creds).
-
-## Notes
-
-- Auth is handled by Spring Security.
-- The H2 console can be enabled (`spring.h2.console.enabled=true`) for debugging, but do not use it in production.
-
-## Next steps
-
-- Add a fully end-to-end SIEM -> JIRA integration test.

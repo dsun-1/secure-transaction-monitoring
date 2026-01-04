@@ -4,7 +4,6 @@ import com.security.ecommerce.model.SecurityEvent;
 import com.security.ecommerce.model.Transaction;
 import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.TransactionService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -16,11 +15,14 @@ import java.util.Map;
 @RequestMapping("/api/security")
 public class SecurityApiController {
     
-    @Autowired
-    private SecurityEventService securityEventService;
-    
-    @Autowired
-    private TransactionService transactionService;
+    private final SecurityEventService securityEventService;
+    private final TransactionService transactionService;
+
+    public SecurityApiController(SecurityEventService securityEventService,
+                                 TransactionService transactionService) {
+        this.securityEventService = securityEventService;
+        this.transactionService = transactionService;
+    }
     
     @GetMapping("/events")
     public List<SecurityEvent> getAllSecurityEvents() {

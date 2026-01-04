@@ -66,10 +66,10 @@ try {
         }
     }
 
-    Write-Host "Step 1: Start the Spring Boot app"
+    Write-Host "Step 1: Start the Secure Transaction Monitor (Spring Boot App)"
     $appProcess = Start-Process -FilePath "mvn" `
-        -ArgumentList "-DskipTests", "spring-boot:run", "-Dspring-boot.run.profiles=demo" `
-        -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
+        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=demo" `
+        -WorkingDirectory $repoRoot `
         -PassThru -NoNewWindow
     $startedApp = $true
 
@@ -77,26 +77,16 @@ try {
         throw "App did not start in time."
     }
 
-    Write-Host "Step 2: Run security tests (headless)"
-    & mvn -pl security-tests test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
+    Write-Host "Step 2: Run Attack Simulation (Selenium + TestNG)"
+    & mvn -f security-tests/pom.xml test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
 
-    Write-Host "Step 3: Run SIEM analysis"
-    Push-Location (Join-Path $repoRoot "scripts/python")
-    try {
-        & python security_analyzer_h2.py
-    } finally {
-        Pop-Location
-    }
+    Write-Host "Step 3: Run SIEM Threat Detection (Python)"
+    & python scripts/python/security_analyzer_h2.py
 
-    Write-Host "Step 4: Generate JIRA tickets (optional)"
-    Push-Location (Join-Path $repoRoot "scripts/python")
-    try {
-        & python jira_ticket_generator.py siem_incident_report.json
-    } finally {
-        Pop-Location
-    }
+    Write-Host "Step 4: Generate Incident Tickets (JIRA Integration)"
+    & python scripts/python/jira_ticket_generator.py siem_incident_report.json
 
-    Write-Host "Demo completed."
+    Write-Host "Demo completed successfully."
 } finally {
     if ($startedApp -and $appProcess -and -not $appProcess.HasExited) {
         Write-Host "Stopping app..."

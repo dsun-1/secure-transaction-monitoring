@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-01-04T15:02:49.814747",
+  "total_incidents": 1,
+  "high_severity_count": 1,
+  "medium_severity_count": 0,
+  "incidents": [
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "demo-tx-001",
+      "username": "testuser",
+      "anomaly_type": "NEGATIVE_MODIFICATION",
+      "original_amount": 100.0,
+      "modified_amount": -100.0,
+      "details": "Demo negative amount modification detected",
+      "timestamp": "2026-01-04 15:01:58.149810",
+      "recommendation": "Review transaction, freeze account if necessary"
+    }
+  ],
+  "high_severity_events": []
+}

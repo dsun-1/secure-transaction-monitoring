@@ -4,7 +4,6 @@ import com.security.ecommerce.model.CartItem;
 import com.security.ecommerce.model.Product;
 import com.security.ecommerce.repository.CartItemRepository;
 import com.security.ecommerce.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,20 +14,27 @@ import java.util.List;
 @Transactional
 public class CartService {
 
-    @Autowired
-    private CartItemRepository cartItemRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
+    public CartService(CartItemRepository cartItemRepository,
+                       ProductRepository productRepository) {
+        this.cartItemRepository = cartItemRepository;
+        this.productRepository = productRepository;
+    }
 
     public List<CartItem> getCartItems(String sessionId) {
         return cartItemRepository.findBySessionId(sessionId);
     }
 
     public CartItem addToCart(String sessionId, Long productId, Integer quantity) {
+        if (productId == null || quantity == null || quantity <= 0) {
+            return null;
+        }
+
         Product product = productRepository.findById(productId).orElse(null);
         
-        if (product == null || quantity == null || quantity <= 0) {
+        if (product == null) {
             return null;
         }
 
@@ -57,6 +63,10 @@ public class CartService {
     }
 
     public void updateQuantity(String sessionId, Long cartItemId, Integer quantity) {
+        if (cartItemId == null || quantity == null) {
+            return;
+        }
+
         CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
         if (item != null && item.getSessionId().equals(sessionId)) {
             if (quantity <= 0) {
@@ -69,6 +79,10 @@ public class CartService {
     }
 
     public void removeFromCart(String sessionId, Long cartItemId) {
+        if (cartItemId == null) {
+            return;
+        }
+
         CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
         if (item != null && item.getSessionId().equals(sessionId)) {
             cartItemRepository.delete(item);

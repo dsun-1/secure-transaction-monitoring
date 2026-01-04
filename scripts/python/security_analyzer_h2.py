@@ -16,7 +16,12 @@ logger.setLevel(logging.INFO)
 
 class SecurityEventAnalyzer:
     # central analyzer class for detection and reporting
-    def __init__(self, db_path='../../ecommerce-app/data/security-events'):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            # Resolve path relative to this script file
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(script_dir, '../../ecommerce-app/data/security-events')
+
         # connect to the same event store used by the app and tests
         self.db_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         self.db_user = "sa"

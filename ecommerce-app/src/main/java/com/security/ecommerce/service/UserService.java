@@ -2,7 +2,7 @@ package com.security.ecommerce.service;
 
 import com.security.ecommerce.model.User;
 import com.security.ecommerce.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,6 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class UserService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -33,12 +41,6 @@ public class UserService implements UserDetailsService {
             .accountLocked(user.isAccountLocked()) 
             .build();
     }
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     
     public void incrementFailedAttempts(String username) {
@@ -65,7 +67,7 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
-    public User save(User user) {
+    public User save(@NonNull User user) {
         return userRepository.save(user);
     }
 }

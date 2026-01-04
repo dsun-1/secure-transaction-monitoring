@@ -7,7 +7,6 @@ import com.security.ecommerce.service.CartService;
 import com.security.ecommerce.service.TransactionService;
 import com.security.ecommerce.service.UserService;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,14 +23,17 @@ import java.util.List;
 // checkout flow; this is a key surface for tampering and fraud tests
 public class CheckoutController {
 
-    @Autowired
-    private CartService cartService;
+    private final CartService cartService;
+    private final TransactionService transactionService;
+    private final UserService userService;
 
-    @Autowired
-    private TransactionService transactionService;
-
-    @Autowired
-    private UserService userService;
+    public CheckoutController(CartService cartService,
+                              TransactionService transactionService,
+                              UserService userService) {
+        this.cartService = cartService;
+        this.transactionService = transactionService;
+        this.userService = userService;
+    }
 
     @GetMapping("/checkout")
     // renders checkout details and total for the current session cart

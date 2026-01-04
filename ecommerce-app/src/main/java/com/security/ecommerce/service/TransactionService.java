@@ -5,7 +5,7 @@ import com.security.ecommerce.model.User;
 import com.security.ecommerce.repository.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +20,14 @@ public class TransactionService {
     
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
     
-    @Autowired
-    private TransactionRepository transactionRepository;
-    
-    @Autowired
-    private SecurityEventService securityEventService;
+    private final TransactionRepository transactionRepository;
+    private final SecurityEventService securityEventService;
+
+    public TransactionService(TransactionRepository transactionRepository,
+                              SecurityEventService securityEventService) {
+        this.transactionRepository = transactionRepository;
+        this.securityEventService = securityEventService;
+    }
     
     public Transaction createTransaction(User user, BigDecimal amount, String lastFourDigits, String shippingAddress) {
         Transaction transaction = new Transaction();
@@ -101,7 +104,7 @@ public class TransactionService {
         return saved;
     }
     
-    public Transaction processTransaction(Long transactionId, boolean success, String failureReason) {
+    public Transaction processTransaction(@NonNull Long transactionId, boolean success, String failureReason) {
         Transaction transaction = transactionRepository.findById(transactionId)
             .orElseThrow(() -> new RuntimeException("Transaction not found"));
         

@@ -4,7 +4,6 @@ import com.security.ecommerce.model.SecurityEvent;
 import com.security.ecommerce.repository.SecurityEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +17,11 @@ public class SecurityEventService {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventService.class);
     
-    @Autowired
-    private SecurityEventRepository securityEventRepository;
+    private final SecurityEventRepository securityEventRepository;
+
+    public SecurityEventService(SecurityEventRepository securityEventRepository) {
+        this.securityEventRepository = securityEventRepository;
+    }
     
     
     
