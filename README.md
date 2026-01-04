@@ -1,86 +1,79 @@
 # Secure Transaction Monitoring
 
-A small demo platform for testing security monitoring, SIEM integrations, and alerting workflows. It includes a Spring Boot mock e-commerce app, security-focused test suites, and scripts to generate JIRA tickets or send alerts for detected incidents.
+This is a small demo platform for security monitoring and incident response. It has a Spring Boot mock e-commerce app, a security test suite that simulates attacks, and Python scripts that analyze events and generate incident reports.
 
-This README gives a quick way to build, run, and test the project locally and explains the main configuration points (JIRA, email, Slack, PagerDuty, and SIEM integrations).
+If you want the quick version: run the app, run the tests, then run the SIEM analyzer.
 
-## Resume-aligned summary (Oct 2025)
+## What this project shows
 
-- Built an end-to-end security monitoring system demonstrating attack -> detection -> analysis -> response workflows.
-- Designed a Spring Boot e-commerce application backed by an H2 security-events database for live forensic inspection.
-- Created a TestNG/Selenium automation suite that simulates credential-stuffing and brute-force attacks against the application.
-- Implemented a Python-based SIEM engine that analyzes logs, detects suspicious patterns (for example, >5 failed logins), and generates structured JSON incident reports.
-- Automated JIRA incident creation using API integrations to illustrate security-operations escalation flows.
-- Presented system operation through VS Code using integrated terminals, database clients, and scripted workflows (see `docs/vscode-demo.md`).
+- End-to-end flow: attack simulation -> event logging -> detection -> report -> ticket creation.
+- A simple SIEM-style pipeline built on top of an H2 event store.
+- Automated security checks that map to OWASP Top 10 categories.
 
-## Contents
+## Repo layout
 
-- `ecommerce-app/` - Spring Boot application (Thymeleaf UI, H2 DB).
-- `security-tests/` - TestNG security tests targeting the application.
-- `scripts/` - Helper scripts (Python & PowerShell) for alerts, JIRA ticket creation, and monitoring.
-- `.github/workflows/` - CI workflows for running tests and creating JIRA tickets.
+- `ecommerce-app/` - Spring Boot app (Thymeleaf UI, H2 DB).
+- `security-tests/` - TestNG + Selenium security tests.
+- `scripts/` - Python/PowerShell scripts for analysis and JIRA ticket creation.
+- `.github/workflows/` - CI workflows.
 
 ## Prerequisites
 
-- Java 21 (the project is set up for Java 21 / Spring Boot 3.x)
+- Java 21
 - Maven 3.8+
-- (Optional) Python 3.9+ to run Python scripts in `scripts/python`
+- (Optional) Python 3.9+ for `scripts/python`
 
 ## Build
 
-From the repository root:
+From the repo root:
 
 ```powershell
 mvn -T 1C clean package -DskipTests
 ```
 
-Or build and run the ecommerce module only:
+Or just run the app:
 
 ```powershell
 cd ecommerce-app
 mvn spring-boot:run
 ```
 
-The app listens on port 8080 by default.
+The app runs on http://localhost:8080.
 
 ## Run (development)
 
-1. Configure application properties (see below).
-2. Run the app from your IDE or with:
+1. Make sure `ecommerce-app/src/main/resources/application.properties` is set the way you want.
+2. Start the app:
 
 ```powershell
 cd ecommerce-app
 mvn spring-boot:run
 ```
 
-Visit http://localhost:8080.
-
 ## Tests
 
-Run the security tests module (TestNG):
+Run the security test suite:
 
 ```powershell
 mvn -pl security-tests test
 ```
 
-CI workflows in `.github/workflows/security-tests.yml` will also run these tests in CI.
+CI uses `.github/workflows/security-tests.yml` to run the same tests headless.
 
-## Configuration & Secrets
+## Configuration and secrets
 
-Main configuration is in `ecommerce-app/src/main/resources/application.properties`.
-Sensitive values should not be stored in version control. Instead use environment variables or your CI secrets.
+Config lives in `ecommerce-app/src/main/resources/application.properties`.
+For secrets, use env vars or CI secrets.
 
-Important settings used by the project and CI workflows:
+Common env vars:
 
-- `JIRA_URL` - JIRA base URL
-- `JIRA_USERNAME` - JIRA account email used for API requests (also used as sender for email alerts)
-- `JIRA_API_TOKEN` - API token for the JIRA user
-- `alert.email.recipients` - Comma-separated list of recipients for security alert emails
-- `alert.email.from` - Sender address; CI/workflows set this from `${JIRA_USERNAME}` by default
-- `alert.slack.webhook` - Slack incoming webhook URL (if enabling Slack alerts)
-- `alert.pagerduty.token` - PagerDuty API token (if enabling PagerDuty)
+- `JIRA_URL`
+- `JIRA_USERNAME`
+- `JIRA_API_TOKEN`
+- `alert.email.recipients`
+- `alert.email.from`
 
-In local development you can set these in your shell or in your IDE run configuration. Example (PowerShell):
+Example (PowerShell):
 
 ```powershell
 $env:JIRA_URL = 'https://yourcompany.atlassian.net'
@@ -88,26 +81,16 @@ $env:JIRA_USERNAME = 'alerts@example.com'
 $env:JIRA_API_TOKEN = 'REDACTED'
 ```
 
-## Alerting & SIEM
+## Alerting and SIEM
 
-- The `AlertManagerService` handles Slack, Email, and PagerDuty alerts. Email sending uses Spring Boot Mail. The sender address is read from `alert.email.from` and in CI is set from the `JIRA_USERNAME` secret.
-- JIRA ticket creation is handled by `scripts/python/jira_ticket_generator.py` and the GitHub Actions workflows when configured.
-- Slack and PagerDuty features are scaffolded with TODOs - see `AlertManagerService.java` if you want to enable or complete them.
+- `scripts/python/security_analyzer_h2.py` reads the H2 event store and generates a JSON incident report.
+- `scripts/python/jira_ticket_generator.py` can turn those incidents into JIRA tickets (dry run without creds).
 
-## Development notes
+## Notes
 
-- Authentication is handled by Spring Security. Custom event handlers log authentication success/failure using `SecurityEventService`.
-- `UserService` implements `UserDetailsService` to integrate with Spring Security.
-- The H2 console can be enabled (`spring.h2.console.enabled=true`) for debugging (do not enable in production).
+- Auth is handled by Spring Security.
+- The H2 console can be enabled (`spring.h2.console.enabled=true`) for debugging, but do not use it in production.
 
-## How to contribute
+## Next steps
 
-1. Fork the repo and create a topic branch.
-2. Make changes, run the tests locally.
-3. Open a pull request with a description of the changes.
-
-## Next steps / TODOs
-
-- Implement Slack and PagerDuty integrations in `AlertManagerService` (currently TODO).
-- Add more concrete integration tests that exercise the SIEM -> JIRA flow end-to-end.
-
+- Add a fully end-to-end SIEM -> JIRA integration test.

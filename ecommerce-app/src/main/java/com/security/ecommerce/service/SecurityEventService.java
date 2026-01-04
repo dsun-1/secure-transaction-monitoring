@@ -13,6 +13,7 @@ import java.util.List;
 
 @Service
 @Transactional
+// central logger for security telemetry; feeds the siem analysis pipeline
 public class SecurityEventService {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventService.class);
@@ -20,11 +21,12 @@ public class SecurityEventService {
     @Autowired
     private SecurityEventRepository securityEventRepository;
     
-    //
-    // --- FIX ---
-    // Removed the @Autowired property for the deleted SiemIntegrationService
-    //
     
+    
+    
+    
+    
+    // persist any security event and emit a structured audit log entry
     public SecurityEvent logEvent(SecurityEvent event) {
         if (event.getTimestamp() == null) {
             event.setTimestamp(LocalDateTime.now());
@@ -33,14 +35,15 @@ public class SecurityEventService {
         logger.info("Security Event Logged: {} - {} - {}", 
             event.getEventType(), event.getSeverity(), event.getDescription());
         
-        //
-        // --- FIX ---
-        // Removed the "if (siemIntegrationService != null)" block
-        //
+        
+        
+        
+        
         
         return saved;
     }
     
+    // standardizes login success/failure events for auth monitoring
     public SecurityEvent logAuthenticationAttempt(String username, String ipAddress, 
                                                    boolean successful, String userAgent) {
         SecurityEvent event = new SecurityEvent();
@@ -58,6 +61,7 @@ public class SecurityEventService {
         return logEvent(event);
     }
     
+    // convenience wrapper for high-severity alerts used by tests and detections
     public SecurityEvent logHighSeverityEvent(String eventType, String username, 
                                                String description, String additionalData) {
         SecurityEvent event = new SecurityEvent();
@@ -72,16 +76,19 @@ public class SecurityEventService {
         return logEvent(event);
     }
     
+    // used by dashboards or siem queries to pull recent critical activity
     public List<SecurityEvent> getRecentHighSeverityEvents(int hours) {
         LocalDateTime since = LocalDateTime.now().minusHours(hours);
         return securityEventRepository.findHighSeverityEventsSince(since);
     }
     
+    // supports brute-force detection by aggregating failed attempts
     public List<SecurityEvent> getFailedLoginsByIp(String ipAddress, int minutes) {
         LocalDateTime since = LocalDateTime.now().minusMinutes(minutes);
         return securityEventRepository.findFailedAttemptsByIpSince(ipAddress, since);
     }
     
+    // admin-level view of all security events
     public List<SecurityEvent> getAllEvents() {
         return securityEventRepository.findAll();
     }

@@ -8,9 +8,7 @@ import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 
-/**
- * TestNG listener for detailed HTML reporting with ExtentReports
- */
+
 public class TestListener implements ITestListener {
     
     private static ExtentReports extent;

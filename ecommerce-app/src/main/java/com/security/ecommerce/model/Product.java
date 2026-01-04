@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
-/**
- * Product entity for e-commerce catalog
- */
+
 @Entity
 @Table(name = "products")
 @Data

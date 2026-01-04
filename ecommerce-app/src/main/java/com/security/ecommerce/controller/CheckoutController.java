@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Controller
+// checkout flow; this is a key surface for tampering and fraud tests
 public class CheckoutController {
 
     @Autowired
@@ -33,6 +34,7 @@ public class CheckoutController {
     private UserService userService;
 
     @GetMapping("/checkout")
+    // renders checkout details and total for the current session cart
     public String checkoutPage(HttpSession session, Model model) {
         String sessionId = session.getId();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -51,7 +53,7 @@ public class CheckoutController {
         model.addAttribute("total", total);
         
         if (isAuthenticated) {
-            // User is logged in - could pre-fill shipping info
+            
             model.addAttribute("loggedIn", true);
         }
         
@@ -59,6 +61,7 @@ public class CheckoutController {
     }
 
     @PostMapping("/checkout/process")
+    // processes payment submission and creates a transaction record
     public String processCheckout(@RequestParam String cardNumber,
                                   @RequestParam String cardName,
                                   @RequestParam String expiryDate,
@@ -78,7 +81,7 @@ public class CheckoutController {
             return "redirect:/cart";
         }
         
-        // Validate payment (basic validation)
+        
         if (cardNumber == null || cardNumber.length() < 13) {
             model.addAttribute("error", "Invalid card number");
             model.addAttribute("cartItems", cartItems);
@@ -86,18 +89,18 @@ public class CheckoutController {
             return "checkout";
         }
         
-        // Create transaction
+        
         User user = username != null ? userService.findByUsername(username) : null;
         
         try {
             Transaction transaction = transactionService.createTransaction(
                 user, 
                 total, 
-                cardNumber.substring(cardNumber.length() - 4), // Last 4 digits
+                cardNumber.substring(cardNumber.length() - 4), 
                 shippingAddress
             );
             
-            // Clear cart after successful checkout
+            
             cartService.clearCart(sessionId);
             
             model.addAttribute("transaction", transaction);

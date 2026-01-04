@@ -17,7 +17,6 @@ public class SQLInjectionTest extends BaseTest {
     public void testSQLInjectionLogin() {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
-        // Try SQL injection payloads
         String[] sqlPayloads = {
             "' OR '1'='1",
             "admin'--",
@@ -37,7 +36,6 @@ public class SQLInjectionTest extends BaseTest {
             password.sendKeys("password");
             loginButton.click();
             
-            // Should not be able to bypass login
             wait.until(ExpectedConditions.urlContains("/login"));
             String currentUrl = driver.getCurrentUrl();
             Assert.assertTrue(currentUrl.contains("/login"), 
@@ -55,11 +53,15 @@ public class SQLInjectionTest extends BaseTest {
     
     @Test(description = "Test SQL injection in search parameters")
     public void testSQLInjectionSearch() {
-        navigateToUrl("/products");
-        
-        // This would test search functionality if it existed
-        // For now, just log that we tested it
-        
+        String payload = "' OR '1'='1";
+        navigateToUrl("/products?search=" + payload);
+
+        String pageSource = driver.getPageSource();
+        Assert.assertFalse(pageSource.contains(payload), 
+            "Search payload should not be reflected in page output");
+        Assert.assertFalse(pageSource.toLowerCase().contains("sql"),
+            "SQL errors should not be exposed in responses");
+
         SecurityEvent event = SecurityEvent.createHighSeverityEvent(
             "SQL_INJECTION_TEST",
             "test_user",

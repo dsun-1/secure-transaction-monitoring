@@ -1,7 +1,5 @@
 name: Manual JIRA Ticket Generation
 
-# Manual trigger workflow for generating JIRA tickets from security incidents
-# Uses repository secrets for JIRA credentials
 on:
   workflow_dispatch:
     inputs:
@@ -41,6 +39,21 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
           cache: 'maven'
+      
+      - name: Configure Maven Central mirror
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <mirrors>
+              <mirror>
+                <id>central-mirror</id>
+                <mirrorOf>central</mirrorOf>
+                <url>https://repo1.maven.org/maven2</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
       
       - name: Build application
         run: mvn clean install -DskipTests

@@ -1,5 +1,6 @@
 name: Security Tests
 
+# ci pipeline for running the full security test suite headlessly
 on:
   push:
     branches:
@@ -13,22 +14,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # pull source code for the build
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # set java toolchain for maven builds
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
           cache: maven
+      
+      # use a mirror to avoid transient maven central access issues
+      - name: Configure Maven Central mirror
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'EOF'
+          <settings>
+            <mirrors>
+              <mirror>
+                <id>central-mirror</id>
+                <mirrorOf>central</mirrorOf>
+                <url>https://repo1.maven.org/maven2</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
 
+      # install chrome for selenium tests
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
 
+      # build the app first so the tests can run against it
       - name: Build ecommerce app
         run: mvn -pl ecommerce-app -DskipTests package
 
+      # start the app and wait until it responds
       - name: Start ecommerce app
         run: |
           cd ecommerce-app
@@ -43,9 +65,11 @@ jobs:
           done
           curl -fsS http://localhost:8080 >/dev/null
 
+      # run the test suite in headless mode against localhost
       - name: Run security tests
         run: mvn -pl security-tests test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
 
+      # cleanup is always executed to avoid leaked processes
       - name: Stop ecommerce app
         if: always()
         run: |
@@ -54,6 +78,7 @@ jobs:
           fi
           pkill -f "spring-boot:run" || true
 
+      # publish test artifacts for review
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

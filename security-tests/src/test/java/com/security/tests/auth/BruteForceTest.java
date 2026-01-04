@@ -11,21 +11,19 @@ import org.testng.annotations.Test;
 
 import java.time.Duration;
 
-/**
- * Tests for brute force attack detection and prevention.
- * Simulates multiple failed login attempts to verify rate limiting and account lockout.
- */
+
 public class BruteForceTest extends BaseTest {
     
     @Test(priority = 1, description = "Verify brute force protection with rapid login attempts")
     public void testBruteForceProtection() {
+        // simulate rapid failed logins to verify lockout behavior
         navigateToUrl("/login");
         
         String testUsername = "admin";
         String wrongPassword = "wrongpassword";
-        int attemptCount = 10; // More than the 5-attempt lockout threshold
+        int attemptCount = 10; 
         
-        // 1. Simulate failed login attempts to trigger the account lockout
+        
         for (int i = 1; i <= attemptCount; i++) {
             WebElement usernameField = driver.findElement(By.id("username"));
             WebElement passwordField = driver.findElement(By.id("password"));
@@ -37,7 +35,8 @@ public class BruteForceTest extends BaseTest {
             passwordField.sendKeys(wrongPassword + i);
             loginButton.click();
             
-            // Log each failed attempt
+            
+            // record each attempt for siem correlation
             eventLogger.logAuthenticationAttempt(
                 testUsername, 
                 false, 
@@ -46,15 +45,16 @@ public class BruteForceTest extends BaseTest {
             );
             
             try {
-                Thread.sleep(500); // Small delay between attempts
+                Thread.sleep(500); 
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
         
-        // --- FIX START: Replace faulty page content check with functional security check ---
+        
 
-        // 2. Attempt a final login with the correct credentials (admin/admin123)
+        
+        // attempt a valid login after repeated failures to validate lockout
         navigateToUrl("/login");
         WebElement usernameField = driver.findElement(By.id("username"));
         WebElement passwordField = driver.findElement(By.id("password"));
@@ -63,29 +63,31 @@ public class BruteForceTest extends BaseTest {
         usernameField.clear();
         usernameField.sendKeys(testUsername);
         passwordField.clear();
-        passwordField.sendKeys("admin123"); // The correct password for 'admin'
+        passwordField.sendKeys("admin123"); 
         loginButton.click();
         
-        // 3. Assertion: Verify the login FAILED (i.e., we are still on the login page)
+        
         String currentUrl = driver.getCurrentUrl();
         Assert.assertTrue(currentUrl.contains("/login") || currentUrl.contains("?error"),
             "Brute force protection failed: Locked account was able to successfully log in.");
         
-        // Log security event for successful *prevention*
+        
+        // emit high-severity event to show detection in the pipeline
         logSecurityEvent("BRUTE_FORCE_PREVENTION_SUCCESS", "HIGH", 
             "Account lockout successfully prevented correct login after " + attemptCount + " failed attempts for user: " + testUsername);
         
-        // --- FIX END ---
+        
     }
     
     @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
     public void testDistributedBruteForce() {
+        // simulate multiple sessions/ip sources to mimic distributed attacks
         String testUsername = "user@example.com";
         int totalAttempts = 15;
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         for (int i = 1; i <= totalAttempts; i++) {
-            driver.manage().deleteAllCookies(); // Simulate new session
+            driver.manage().deleteAllCookies(); 
             navigateToUrl("/login");
             
             WebElement usernameField;
@@ -107,19 +109,20 @@ public class BruteForceTest extends BaseTest {
             eventLogger.logAuthenticationAttempt(
                 testUsername, 
                 false, 
-                "127.0.0." + (i % 255), // Simulate different IPs
+                "127.0.0." + (i % 255), 
                 "Distributed brute force attempt"
             );
         }
         
-        // Log sophisticated attack pattern
+        
+        // log aggregated signal for the siem report
         logSecurityEvent("DISTRIBUTED_BRUTE_FORCE", "HIGH", 
             "Coordinated brute force attack - Multiple failed attempts across different sessions/IPs detected for user: " + testUsername);
     }
     
     @Test(priority = 3, description = "Test credential stuffing with leaked credentials")
     public void testCredentialStuffing() {
-        // Simulate credential stuffing with common leaked username/password combinations
+        // try common leaked credentials to simulate credential stuffing
         String[][] leakedCredentials = {
             {"admin", "admin123"},
             {"user@test.com", "password123"},
@@ -147,6 +150,7 @@ public class BruteForceTest extends BaseTest {
             );
         }
         
+        // emit a high-severity event for SOC-style alerting
         logSecurityEvent("CREDENTIAL_STUFFING", "HIGH",
             "Automated login attempts with leaked credential database detected");
     }

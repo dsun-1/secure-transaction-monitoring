@@ -7,9 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Separate table for tracking authentication attempts for brute force detection
- */
+
 @Entity
 @Table(name = "authentication_attempts")
 @Data

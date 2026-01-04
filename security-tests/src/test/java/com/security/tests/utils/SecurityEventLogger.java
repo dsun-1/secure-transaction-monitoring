@@ -10,17 +10,17 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Security Event Logger - Captures authentication events, failed logins,
- * and transaction anomalies into a SQL database for analysis.
- */
+
+// writes test-generated security events into the h2 demo siem store
 public class SecurityEventLogger {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventLogger.class);
+    // shared db path so app and tests write to the same event store
     private static final String DB_PATH = "../ecommerce-app/data/security-events";
     private static final String DB_URL = "jdbc:h2:" + DB_PATH + ";AUTO_SERVER=TRUE";
     private static final String DB_USER = "sa";
     private static final String DB_PASSWORD = "";
+    // keep event types normalized to match app enums and analyzer queries
     private static final Set<String> ALLOWED_EVENT_TYPES = Set.of(
         "ACCOUNT_LOCKED",
         "AMOUNT_TAMPERING",
@@ -40,6 +40,7 @@ public class SecurityEventLogger {
         "SUSPICIOUS_ACTIVITY",
         "XSS_ATTEMPT"
     );
+    // normalized severities so analytics can key on consistent values
     private static final Set<String> ALLOWED_SEVERITIES = Set.of(
         "INFO",
         "LOW",
@@ -49,6 +50,7 @@ public class SecurityEventLogger {
     );
     
     public static void initializeDatabase() {
+        // create local db directory and tables for event storage
         try {
             Path dbDir = Paths.get("../ecommerce-app/data");
             Files.createDirectories(dbDir);
@@ -58,7 +60,8 @@ public class SecurityEventLogger {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              Statement stmt = conn.createStatement()) {
             
-            // Create security_events table aligned with app schema
+            
+            // core security event table used by siem analyzer
             String createTable = """
                 CREATE TABLE IF NOT EXISTS security_events (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -77,13 +80,14 @@ public class SecurityEventLogger {
             
             stmt.execute(createTable);
             
-            // Create indexes separately
+            
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_event_type ON security_events(event_type)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_severity ON security_events(severity)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_username ON security_events(username)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON security_events(timestamp)");
             
-            // Create authentication_attempts table
+            
+            // login attempt history used for brute-force analysis
             String createAuthTable = """
                 CREATE TABLE IF NOT EXISTS authentication_attempts (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -99,7 +103,8 @@ public class SecurityEventLogger {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_username_time ON authentication_attempts(username, attempt_timestamp)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_success ON authentication_attempts(success)");
             
-            // Create transaction_anomalies table
+            
+            // anomaly table used for transaction tampering signals
             String createTxTable = """
                 CREATE TABLE IF NOT EXISTS transaction_anomalies (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -125,6 +130,7 @@ public class SecurityEventLogger {
     }
     
     public void logSecurityEvent(SecurityEvent event) {
+        // insert a normalized event record for downstream detection
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              PreparedStatement pstmt = conn.prepareStatement(buildInsertSql(conn))) {
             
@@ -169,6 +175,7 @@ public class SecurityEventLogger {
         }
     }
 
+    // map arbitrary event labels to the allowed enum values
     private String mapEventType(String rawEventType) {
         if (rawEventType == null || rawEventType.isBlank()) {
             return "SUSPICIOUS_ACTIVITY";
@@ -222,6 +229,7 @@ public class SecurityEventLogger {
         return "SUSPICIOUS_ACTIVITY";
     }
 
+    // map free-form severity to a known tier
     private String mapSeverity(String rawSeverity) {
         if (rawSeverity == null || rawSeverity.isBlank()) {
             return "LOW";
@@ -246,12 +254,14 @@ public class SecurityEventLogger {
         return existing + " | " + addition;
     }
 
+    // detect legacy vs current schema column names
     private boolean usesDescriptionColumns(Connection conn) throws SQLException {
         return columnExists(conn, "SECURITY_EVENTS", "DESCRIPTION")
             && columnExists(conn, "SECURITY_EVENTS", "ADDITIONAL_DATA")
             && columnExists(conn, "SECURITY_EVENTS", "SUCCESSFUL");
     }
 
+    // pick insert statement based on schema shape
     private String buildInsertSql(Connection conn) throws SQLException {
         if (usesDescriptionColumns(conn)) {
             return """
@@ -278,6 +288,7 @@ public class SecurityEventLogger {
     
     public void logAuthenticationAttempt(String username, boolean success, 
                                         String ipAddress, String failureReason) {
+        // store auth attempts for brute-force correlation
         String sql = """
             INSERT INTO authentication_attempts 
             (username, success, ip_address, failure_reason, attempt_timestamp)
@@ -303,6 +314,7 @@ public class SecurityEventLogger {
     public void logTransactionAnomaly(String transactionId, String username, 
                                      String anomalyType, Double originalAmount, 
                                      Double modifiedAmount, String details) {
+        // store transaction anomalies for fraud-style detection
         String sql = """
             INSERT INTO transaction_anomalies 
             (transaction_id, username, anomaly_type, original_amount, 

@@ -13,6 +13,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
+// central security policy for auth, sessions, and csrf; this is the primary guardrail for the app
 public class SecurityConfig {
 
     private final SecurityEventService securityEventService;
@@ -26,6 +27,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
+            // log successful auth for siem pipeline
             String username = authentication.getName();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -37,6 +39,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return (request, response, exception) -> {
+            // log failed auth and increment failure counters
             String username = request.getParameter("username");
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -55,13 +58,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // FIX: Removed "/api/**" from this list so it defaults to authenticated() below
+                // define public vs protected routes
                 .requestMatchers("/", "/login", "/register", "/error", "/h2-console/**", "/css/**", "/js/**", 
-                               "/products", "/product/**", "/cart/**").permitAll()
+                               "/products", "/cart/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
-            // ... rest of the code remains the same ...
+            
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/perform_login")
@@ -70,6 +73,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
+                // invalidate server session and clear cookie
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
@@ -77,15 +81,17 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
+                // use cookie token for ui forms; allow h2 console in dev
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .ignoringRequestMatchers("/h2-console/**")
             )
             .sessionManagement(session -> session
+                // limit concurrent sessions per user
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             );
 
-        // H2 Console access
+        // h2 console uses frames in dev; disable frame options to keep console usable
         http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
 
         return http.build();

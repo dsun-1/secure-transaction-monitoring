@@ -2,9 +2,7 @@ package com.security.tests.utils;
 
 import java.time.LocalDateTime;
 
-/**
- * Security Event data model
- */
+
 public class SecurityEvent {
     private String eventType;
     private String severity;
@@ -42,7 +40,7 @@ public class SecurityEvent {
         return event;
     }
     
-    // Getters and Setters
+    
     public String getEventType() { return eventType; }
     public void setEventType(String eventType) { this.eventType = eventType; }
     

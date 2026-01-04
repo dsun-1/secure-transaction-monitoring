@@ -1,17 +1,13 @@
-"""
-Test JIRA Integration - Creates a sample security incident ticket
-Run this to verify your JIRA credentials work before using in GitHub Actions
-"""
 
 import sys
 import os
 
-# Add parent directory to path to import jira_ticket_generator
+                                                              
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from jira_ticket_generator import JiraIncidentTicketGenerator
 
-# Test incident data
+                    
 test_incident = {
     "type": "BRUTE_FORCE_DETECTED",
     "severity": "HIGH",
@@ -27,13 +23,13 @@ def main():
     print("🔍 Testing JIRA Integration...")
     print("-" * 60)
     
-    # Get credentials from environment variables
+                                                
     jira_url = os.getenv("JIRA_URL")
     jira_username = os.getenv("JIRA_USERNAME")
     jira_api_token = os.getenv("JIRA_API_TOKEN")
     jira_project_key = os.getenv("JIRA_PROJECT_KEY", "SEC")
     
-    # Check if credentials are provided
+                                       
     if not all([jira_url, jira_username, jira_api_token]):
         print("❌ Error: Missing JIRA credentials!")
         print()
@@ -57,7 +53,7 @@ def main():
     print("-" * 60)
     
     try:
-        # Initialize JIRA client
+                                
         print("\n📡 Connecting to JIRA...")
         jira = JiraIncidentTicketGenerator(
             jira_url=jira_url,
@@ -66,7 +62,7 @@ def main():
             project_key=jira_project_key
         )
         
-        # Create test ticket
+                            
         print("🎫 Creating test security incident ticket...")
         ticket_key = jira.create_incident_ticket(test_incident)
         

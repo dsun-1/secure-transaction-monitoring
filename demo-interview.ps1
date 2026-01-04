@@ -1,10 +1,9 @@
-# Quick interview demo runner
-# Starts the app, runs tests headless, runs SIEM analysis, and optionally generates JIRA tickets.
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = $PSScriptRoot
+$startedApp = $false
 
 function Wait-ForApp {
     param(
@@ -29,16 +28,22 @@ function Wait-ForApp {
 Write-Host "Starting demo from: $repoRoot"
 
 $appProcess = $null
+Set-Location $repoRoot
 
 try {
-    Write-Host "Step 1: Start the Spring Boot app"
-    $appProcess = Start-Process -FilePath "mvn" `
-        -ArgumentList "-DskipTests", "spring-boot:run" `
-        -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
-        -PassThru -NoNewWindow
+    if (Wait-ForApp) {
+        Write-Host "Step 1: App already running; skipping startup"
+    } else {
+        Write-Host "Step 1: Start the Spring Boot app"
+        $appProcess = Start-Process -FilePath "mvn" `
+            -ArgumentList "-DskipTests", "spring-boot:run" `
+            -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
+            -PassThru -NoNewWindow
+        $startedApp = $true
 
-    if (-not (Wait-ForApp)) {
-        throw "App did not start in time."
+        if (-not (Wait-ForApp)) {
+            throw "App did not start in time."
+        }
     }
 
     Write-Host "Step 2: Run security tests (headless)"
@@ -62,7 +67,7 @@ try {
 
     Write-Host "Demo completed."
 } finally {
-    if ($appProcess -and -not $appProcess.HasExited) {
+    if ($startedApp -and $appProcess -and -not $appProcess.HasExited) {
         Write-Host "Stopping app..."
         Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
     }

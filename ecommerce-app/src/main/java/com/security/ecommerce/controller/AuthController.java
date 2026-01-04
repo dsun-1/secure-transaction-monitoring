@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
+// auth entry points; these are high-value attack surfaces for credential abuse
 public class AuthController {
 
     @Autowired
@@ -19,19 +20,22 @@ public class AuthController {
     @Autowired
     private SecurityEventService securityEventService;
 
-    // --- FIX: This method was missing, causing the 404 error ---
+    
     @GetMapping("/login")
+    // serves login page used by auth and brute-force tests
     public String login() {
-        return "login"; // This looks for login.html in templates folder
+        return "login"; 
     }
-    // ----------------------------------------------------------
+    
 
     @GetMapping("/register")
+    // serves registration form for new users
     public String showRegistrationForm() {
         return "register";
     }
 
     @PostMapping("/register")
+    // registration flow that persists users and surfaces errors
     public String registerUser(@RequestParam String username, 
                              @RequestParam String email,
                              @RequestParam String password,

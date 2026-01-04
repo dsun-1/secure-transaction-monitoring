@@ -11,10 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST API for security monitoring and incident reporting
- * Used by Python scripts and CI/CD pipeline
- */
+
 @RestController
 @RequestMapping("/api/security")
 public class SecurityApiController {

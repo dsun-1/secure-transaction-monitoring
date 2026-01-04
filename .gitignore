@@ -1,11 +1,9 @@
-# Compiled class files
 *.class
 target/
 *.jar
 *.war
 *.ear
 
-# IDE files
 .idea/
 *.iml
 .vscode/
@@ -13,7 +11,6 @@ target/
 .project
 .classpath
 
-# Maven
 .mvn/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -21,7 +18,6 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -31,41 +27,33 @@ env/
 venv/
 .env
 
-# Test reports
 test-output/
 reports/
 screenshots/
 *.log
 logs/
 
-# Database
 *.db
 *.sqlite
 *.h2.db
 
-# Security sensitive files
 *.key
 *.pem
 secrets.properties
 fortify-token.txt
 
-# OS
 .DS_Store
 Thumbs.db
 *.swp
 
-# ChromeDriver
 chromedriver.exe
 chromedriver
 
-# Generated reports
 incident-response/reports/generated/*
 !incident-response/reports/generated/.gitkeep
 scripts/python/siem_incident_report.json
 
-# Fortify results
 .fortify/
 fortify-results/
 
-# JIRA credentials
 jira-config.properties

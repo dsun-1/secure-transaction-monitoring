@@ -10,10 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * User entity representing customer accounts
- * Tracks authentication and authorization information
- */
+
 @Entity
 @Table(name = "users")
 @Data
@@ -59,12 +56,12 @@ public class User {
 
     private boolean active = true;
 
-    // Helper methods for security monitoring
+    
     public void incrementFailedAttempts() {
         this.failedLoginAttempts++;
         this.lastFailedLogin = LocalDateTime.now();
         
-        // Lock account after 5 failed attempts
+        
         if (this.failedLoginAttempts >= 5) {
             this.accountNonLocked = false;
             this.accountLockedUntil = LocalDateTime.now().plusMinutes(30);
@@ -79,7 +76,7 @@ public class User {
     public boolean isAccountLocked() {
         if (!accountNonLocked && accountLockedUntil != null) {
             if (LocalDateTime.now().isAfter(accountLockedUntil)) {
-                // Auto-unlock after timeout
+                
                 this.accountNonLocked = true;
                 this.accountLockedUntil = null;
                 this.failedLoginAttempts = 0;

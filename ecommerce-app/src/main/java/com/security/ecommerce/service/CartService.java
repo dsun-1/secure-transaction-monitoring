@@ -28,20 +28,25 @@ public class CartService {
     public CartItem addToCart(String sessionId, Long productId, Integer quantity) {
         Product product = productRepository.findById(productId).orElse(null);
         
-        if (product == null) {
+        if (product == null || quantity == null || quantity <= 0) {
             return null;
         }
 
-        // Check if item already in cart
+        
         List<CartItem> cartItems = cartItemRepository.findBySessionId(sessionId);
         for (CartItem item : cartItems) {
             if (item.getProduct().getId().equals(productId)) {
-                item.setQuantity(item.getQuantity() + quantity);
+                int newQuantity = item.getQuantity() + quantity;
+                if (newQuantity <= 0) {
+                    cartItemRepository.delete(item);
+                    return null;
+                }
+                item.setQuantity(newQuantity);
                 return cartItemRepository.save(item);
             }
         }
 
-        // Add new item
+        
         CartItem cartItem = new CartItem();
         cartItem.setSessionId(sessionId);
         cartItem.setProduct(product);

@@ -9,23 +9,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/**
- * OWASP A08:2021 - Software and Data Integrity Failures
- * Tests for unsigned code, insecure deserialization, and CI/CD pipeline security
- */
+
 public class SoftwareIntegrityTest extends BaseTest {
 
     @Test(description = "OWASP A08 - Verify JAR file integrity")
     public void testJarFileIntegrity() {
         try {
-            // Check if the built JAR exists
+            
             Path jarPath = Paths.get("../ecommerce-app/target/ecommerce-app-1.0.0.jar");
             
             if (Files.exists(jarPath)) {
                 long fileSize = Files.size(jarPath);
                 assertTrue(fileSize > 0, "JAR file should not be empty");
                 
-                // In production, you'd verify checksums/signatures here
+                
                 logSecurityEvent("JAR_INTEGRITY_CHECK", "INFO", 
                     "Verified JAR exists - Size: " + fileSize + " bytes");
             } else {
@@ -44,7 +41,7 @@ public class SoftwareIntegrityTest extends BaseTest {
         
         String pageSource = driver.getPageSource();
         
-        // Check for signs of Java serialization (potential security risk)
+        
         assertFalse(pageSource.contains("ObjectInputStream"),
             "Java ObjectInputStream usage can lead to deserialization attacks");
         assertFalse(pageSource.contains("readObject"),
@@ -57,13 +54,13 @@ public class SoftwareIntegrityTest extends BaseTest {
     @Test(description = "OWASP A08 - Verify dependencies are from trusted sources")
     public void testDependencySourceIntegrity() {
         try {
-            // Check Maven settings for repository configuration
+            
             File settingsFile = new File(System.getProperty("user.home") + "/.m2/settings.xml");
             
             if (settingsFile.exists()) {
                 String content = new String(Files.readAllBytes(settingsFile.toPath()));
                 
-                // Should use HTTPS for Maven repos
+                
                 assertFalse(content.contains("http://") && content.contains("repository"),
                     "Maven repositories should use HTTPS, not HTTP");
                 
@@ -78,7 +75,7 @@ public class SoftwareIntegrityTest extends BaseTest {
 
     @Test(description = "OWASP A08 - Check for CI/CD pipeline security")
     public void testCICDPipelineSecurity() {
-        // Verify GitHub Actions workflows exist and are properly configured
+        
         Path securityWorkflow = Paths.get("../.github/workflows/security-tests.yml");
         Path jiraWorkflow = Paths.get("../.github/workflows/manual-jira-tickets.yml");
         
@@ -120,18 +117,33 @@ public class SoftwareIntegrityTest extends BaseTest {
 
     @Test(description = "OWASP A08 - Verify no unsigned libraries in classpath")
     public void testUnsignedLibraries() {
-        // This would typically check JAR signatures
-        // For now, we verify Maven Central is used (trusted source)
-        
-        logSecurityEvent("UNSIGNED_LIBRARIES_CHECK", "INFO", 
-            "Libraries from Maven Central are generally trusted");
-        
-        assertTrue(true, "Use jarsigner tool to verify JAR signatures in production");
+        try {
+            String jarPath = org.openqa.selenium.WebDriver.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .toURI()
+                .getPath();
+
+            assertTrue(jarPath.contains(".m2") && jarPath.contains("repository"),
+                "Dependencies should load from the local Maven repository");
+
+            File jarFile = new File(jarPath);
+            assertTrue(jarFile.exists() && jarFile.length() > 0,
+                "Dependency JAR should exist and be non-empty");
+
+            logSecurityEvent("UNSIGNED_LIBRARIES_CHECK", "INFO",
+                "Verified dependency JAR path and integrity: " + jarFile.getName());
+        } catch (Exception e) {
+            logSecurityEvent("UNSIGNED_LIBRARIES_CHECK", "WARN",
+                "Could not verify dependency JAR integrity: " + e.getMessage());
+            throw new org.testng.SkipException("Jar integrity check unavailable");
+        }
     }
 
     @Test(description = "OWASP A08 - Check for auto-update security")
     public void testAutoUpdateSecurity() {
-        // Verify no auto-update mechanisms that could be exploited
+        
         driver.get(baseUrl);
         
         String pageSource = driver.getPageSource();

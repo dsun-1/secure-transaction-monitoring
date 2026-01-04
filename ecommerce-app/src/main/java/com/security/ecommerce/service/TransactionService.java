@@ -36,7 +36,7 @@ public class TransactionService {
         transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         transaction.setTransactionDate(LocalDateTime.now());
         
-        // Detect anomalies
+        
         String username = user != null ? user.getUsername() : "guest";
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
@@ -74,7 +74,7 @@ public class TransactionService {
         transaction.setStatus(Transaction.TransactionStatus.PENDING);
         transaction.setTransactionDate(LocalDateTime.now());
         
-        // Detect anomalies
+        
         if (amount < 0) {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
             transaction.setFailureReason("Negative amount not allowed");

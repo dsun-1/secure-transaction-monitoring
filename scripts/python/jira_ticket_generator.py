@@ -1,7 +1,3 @@
-"""
-JIRA Incident Ticket Generator
-Automatically creates JIRA tickets for security incidents with full context.
-"""
 
 import logging
 import requests
@@ -9,7 +5,7 @@ import json
 import sys
 from datetime import datetime
 
-# Configure logger
+                  
 logger = logging.getLogger('jira_generator')
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -28,9 +24,6 @@ class JiraIncidentTicketGenerator:
         }
     
     def create_incident_ticket(self, incident):
-        """
-        Create a JIRA ticket for a security incident.
-        """
         severity_priority_map = {
             'HIGH': 'Highest',
             'MEDIUM': 'High',
@@ -39,22 +32,22 @@ class JiraIncidentTicketGenerator:
         
         priority = severity_priority_map.get(incident.get('severity', 'MEDIUM'), 'High')
         
-        # Build ticket description
+                                  
         description = self._build_ticket_description(incident)
         
-        # Create issue payload
+                              
         issue_data = {
             'fields': {
                 'project': {'key': self.project_key},
                 'summary': f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}",
                 'description': description,
-                'issuetype': {'name': 'Task'},  # Changed from 'Bug' to 'Task' for Kanban
+                'issuetype': {'name': 'Task'},                                           
                 'priority': {'name': priority},
                 'labels': ['security', 'automated', incident['type'].lower()]
             }
         }
         
-        # Note: Custom fields removed for better compatibility across JIRA instances
+                                                                                    
         
         try:
             logger.debug("Creating JIRA ticket for incident: %s", incident.get('type'))
@@ -72,7 +65,7 @@ class JiraIncidentTicketGenerator:
                 return issue_key
             else:
                 logger.error("Failed to create ticket: %s - %s", response.status_code, response.text)
-                # If 401/403 -> token may be expired or invalid
+                                                               
                 if response.status_code in (401, 403):
                     logger.error("Authentication to JIRA failed (status %s). Check JIRA credentials or token expiry.", response.status_code)
                 return None
@@ -82,9 +75,6 @@ class JiraIncidentTicketGenerator:
             return None
     
     def _build_ticket_description(self, incident):
-        """
-        Build detailed ticket description with all incident context.
-        """
         description = f"""
 h2. Security Incident Detected
 
@@ -95,7 +85,7 @@ h2. Security Incident Detected
 h3. Incident Details
 """
         
-        # Add all incident fields
+                                 
         for key, value in incident.items():
             if key not in ['type', 'severity', 'recommendation']:
                 description += f"*{key.replace('_', ' ').title()}:* {value}\n"
@@ -126,9 +116,6 @@ h3. Remediation Status
         return description
     
     def process_incident_report(self, report_file):
-        """
-        Process security incident report and create JIRA tickets.
-        """
         with open(report_file, 'r') as f:
             report = json.load(f)
         
@@ -139,7 +126,7 @@ h3. Remediation Status
         created_tickets = []
         failed_tickets = []
         
-        # Only create tickets for HIGH and MEDIUM severity
+                                                          
         for incident in incidents:
             if incident.get('severity') in ['HIGH', 'MEDIUM']:
                 ticket_key = self.create_incident_ticket(incident)
@@ -159,18 +146,18 @@ h3. Remediation Status
 def main():
     import os
     
-    # Load configuration from environment variables
+                                                   
     JIRA_URL = os.getenv('JIRA_URL')
     JIRA_USERNAME = os.getenv('JIRA_USERNAME')
     JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN')
     PROJECT_KEY = os.getenv('JIRA_PROJECT_KEY', 'KAN')
-    # Allow dry-run if JIRA credentials are not provided
+                                                        
     dry_run = False
     if not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN]):
         logger.warning('JIRA credentials not provided — running in dry-run mode (no tickets will be created).')
         dry_run = True
 
-    # Accept an optional report file argument; default to generated report name
+                                                                               
     if len(sys.argv) < 2:
         report_file = 'siem_incident_report.json'
         print(f"No report file provided, using default: {report_file}")
@@ -180,7 +167,7 @@ def main():
     logger.info('Project: %s', PROJECT_KEY)
 
     if dry_run:
-        # Load report and print what would be created
+                                                     
         with open(report_file, 'r') as f:
             report = json.load(f)
         incidents = report.get('incidents', [])

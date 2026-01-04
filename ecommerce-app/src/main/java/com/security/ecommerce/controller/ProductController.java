@@ -28,13 +28,4 @@ public class ProductController {
         return listProducts(model); 
     }
 
-    @GetMapping("/product/{id}")
-    public String viewProduct(@PathVariable Long id, Model model) {
-        Product product = productService.getProductById(id);
-        if (product != null) {
-            model.addAttribute("product", product);
-            return "product-detail";
-        }
-        return "redirect:/products";
-    }
 }

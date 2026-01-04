@@ -11,28 +11,24 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import com.security.tests.utils.SecurityEventLogger;
 import com.security.tests.utils.SecurityEvent;
-import com.security.tests.utils.ConfigReader;
 
-/**
- * Base test class that all security tests extend from.
- * Handles WebDriver initialization, teardown, and common setup.
- */
+
 public class BaseTest {
     
     protected WebDriver driver;
-    // FIX: Initialize inline to guarantee it is never null
+    
     protected String baseUrl = "http://localhost:8080"; 
     protected SecurityEventLogger eventLogger;
     
     @BeforeSuite
     public void suiteSetup() {
-        // Initialize security event database
+        
         SecurityEventLogger.initializeDatabase();
     }
     
     @BeforeMethod
     public void setUp() {
-        // Check for override from system property (e.g., from Maven command line)
+        
         String propUrl = System.getProperty("baseUrl");
         if (propUrl != null && !propUrl.isEmpty()) {
             this.baseUrl = propUrl;
@@ -61,7 +57,7 @@ public class BaseTest {
                 chromeOptions.addArguments("--no-sandbox");
                 chromeOptions.addArguments("--disable-dev-shm-usage");
                 chromeOptions.addArguments("--disable-gpu");
-                // FIX: Added to prevent connection issues with newer Chrome versions
+                
                 chromeOptions.addArguments("--remote-allow-origins=*");
                 driver = new ChromeDriver(chromeOptions);
                 break;
@@ -69,10 +65,10 @@ public class BaseTest {
         
         driver.manage().window().maximize();
         
-        // FIX: Implicit wait (for elements)
+        
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
         
-        // FIX: Page Load Timeout (for navigation to complete)
+        
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         
         eventLogger = new SecurityEventLogger();
@@ -89,9 +85,7 @@ public class BaseTest {
         driver.get(baseUrl + path);
     }
     
-    /**
-     * Helper method to log security events from tests
-     */
+    
     protected void logSecurityEvent(String eventType, String severity, String description) {
         if (eventLogger != null) {
             SecurityEvent event = new SecurityEvent();

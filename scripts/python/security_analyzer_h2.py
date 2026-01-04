@@ -1,5 +1,3 @@
-
-
 import logging
 import jaydebeapi
 from datetime import datetime, timedelta
@@ -7,7 +5,7 @@ import json
 import sys
 import os
 
-# Configure module logger
+# lightweight siem analyzer that queries the h2 event store and emits a json report
 logger = logging.getLogger('security_analyzer')
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -17,13 +15,15 @@ if not logger.handlers:
 logger.setLevel(logging.INFO)
 
 class SecurityEventAnalyzer:
-    # --- FIX 4: Updated database path to correct relative path from workflow ---
+    # central analyzer class for detection and reporting
     def __init__(self, db_path='../../ecommerce-app/data/security-events'):
+        # connect to the same event store used by the app and tests
         self.db_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
         self.db_user = "sa"
         self.db_password = ""
         
-        # H2 JDBC driver (needs h2.jar in classpath)
+                                                    
+        # resolve h2 jdbc driver from local m2 cache
         h2_jar = self._find_h2_jar()
         if h2_jar:
             self.jdbc_driver = "org.h2.Driver"
@@ -32,8 +32,8 @@ class SecurityEventAnalyzer:
             print("WARNING: H2 JAR not found. Install h2 database or add h2.jar to classpath")
             self.jdbc_driver = None
         
+    # locate the h2 jar in the local maven repository
     def _find_h2_jar(self):
-        """Find H2 JAR in Maven local repository"""
         home = os.path.expanduser("~")
         m2_repo = os.path.join(home, ".m2", "repository", "com", "h2database", "h2")
         
@@ -45,8 +45,8 @@ class SecurityEventAnalyzer:
         
         return None
     
+    # open a jdbc connection to the h2 file db
     def connect(self):
-        """Create JDBC connection to H2 database"""
         if not self.jdbc_driver:
             raise Exception("H2 JDBC driver not available")
 
@@ -58,8 +58,8 @@ class SecurityEventAnalyzer:
             self.h2_jar_path
         )
     
+    # detect repeated failed logins within a window (threshold-based alerting)
     def detect_brute_force_patterns(self, time_window_minutes=30, threshold=5):
-        """Detect brute force: multiple failed logins from same user/IP"""
         logger.debug("Detecting brute force patterns (window=%s min, threshold=%s)", time_window_minutes, threshold)
         try:
             conn = self.connect()
@@ -103,8 +103,8 @@ class SecurityEventAnalyzer:
         logger.info("Brute force detection found %d incidents", len(incidents))
         return incidents
     
+    # detect many unique usernames from a single ip (enumeration indicator)
     def detect_account_enumeration(self, threshold=10):
-        """Detect account enumeration: failed logins across many usernames from same IP"""
         logger.debug("Detecting account enumeration (threshold=%s)", threshold)
         try:
             conn = self.connect()
@@ -144,8 +144,8 @@ class SecurityEventAnalyzer:
         logger.info("Account enumeration detection found %d incidents", len(incidents))
         return incidents
     
+    # detect suspicious transaction patterns from anomaly table
     def detect_transaction_anomalies(self):
-        """Detect suspicious transaction patterns"""
         logger.debug("Detecting transaction anomalies")
         try:
             conn = self.connect()
@@ -154,7 +154,7 @@ class SecurityEventAnalyzer:
             logger.error("Failed to connect to DB for transaction anomaly detection: %s", e)
             return []
 
-        # Ensure table exists; if not, create a sample table and seed data for demo
+                                                                                   
         try:
             cursor.execute("SELECT 1 FROM transaction_anomalies LIMIT 1")
         except Exception:
@@ -171,7 +171,7 @@ class SecurityEventAnalyzer:
                         detection_timestamp TIMESTAMP
                     )
                 """)
-                # Insert a demo anomaly row
+                                           
                 cursor.execute("""
                     INSERT INTO transaction_anomalies (
                         transaction_id, username, anomaly_type, original_amount, modified_amount, anomaly_details, detection_timestamp
@@ -221,8 +221,8 @@ class SecurityEventAnalyzer:
         logger.info("Transaction anomaly detection found %d incidents", len(incidents))
         return incidents
     
+    # pull recent high-severity events for reporting and escalation
     def get_high_severity_events(self, hours=24):
-        """Get all high-severity security events"""
         logger.debug("Retrieving high severity events from last %s hours", hours)
         try:
             conn = self.connect()
@@ -321,8 +321,8 @@ class SecurityEventAnalyzer:
             cursor.close()
             conn.close()
     
+    # run all detections and write a consolidated json report
     def generate_incident_report(self):
-        """Generate comprehensive incident report"""
         print("=" * 80)
         print("SECURITY INCIDENT ANALYSIS REPORT")
         print(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -330,30 +330,30 @@ class SecurityEventAnalyzer:
         
         all_incidents = []
         
-        # Detect brute force
+                            
         print("\n[1] Analyzing brute force patterns...")
         brute_force = self.detect_brute_force_patterns()
         all_incidents.extend(brute_force)
         print(f"   Found {len(brute_force)} brute force incidents")
         
-        # Detect account enumeration
+                                    
         print("[2] Analyzing account enumeration...")
         enumeration = self.detect_account_enumeration()
         all_incidents.extend(enumeration)
         print(f"   Found {len(enumeration)} enumeration attempts")
         
-        # Detect transaction anomalies
+                                      
         print("[3] Analyzing transaction anomalies...")
         tx_anomalies = self.detect_transaction_anomalies()
         all_incidents.extend(tx_anomalies)
         print(f"   Found {len(tx_anomalies)} transaction anomalies")
         
-        # Get high severity events
+                                  
         print("[4] Retrieving high-severity security events...")
         high_sev = self.get_high_severity_events()
         print(f"   Found {len(high_sev)} high-severity events")
         
-        # Summary
+                 
         print("\n" + "=" * 80)
         print("SUMMARY")
         print("=" * 80)
@@ -366,10 +366,10 @@ class SecurityEventAnalyzer:
         print(f"  - MEDIUM Severity: {len(medium_severity)}")
         
         if high_severity:
-            print("\n⚠️  CRITICAL: High-severity incidents require immediate attention!")
+            print("\n  CRITICAL: High-severity incidents require immediate attention!")
         
-        # Save detailed report
-        # --- FIX 3: Removed os.makedirs and changed filename to static name ---
+                              
+                                                                                
         report_file = "siem_incident_report.json"
         
         with open(report_file, 'w') as f:
@@ -387,11 +387,12 @@ class SecurityEventAnalyzer:
         return all_incidents
 
 if __name__ == "__main__":
+    # entry point for demo runs; exits non-zero when high severity incidents exist
     try:
         analyzer = SecurityEventAnalyzer()
         incidents = analyzer.generate_incident_report()
         
-        # Exit with error code if high-severity incidents found
+                                                               
         high_severity_count = len([i for i in incidents if i.get('severity') == 'HIGH'])
         sys.exit(1 if high_severity_count > 0 else 0)
         

@@ -24,7 +24,7 @@ public class XSSTest extends BaseTest {
         WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
         loginButton.click();
         
-        // Page source should not contain unescaped script tag
+        
         String pageSource = driver.getPageSource();
         Assert.assertFalse(pageSource.contains("<script>alert('XSS')</script>"),
             "XSS payload should be escaped");
@@ -40,7 +40,7 @@ public class XSSTest extends BaseTest {
     
     @Test(description = "Test reflected XSS")
     public void testReflectedXSS() {
-        // Test URL parameters for XSS
+        
         String xssPayload = "<img src=x onerror=alert('XSS')>";
         navigateToUrl("/products?search=" + xssPayload);
         

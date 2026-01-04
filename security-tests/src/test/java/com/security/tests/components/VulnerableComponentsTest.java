@@ -2,21 +2,19 @@ package com.security.tests.components;
 
 import com.security.tests.base.BaseTest;
 import org.testng.annotations.Test;
+import org.testng.SkipException;
 import static org.testng.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-/**
- * OWASP A06:2021 - Vulnerable and Outdated Components
- * Tests for known vulnerabilities in dependencies
- */
+
 public class VulnerableComponentsTest extends BaseTest {
 
     @Test(description = "OWASP A06 - Check for known CVEs in dependencies")
     public void testDependencyVulnerabilities() {
         try {
-            // Run OWASP Dependency Check (this is what runs in CI/CD)
+            
             ProcessBuilder pb = new ProcessBuilder("mvn", "dependency-check:check", "-f", "../pom.xml");
             pb.redirectErrorStream(true);
             Process process = pb.start();
@@ -32,7 +30,7 @@ public class VulnerableComponentsTest extends BaseTest {
             int exitCode = process.waitFor();
             String result = output.toString();
             
-            // Check if any HIGH or CRITICAL vulnerabilities found
+            
             assertFalse(result.contains("One or more dependencies were identified with known vulnerabilities"),
                 "HIGH/CRITICAL CVEs found in dependencies - check dependency-check-report.html");
             
@@ -40,7 +38,7 @@ public class VulnerableComponentsTest extends BaseTest {
                 "Dependency vulnerability scan completed - Exit code: " + exitCode);
             
         } catch (Exception e) {
-            // If Maven isn't available in test context, just log
+            
             logSecurityEvent("DEPENDENCY_CVE_CHECK", "WARN", 
                 "Could not run dependency check: " + e.getMessage());
         }
@@ -48,10 +46,10 @@ public class VulnerableComponentsTest extends BaseTest {
 
     @Test(description = "OWASP A06 - Verify Spring Boot version is not outdated")
     public void testFrameworkVersion() {
-        // Check Spring Boot version from pom.xml
+        
         String springBootVersion = System.getProperty("spring.boot.version", "UNKNOWN");
         
-        // Spring Boot 3.x is current as of 2024
+        
         assertFalse(springBootVersion.startsWith("2."), 
             "Spring Boot version should be 3.x or higher");
         assertFalse(springBootVersion.startsWith("1."), 
@@ -66,7 +64,7 @@ public class VulnerableComponentsTest extends BaseTest {
         driver.get(baseUrl);
         String pageSource = driver.getPageSource();
         
-        // Check for known outdated/vulnerable JS libraries
+        
         assertFalse(pageSource.contains("jquery-1.") || pageSource.contains("jquery-2."),
             "jQuery version should be 3.x or higher");
         assertFalse(pageSource.contains("angular.js/1."),
@@ -80,26 +78,52 @@ public class VulnerableComponentsTest extends BaseTest {
 
     @Test(description = "OWASP A06 - Verify no unused dependencies")
     public void testUnusedDependencies() {
-        // This is more of a code quality check
-        // In real scenarios, use tools like Maven Dependency Plugin
-        logSecurityEvent("UNUSED_DEPENDENCIES_CHECK", "INFO", 
-            "Use 'mvn dependency:analyze' to detect unused dependencies");
-        
-        // Pass the test - this is informational
-        assertTrue(true, "Run: mvn dependency:analyze to check for unused dependencies");
+        try {
+            ProcessBuilder pb = new ProcessBuilder("mvn", "dependency:analyze", "-f", "../pom.xml");
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            StringBuilder output = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+            String result = output.toString();
+            if (exitCode != 0) {
+                throw new SkipException("dependency:analyze failed with exit code " + exitCode);
+            }
+
+            assertFalse(result.contains("Unused declared dependencies found"),
+                "Unused declared dependencies found");
+            assertFalse(result.contains("Used undeclared dependencies found"),
+                "Used undeclared dependencies found");
+
+            logSecurityEvent("UNUSED_DEPENDENCIES_CHECK", "INFO",
+                "Dependency analyze completed with no unused dependencies");
+        } catch (SkipException e) {
+            logSecurityEvent("UNUSED_DEPENDENCIES_CHECK", "WARN", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logSecurityEvent("UNUSED_DEPENDENCIES_CHECK", "WARN",
+                "Could not run dependency analyze: " + e.getMessage());
+            throw new SkipException("dependency:analyze not available");
+        }
     }
 
     @Test(description = "OWASP A06 - Check for dependencies with known exploits")
     public void testExploitableComponents() {
         driver.get(baseUrl);
         
-        // Common vulnerable components to check for
+        
         String[] vulnerableComponents = {
-            "log4j-core-2.14",  // Log4Shell vulnerability
-            "log4j-core-2.15",  // Still vulnerable
-            "struts-2.3",       // Multiple RCE vulnerabilities
-            "commons-collections-3.2.1",  // Deserialization vulnerability
-            "jackson-databind-2.9"  // Multiple CVEs
+            "log4j-core-2.14",  
+            "log4j-core-2.15",  
+            "struts-2.3",       
+            "commons-collections-3.2.1",  
+            "jackson-databind-2.9"  
         };
         
         String pageSource = driver.getPageSource();

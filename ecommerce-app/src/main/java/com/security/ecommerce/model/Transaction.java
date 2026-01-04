@@ -8,10 +8,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * Transaction entity representing payment transactions
- * Critical for security monitoring and incident detection
- */
+
 @Entity
 @Table(name = "transactions")
 @Data
@@ -31,7 +28,7 @@ public class Transaction {
 
     private BigDecimal amount;
 
-    private BigDecimal originalAmount; // Track tampering attempts
+    private BigDecimal originalAmount; 
 
     private String paymentMethod;
 
@@ -54,7 +51,7 @@ public class Transaction {
 
     private String suspicionReason;
 
-    // Discount/Coupon tracking
+    
     private String couponCode;
 
     private BigDecimal discountAmount;
@@ -69,7 +66,7 @@ public class Transaction {
         FRAUDULENT
     }
 
-    // Check for amount tampering
+    
     public boolean isAmountTampered() {
         if (originalAmount != null && amount != null) {
             return originalAmount.compareTo(amount) != 0;
@@ -77,7 +74,7 @@ public class Transaction {
         return false;
     }
 
-    // Mark as suspicious
+    
     public void markSuspicious(String reason) {
         this.suspicious = true;
         this.suspicionReason = reason;

@@ -7,9 +7,11 @@ import com.security.ecommerce.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
+@Profile("demo")
 public class DataInitializer {
     
     @Bean
@@ -17,7 +19,7 @@ public class DataInitializer {
                                     ProductRepository productRepository,
                                     PasswordEncoder passwordEncoder) {
         return args -> {
-            // Create test users if they don't exist
+            
             User testUser = userRepository.findByUsername("testuser").orElse(null);
             if (testUser == null) {
                 testUser = new User();
@@ -66,7 +68,7 @@ public class DataInitializer {
             }
             userRepository.save(paymentUser);
             
-            // Create sample products
+            
             if (productRepository.count() == 0) {
                 Product product1 = new Product();
                 product1.setName("Premium Laptop");
@@ -132,13 +134,14 @@ public class DataInitializer {
                 product8.setActive(true);
                 productRepository.save(product8);
                 
-                System.out.println("✅ Created 8 test products");
+                System.out.println("INFO: Created 8 test products");
             }
             
-            System.out.println("✅ Database initialized with test data");
-            System.out.println("📝 Test Users:");
-            System.out.println("   Username: testuser | Password: password123");
-            System.out.println("   Username: admin    | Password: admin123");
+            System.out.println("INFO: Database initialized with demo test data");
+            System.out.println("INFO: Demo users (demo profile only):");
+            System.out.println("INFO: Username: testuser | Password: password123");
+            System.out.println("INFO: Username: admin    | Password: admin123");
         };
     }
 }
+

@@ -7,15 +7,13 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Security Event entity for logging authentication and authorization events
- * Used for threat detection and incident response
- */
+
 @Entity
 @Table(name = "security_events")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// structured security telemetry persisted to H2 for analysis and reporting
 public class SecurityEvent {
 
     @Id
@@ -44,6 +42,7 @@ public class SecurityEvent {
 
     private String additionalData;
 
+    // normalized categories used by tests and siem logic
     public enum EventType {
         LOGIN_ATTEMPT,
         LOGIN_SUCCESS,
@@ -64,6 +63,7 @@ public class SecurityEvent {
         COUPON_ABUSE
     }
 
+    // severity levels to drive alerts and reporting
     public enum EventSeverity {
         INFO,
         LOW,
@@ -72,7 +72,8 @@ public class SecurityEvent {
         CRITICAL
     }
 
-    // Factory methods for common events
+    
+    // helper to build a consistent login-failure event
     public static SecurityEvent loginFailure(String username, String ipAddress, String sessionId) {
         SecurityEvent event = new SecurityEvent();
         event.setEventType(EventType.LOGIN_FAILURE);
@@ -85,6 +86,7 @@ public class SecurityEvent {
         return event;
     }
 
+    // helper to capture a high-severity brute-force signal
     public static SecurityEvent bruteForceDetected(String username, String ipAddress, int attemptCount) {
         SecurityEvent event = new SecurityEvent();
         event.setEventType(EventType.BRUTE_FORCE_DETECTED);
@@ -96,6 +98,7 @@ public class SecurityEvent {
         return event;
     }
 
+    // helper to record suspicious transaction behavior
     public static SecurityEvent suspiciousTransaction(String username, String reason) {
         SecurityEvent event = new SecurityEvent();
         event.setEventType(EventType.SUSPICIOUS_ACTIVITY);
