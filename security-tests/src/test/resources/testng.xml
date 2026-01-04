@@ -4,7 +4,6 @@
     
     <listeners>
         <listener class-name="com.security.tests.listeners.TestListener"/>
-        <listener class-name="com.security.tests.listeners.SecurityEventListener"/>
     </listeners>
 
     <test name="Functional Security Tests">

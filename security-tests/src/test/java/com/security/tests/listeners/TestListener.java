@@ -41,6 +41,7 @@ public class TestListener implements ITestListener {
     @Override
     public void onTestFailure(ITestResult result) {
         test.get().log(Status.FAIL, result.getThrowable());
+        System.out.println("Security test failed: " + result.getName());
     }
     
     @Override

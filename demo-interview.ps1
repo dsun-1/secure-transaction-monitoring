@@ -25,25 +25,56 @@ function Wait-ForApp {
     return $false
 }
 
+function Get-ListeningProcess {
+    $conn = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conn) {
+        return $null
+    }
+
+    return Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)"
+}
+
+function Is-DemoAppProcess {
+    param(
+        [object]$ProcessInfo
+    )
+
+    if (-not $ProcessInfo) {
+        return $false
+    }
+
+    $cmd = $ProcessInfo.CommandLine
+    return $cmd -like "*spring-boot:run*" `
+        -or $cmd -like "*com.security.ecommerce.EcommerceApplication*" `
+        -or $cmd -like "*secure-transac\\ecommerce-app*"
+}
+
 Write-Host "Starting demo from: $repoRoot"
 
 $appProcess = $null
 Set-Location $repoRoot
 
 try {
-    if (Wait-ForApp) {
-        Write-Host "Step 1: App already running; skipping startup"
-    } else {
-        Write-Host "Step 1: Start the Spring Boot app"
-        $appProcess = Start-Process -FilePath "mvn" `
-            -ArgumentList "-DskipTests", "spring-boot:run" `
-            -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
-            -PassThru -NoNewWindow
-        $startedApp = $true
-
-        if (-not (Wait-ForApp)) {
-            throw "App did not start in time."
+    $existingListener = Get-ListeningProcess
+    if ($existingListener) {
+        if (Is-DemoAppProcess $existingListener) {
+            Write-Host "Step 1: Restarting app with the demo profile"
+            Stop-Process -Id $existingListener.ProcessId -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        } else {
+            throw "Port 8080 is already in use by another process. Stop it and retry."
         }
+    }
+
+    Write-Host "Step 1: Start the Spring Boot app"
+    $appProcess = Start-Process -FilePath "mvn" `
+        -ArgumentList "-DskipTests", "spring-boot:run", "-Dspring-boot.run.profiles=demo" `
+        -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
+        -PassThru -NoNewWindow
+    $startedApp = $true
+
+    if (-not (Wait-ForApp)) {
+        throw "App did not start in time."
     }
 
     Write-Host "Step 2: Run security tests (headless)"
