@@ -57,3 +57,34 @@ scripts/python/siem_incident_report.json
 fortify-results/
 
 jira-config.properties
+
+@'
+# Java build files
+target/
+build/
+*.class
+*.jar
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# TestNG reports
+test-output/
+TEST-*.xml
+testng-results.xml
+emailable-report.html
+
+# Database files (Local only!)
+*.db
+*.mv.db
+*.trace.db
+
+# Node/Web (if applicable)
+node_modules/
+package-lock.json
+
+# The RepoMix dump
+repomix-output.md
+'@ | Out-File -Encoding UTF8 .gitignore
