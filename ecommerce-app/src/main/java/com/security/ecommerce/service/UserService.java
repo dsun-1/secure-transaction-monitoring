@@ -43,10 +43,21 @@ public class UserService implements UserDetailsService {
     }
 
     
-    public void incrementFailedAttempts(String username) {
+    public boolean incrementFailedAttempts(String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) {
+            boolean wasLocked = user.isAccountLocked();
             user.incrementFailedAttempts();
+            userRepository.save(user);
+            return !wasLocked && user.isAccountLocked();
+        }
+        return false;
+    }
+
+    public void resetFailedAttempts(String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user != null) {
+            user.resetFailedAttempts();
             userRepository.save(user);
         }
     }

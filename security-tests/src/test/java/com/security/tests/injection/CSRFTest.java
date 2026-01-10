@@ -1,7 +1,8 @@
 package com.security.tests.injection;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,13 +15,18 @@ public class CSRFTest extends BaseTest {
         String pageSource = driver.getPageSource();
         Assert.assertTrue(pageSource.contains("_csrf") || pageSource.contains("csrf"),
             "CSRF token should be present in forms");
-        
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CSRF_TEST",
-            "test_user",
-            "security_test",
-            "Tested CSRF token presence"
-        );
-        eventLogger.logSecurityEvent(event);
     }
+
+    @Test(description = "Test CSRF protection rejects missing tokens")
+    public void testCSRFTokenMissing() {
+        RestAssured.baseURI = baseUrl;
+        Response response = RestAssured
+            .given()
+            .redirects().follow(false)
+            .post("/cart/clear");
+        Assert.assertEquals(response.statusCode(), 403,
+            "Missing CSRF token should be rejected");
+        assertSecurityEventLogged("CSRF_VIOLATION");
+    }
+
 }

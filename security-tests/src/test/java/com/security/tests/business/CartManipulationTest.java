@@ -1,7 +1,6 @@
 package com.security.tests.business;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
@@ -21,8 +20,8 @@ public class CartManipulationTest extends BaseTest {
 
         navigateToUrl("/products");
         WebElement productRow = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]"))
-        );
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]")
+        ));
         WebElement addToCartForm = productRow.findElement(By.tagName("form"));
         ((JavascriptExecutor) driver).executeScript(
             "var input = document.createElement('input');" +
@@ -33,19 +32,14 @@ public class CartManipulationTest extends BaseTest {
 
         navigateToUrl("/cart");
         WebElement totalElement = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='total']/span"))
-        );
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='total']/span")
+        ));
         String totalText = totalElement.getText();
         assertTrue(totalText.contains("999.99"),
             "Cart total should reflect server-side price, not tampered client input");
 
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CART_MANIPULATION_TEST",
-            "test_user",
-            "tampering_attempt",
-            "Tested cart price tampering protection"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("CART_MANIPULATION");
+
     }
     
     @Test(description = "Test cart quantity manipulation")
@@ -55,35 +49,33 @@ public class CartManipulationTest extends BaseTest {
 
         navigateToUrl("/products");
         WebElement productRow = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]"))
-        );
+            ExpectedConditions.presenceOfElementLocated(By.xpath("//tr[contains(., 'Premium Laptop')]")
+        ));
         WebElement addToCartForm = productRow.findElement(By.tagName("form"));
         WebElement quantityInput = addToCartForm.findElement(By.name("quantity"));
         quantityInput.clear();
         quantityInput.sendKeys("0");
-        addToCartForm.findElement(By.tagName("button")).click();
+        ((JavascriptExecutor) driver).executeScript("arguments[0].submit();", addToCartForm);
 
         navigateToUrl("/cart");
         boolean emptyCart = driver.getPageSource().contains("Your cart is empty");
         assertTrue(emptyCart, "Cart should remain empty when quantity is zero");
 
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CART_MANIPULATION_TEST",
-            "test_user",
-            "tampering_attempt",
-            "Tested cart quantity manipulation"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("CART_MANIPULATION");
+
     }
+
+
 
     private void clearCartIfNeeded(WebDriverWait wait) {
         navigateToUrl("/cart");
         if (!driver.getPageSource().contains("Your cart is empty")) {
             WebElement clearButton = wait.until(
-                ExpectedConditions.elementToBeClickable(By.xpath("//form[@action='/cart/clear']//button"))
-            );
+                ExpectedConditions.elementToBeClickable(By.xpath("//form[@action='/cart/clear']//button")
+            ));
             clearButton.click();
             wait.until(d -> d.getPageSource().contains("Your cart is empty"));
         }
     }
+
 }

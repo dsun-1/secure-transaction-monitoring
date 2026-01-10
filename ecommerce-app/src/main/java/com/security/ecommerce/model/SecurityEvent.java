@@ -49,18 +49,37 @@ public class SecurityEvent {
         LOGIN_FAILURE,
         LOGOUT,
         ACCOUNT_LOCKED,
+        ACCOUNT_ENUMERATION,
         PASSWORD_CHANGE,
+        ACCESS_CONTROL_VIOLATION,
         PRIVILEGE_ESCALATION_ATTEMPT,
         SUSPICIOUS_ACTIVITY,
         BRUTE_FORCE_DETECTED,
+        BRUTE_FORCE_PREVENTION_SUCCESS,
+        DISTRIBUTED_BRUTE_FORCE,
+        CREDENTIAL_STUFFING,
         SQL_INJECTION_ATTEMPT,
+        SSRF_ATTEMPT,
         XSS_ATTEMPT,
         CSRF_VIOLATION,
         SESSION_HIJACK_ATTEMPT,
+        SESSION_FIXATION_ATTEMPT,
+        API_AUTH_FAILURE,
+        RATE_LIMIT_EXCEEDED,
         INVALID_PAYMENT,
         AMOUNT_TAMPERING,
         CART_MANIPULATION,
-        COUPON_ABUSE
+        COUPON_ABUSE,
+        RACE_CONDITION_DETECTED,
+        TRANSACTION_ANOMALY,
+        SECURITY_HEADERS_MISSING,
+        UNSAFE_HTTP_METHOD,
+        INFO_DISCLOSURE,
+        SECURITY_MISCONFIGURATION,
+        CRYPTOGRAPHIC_FAILURE,
+        DESERIALIZATION_ATTEMPT,
+        SOFTWARE_INTEGRITY_VIOLATION,
+        VULNERABLE_COMPONENTS
     }
 
     // severity levels to drive alerts and reporting
@@ -70,42 +89,5 @@ public class SecurityEvent {
         MEDIUM,
         HIGH,
         CRITICAL
-    }
-
-    
-    // helper to build a consistent login-failure event
-    public static SecurityEvent loginFailure(String username, String ipAddress, String sessionId) {
-        SecurityEvent event = new SecurityEvent();
-        event.setEventType(EventType.LOGIN_FAILURE);
-        event.setUsername(username);
-        event.setIpAddress(ipAddress);
-        event.setSessionId(sessionId);
-        event.setSeverity(EventSeverity.MEDIUM);
-        event.setSuccessful(false);
-        event.setDescription("Failed login attempt for user: " + username);
-        return event;
-    }
-
-    // helper to capture a high-severity brute-force signal
-    public static SecurityEvent bruteForceDetected(String username, String ipAddress, int attemptCount) {
-        SecurityEvent event = new SecurityEvent();
-        event.setEventType(EventType.BRUTE_FORCE_DETECTED);
-        event.setUsername(username);
-        event.setIpAddress(ipAddress);
-        event.setSeverity(EventSeverity.CRITICAL);
-        event.setSuccessful(false);
-        event.setDescription("Brute force attack detected: " + attemptCount + " attempts");
-        return event;
-    }
-
-    // helper to record suspicious transaction behavior
-    public static SecurityEvent suspiciousTransaction(String username, String reason) {
-        SecurityEvent event = new SecurityEvent();
-        event.setEventType(EventType.SUSPICIOUS_ACTIVITY);
-        event.setUsername(username);
-        event.setSeverity(EventSeverity.HIGH);
-        event.setSuccessful(false);
-        event.setDescription("Suspicious transaction activity: " + reason);
-        return event;
     }
 }

@@ -32,6 +32,7 @@ public class DataInitializer {
                 testUser.resetFailedAttempts();
                 testUser.setAccountNonLocked(true);
                 testUser.setAccountLockedUntil(null);
+                testUser.setPassword(passwordEncoder.encode("password123"));
                 testUser.setActive(true);
             }
             userRepository.save(testUser);
@@ -48,6 +49,7 @@ public class DataInitializer {
                 admin.resetFailedAttempts();
                 admin.setAccountNonLocked(true);
                 admin.setAccountLockedUntil(null);
+                admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setActive(true);
             }
             userRepository.save(admin);
@@ -64,6 +66,7 @@ public class DataInitializer {
                 paymentUser.resetFailedAttempts();
                 paymentUser.setAccountNonLocked(true);
                 paymentUser.setAccountLockedUntil(null);
+                paymentUser.setPassword(passwordEncoder.encode("Paym3nt@123"));
                 paymentUser.setActive(true);
             }
             userRepository.save(paymentUser);

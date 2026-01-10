@@ -1,7 +1,6 @@
 package com.security.tests.api;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import io.restassured.RestAssured;
 import io.restassured.config.RedirectConfig; 
 import io.restassured.response.Response;
@@ -24,13 +23,13 @@ public class APIAuthenticationTest extends BaseTest {
         
         Assert.assertTrue(response.statusCode() == 401 || response.statusCode() == 302,
             "API should require authentication (Received: " + response.statusCode() + ")");
-        
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "API_AUTH_TEST",
-            "anonymous",
-            "authentication_test",
-            "Tested API authentication requirement"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("API_AUTH_FAILURE");
     }
+
+
+    @Override
+    protected boolean useWebDriver() {
+        return false;
+    }
+
 }

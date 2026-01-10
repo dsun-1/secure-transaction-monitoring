@@ -1,7 +1,6 @@
 package com.security.tests.injection;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -42,13 +41,7 @@ public class SQLInjectionTest extends BaseTest {
                 "SQL injection should not bypass authentication");
         }
         
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "SQL_INJECTION_TEST",
-            "test_user",
-            "injection_attempt",
-            "Tested SQL injection in login form"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("SQL_INJECTION_ATTEMPT");
     }
     
     @Test(description = "Test SQL injection in search parameters")
@@ -62,12 +55,7 @@ public class SQLInjectionTest extends BaseTest {
         Assert.assertFalse(pageSource.toLowerCase().contains("sql"),
             "SQL errors should not be exposed in responses");
 
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "SQL_INJECTION_TEST",
-            "test_user",
-            "injection_attempt",
-            "Tested SQL injection in search parameters"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("SQL_INJECTION_ATTEMPT");
     }
+
 }

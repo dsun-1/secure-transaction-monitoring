@@ -1,7 +1,6 @@
 package com.security.tests.auth;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -29,9 +28,10 @@ public class SessionFixationTest extends BaseTest {
         
         new WebDriverWait(driver, Duration.ofSeconds(10))
             .until(ExpectedConditions.or(
-                ExpectedConditions.urlContains("/checkout"),
+                ExpectedConditions.urlContains("/products"),
                 ExpectedConditions.urlContains("/cart")
             ));
+
 
         
         Cookie sessionAfter = driver.manage().getCookieNamed("JSESSIONID");
@@ -41,13 +41,8 @@ public class SessionFixationTest extends BaseTest {
         Assert.assertNotNull(sessionIdAfter, "Session ID should not be null after login");
         Assert.assertNotEquals(sessionIdAfter, sessionIdBefore,
             "Session ID should change after login to prevent session fixation");
-            
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "SESSION_FIXATION_TEST",
-            "test_user",
-            "session_management_test",
-            "Tested session fixation protection"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("SESSION_FIXATION_ATTEMPT");
+
     }
+
 }

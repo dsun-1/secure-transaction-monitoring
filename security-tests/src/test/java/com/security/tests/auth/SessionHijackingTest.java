@@ -18,6 +18,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 
+
 public class SessionHijackingTest extends BaseTest {
     
     @Test(priority = 1, description = "Test session hijacking by stealing session cookie")
@@ -45,11 +46,6 @@ public class SessionHijackingTest extends BaseTest {
         boolean isSecure = sessionCookie.isSecure();
         
         
-        if (!isHttpOnly || (!isSecure && !baseUrl.contains("localhost"))) {
-            logSecurityEvent("INSECURE_SESSION_COOKIE", "HIGH",
-                "Session hijacking vulnerability - Session cookie lacks proper security flags (HttpOnly: " + 
-                isHttpOnly + ", Secure: " + isSecure + ") for user: testuser");
-        }
     }
     
     @Test(priority = 2, description = "Test session reuse after logout")
@@ -63,6 +59,7 @@ public class SessionHijackingTest extends BaseTest {
         
         new WebDriverWait(driver, Duration.ofSeconds(10))
             .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+
 
         
         Cookie oldSessionCookie = driver.manage().getCookieNamed("JSESSIONID");
@@ -79,6 +76,7 @@ public class SessionHijackingTest extends BaseTest {
         new WebDriverWait(driver, Duration.ofSeconds(10))
             .until(ExpectedConditions.urlContains("/login"));
 
+
         
         if (oldSessionCookie != null) {
             driver.manage().addCookie(oldSessionCookie);
@@ -94,10 +92,7 @@ public class SessionHijackingTest extends BaseTest {
         Assert.assertTrue(isRedirectedToLogin, 
             "Old session should not be valid after logout - session hijacking vulnerability!");
         
-        if (!isRedirectedToLogin) {
-            logSecurityEvent("SESSION_REUSE_VULNERABILITY", "HIGH",
-                "Session reuse after logout - Session " + oldSessionId + " remained valid after logout for user: testuser");
-        }
+        assertSecurityEventLogged("SESSION_HIJACK_ATTEMPT");
     }
     
     @Test(priority = 3, description = "Test concurrent session detection")
@@ -107,8 +102,11 @@ public class SessionHijackingTest extends BaseTest {
         driver.findElement(By.id("password")).sendKeys("password123");
         driver.findElement(By.xpath("//button[@type='submit']")).click();
 
+
         new WebDriverWait(driver, Duration.ofSeconds(10))
             .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+
+
 
         WebDriver secondDriver = createSecondaryDriver();
         try {
@@ -117,26 +115,36 @@ public class SessionHijackingTest extends BaseTest {
             secondDriver.findElement(By.id("password")).sendKeys("password123");
             secondDriver.findElement(By.xpath("//button[@type='submit']")).click();
 
+
             new WebDriverWait(secondDriver, Duration.ofSeconds(10))
                 .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
         } finally {
             secondDriver.quit();
         }
 
+
+
         navigateToUrl("/checkout");
         boolean redirectedToLogin = driver.getCurrentUrl().contains("/login") ||
             driver.getPageSource().toLowerCase().contains("login");
 
+
+
         Assert.assertTrue(redirectedToLogin,
             "First session should be invalidated after a second login");
 
-        logSecurityEvent("CONCURRENT_SESSION_TEST", "MEDIUM",
-            "Verified concurrent session handling for user: testuser");
+
+
+        assertSecurityEventLogged("SESSION_HIJACK_ATTEMPT");
     }
+
+
 
     private WebDriver createSecondaryDriver() {
         String browser = System.getProperty("browser", "chrome").toLowerCase();
-        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "false"));
+        boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
+
+
 
         switch (browser) {
             case "firefox":
@@ -160,4 +168,5 @@ public class SessionHijackingTest extends BaseTest {
                 return new ChromeDriver(chromeOptions);
         }
     }
+
 }

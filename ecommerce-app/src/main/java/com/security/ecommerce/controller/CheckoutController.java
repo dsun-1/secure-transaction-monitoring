@@ -4,6 +4,7 @@ import com.security.ecommerce.model.CartItem;
 import com.security.ecommerce.model.Transaction;
 import com.security.ecommerce.model.User;
 import com.security.ecommerce.service.CartService;
+import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.TransactionService;
 import com.security.ecommerce.service.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -18,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 @Controller
 // checkout flow; this is a key surface for tampering and fraud tests
@@ -26,13 +28,16 @@ public class CheckoutController {
     private final CartService cartService;
     private final TransactionService transactionService;
     private final UserService userService;
+    private final SecurityEventService securityEventService;
 
     public CheckoutController(CartService cartService,
                               TransactionService transactionService,
-                              UserService userService) {
+                              UserService userService,
+                              SecurityEventService securityEventService) {
         this.cartService = cartService;
         this.transactionService = transactionService;
         this.userService = userService;
+        this.securityEventService = securityEventService;
     }
 
     @GetMapping("/checkout")
@@ -68,6 +73,7 @@ public class CheckoutController {
                                   @RequestParam String cardName,
                                   @RequestParam String expiryDate,
                                   @RequestParam String cvv,
+                                  @RequestParam(required = false) String clientTotal,
                                   @RequestParam(required = false) String shippingAddress,
                                   HttpSession session,
                                   Model model) {
@@ -83,25 +89,68 @@ public class CheckoutController {
             return "redirect:/cart";
         }
         
-        
+        String validationError = null;
         if (cardNumber == null || cardNumber.length() < 13) {
-            model.addAttribute("error", "Invalid card number");
+            validationError = "Invalid card number";
+        } else if (cardName == null || cardName.isBlank()) {
+            validationError = "Cardholder name is required";
+        } else if (expiryDate == null || !expiryDate.matches("\\d{2}/\\d{2}")) {
+            validationError = "Invalid expiry date";
+        } else if (cvv == null || !cvv.matches("\\d{3,4}")) {
+            validationError = "Invalid CVV";
+        } else if (shippingAddress != null
+                && !shippingAddress.isBlank()
+                && shippingAddress.trim().length() < 10) {
+            validationError = "Shipping address is too short";
+        }
+        
+        if (validationError != null) {
+            model.addAttribute("error", validationError);
             model.addAttribute("cartItems", cartItems);
             model.addAttribute("total", total);
             return "checkout";
         }
-        
+
+        if (clientTotal != null && !clientTotal.isBlank()) {
+            try {
+                BigDecimal submittedTotal = new BigDecimal(clientTotal.trim());
+                if (submittedTotal.compareTo(total) != 0) {
+                    String usernameLabel = username != null ? username : "anonymous";
+                    securityEventService.logHighSeverityEvent(
+                        "AMOUNT_TAMPERING",
+                        usernameLabel,
+                        "Checkout total mismatch detected",
+                        "client_total=" + submittedTotal + " | server_total=" + total
+                    );
+                    securityEventService.recordTransactionAnomaly(
+                        "CLIENT_TOTAL_MISMATCH",
+                        usernameLabel,
+                        "CLIENT_TOTAL_MISMATCH",
+                        total.doubleValue(),
+                        submittedTotal.doubleValue(),
+                        "Client total did not match server total"
+                    );
+                }
+            } catch (NumberFormatException ex) {
+                securityEventService.logHighSeverityEvent(
+                    "AMOUNT_TAMPERING",
+                    username != null ? username : "anonymous",
+                    "Invalid checkout total submitted",
+                    "client_total=" + clientTotal
+                );
+            }
+        }
         
         User user = username != null ? userService.findByUsername(username) : null;
         
         try {
+            Objects.requireNonNull(cardNumber, "Card number is required");
+            String last4 = cardNumber.substring(cardNumber.length() - 4);
             Transaction transaction = transactionService.createTransaction(
-                user, 
-                total, 
-                cardNumber.substring(cardNumber.length() - 4), 
-                shippingAddress
+                user,
+                total,
+                last4
             );
-            
             
             cartService.clearCart(sessionId);
             
@@ -117,4 +166,5 @@ public class CheckoutController {
             return "checkout";
         }
     }
+
 }

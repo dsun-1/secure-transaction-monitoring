@@ -20,7 +20,7 @@ class SecurityEventAnalyzer:
         if db_path is None:
             # Resolve path relative to this script file
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(script_dir, '../../ecommerce-app/data/security-events')
+            db_path = os.path.join(script_dir, '../../data/security-events')
 
         # connect to the same event store used by the app and tests
         self.db_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
