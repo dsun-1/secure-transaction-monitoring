@@ -16,7 +16,7 @@ public class AmountTamperingTest extends BaseTest {
     
     @Test(priority = 1, description = "Test client-side price modification via DOM manipulation")
     public void testClientSidePriceModification() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        WebDriverWait  wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         navigateToUrl("/login");
         driver.findElement(By.id("username")).sendKeys("paymentuser");
