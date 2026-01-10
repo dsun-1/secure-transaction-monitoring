@@ -1,13 +1,22 @@
 
+param(
+    [string]$DemoProfile = "demo",
+    [string]$BaseUrl = "http://localhost:8080",
+    [string]$Browser = "chrome",
+    [bool]$Headless = $true,
+    [bool]$InstallPythonDependencies = $true
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = $PSScriptRoot
 $startedApp = $false
+$lockFile = Join-Path $repoRoot "data\security-events.lock.db"
 
 function Wait-ForApp {
     param(
-        [string]$Url = "http://localhost:8080",
+        [string]$Url = $BaseUrl,
         [int]$Attempts = 40,
         [int]$DelaySeconds = 2
     )
@@ -49,6 +58,26 @@ function Is-DemoAppProcess {
         -or $cmd -like "*secure-transac\\ecommerce-app*"
 }
 
+function Ensure-PythonDependencies {
+    param(
+        [string]$Requirements = "scripts/python/requirements.txt"
+    )
+
+    if (-not (Test-Path $Requirements)) {
+        Write-Host "Python requirements file not found at $Requirements, skipping installation."
+        return
+    }
+
+    $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $pythonCmd) {
+        throw "Python is not installed or not available in PATH."
+    }
+
+    Write-Host "Installing Python dependencies from $Requirements"
+    & python -m pip install --upgrade pip
+    & python -m pip install -r $Requirements
+}
+
 Write-Host "Starting demo from: $repoRoot"
 
 $appProcess = $null
@@ -66,21 +95,37 @@ try {
         }
     }
 
+    if ((-not $existingListener) -and (Test-Path $lockFile)) {
+        Write-Host "Cleaning stale H2 lock file: $lockFile"
+        Remove-Item -Force $lockFile -ErrorAction SilentlyContinue
+    }
+
     Write-Host "Step 1: Start the Secure Transaction Monitor (Spring Boot App)"
     $appProcess = Start-Process -FilePath "mvn" `
-        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=demo" `
+        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=$DemoProfile" `
         -WorkingDirectory $repoRoot `
         -PassThru -NoNewWindow
     $startedApp = $true
 
-    if (-not (Wait-ForApp)) {
+    if (-not (Wait-ForApp -Url $BaseUrl)) {
         throw "App did not start in time."
     }
 
     Write-Host "Step 2: Run Attack Simulation (Selenium + TestNG)"
-    & mvn -f security-tests/pom.xml test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
+    $headlessFlag = if ($Headless) { "true" } else { "false" }
+    Write-Host "Running attack simulation with:"
+    Write-Host "  baseUrl = $BaseUrl"
+    Write-Host "  browser = $Browser"
+    Write-Host "  headless = $headlessFlag"
+    & mvn -f security-tests/pom.xml test `
+        "-Dheadless=$headlessFlag" `
+        "-Dbrowser=$Browser" `
+        "-DbaseUrl=$BaseUrl"
 
     Write-Host "Step 3: Run SIEM Threat Detection (Python)"
+    if ($InstallPythonDependencies) {
+        Ensure-PythonDependencies -Requirements "scripts/python/requirements.txt"
+    }
     & python scripts/python/security_analyzer_h2.py
 
     Write-Host "Step 4: Generate Incident Tickets (JIRA Integration)"

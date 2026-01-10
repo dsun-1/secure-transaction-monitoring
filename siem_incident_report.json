@@ -1,21 +1,2912 @@
 {
-  "generated_at": "2026-01-04T15:02:49.814747",
-  "total_incidents": 1,
-  "high_severity_count": 1,
-  "medium_severity_count": 0,
+  "generated_at": "2026-01-10T15:19:04.895825",
+  "total_incidents": 29,
+  "high_severity_count": 28,
+  "medium_severity_count": 1,
   "incidents": [
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "distuser-1768074594328",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 15,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 14:49:55.283824",
+      "last_attempt": "2026-01-10 14:50:06.988394",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "distuser-1768074982134",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 15,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 14:56:22.889839",
+      "last_attempt": "2026-01-10 14:56:31.938679",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "distuser-1768076320440",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 15,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 15:18:41.190238",
+      "last_attempt": "2026-01-10 15:18:50.101098",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768074578363",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 11,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 14:49:39.241443",
+      "last_attempt": "2026-01-10 14:49:52.382702",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768074968288",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 11,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 14:56:08.954248",
+      "last_attempt": "2026-01-10 14:56:20.610097",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768076306252",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 11,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 15:18:26.962179",
+      "last_attempt": "2026-01-10 15:18:38.747558",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "admin",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 6,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 14:49:05.887352",
+      "last_attempt": "2026-01-10 15:18:01.898813",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "ACCOUNT_ENUMERATION",
+      "severity": "MEDIUM",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "unique_usernames_attempted": 44,
+      "total_attempts": 234,
+      "recommendation": "Block IP, implement CAPTCHA, use generic error messages"
+    },
     {
       "type": "TRANSACTION_ANOMALY",
       "severity": "HIGH",
-      "transaction_id": "demo-tx-001",
-      "username": "testuser",
-      "anomaly_type": "NEGATIVE_MODIFICATION",
-      "original_amount": 100.0,
-      "modified_amount": -100.0,
-      "details": "Demo negative amount modification detected",
-      "timestamp": "2026-01-04 15:01:58.149810",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 15:16:55.359110",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 15:14:02.426877",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:54:24.863857",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:47:32.791460",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:38:47.528516",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:32:08.254712",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:25:36.381499",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 02:03:29.939604",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:58:17.368431",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:54:54.740344",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:47:47.557944",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:40:11.931229",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:23:05.529930",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:09:50.991917",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:02:21.826470",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 00:21:34.886526",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 00:15:12.197473",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:55:52.786182",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:53:35.905912",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:47:31.734353",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:27:01.996973",
       "recommendation": "Review transaction, freeze account if necessary"
     }
   ],
-  "high_severity_events": []
+  "high_severity_events": [
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser4-1768076331700",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=14 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:54.266566"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser3-1768076331700",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=13 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:53.662961"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser2-1768076331700",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=12 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:52.979926"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser1-1768076331700",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=11 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:52.376532"
+    },
+    {
+      "event_type": "DISTRIBUTED_BRUTE_FORCE",
+      "username": "distuser-1768076320440",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 15:18:47.285740"
+    },
+    {
+      "event_type": "BRUTE_FORCE_DETECTED",
+      "username": "distuser-1768076320440",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:43.670717"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "distuser-1768076320440",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=10 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:41.190238"
+    },
+    {
+      "event_type": "DISTRIBUTED_BRUTE_FORCE",
+      "username": "lockoutuser-1768076306252",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 15:18:37.524365"
+    },
+    {
+      "event_type": "BRUTE_FORCE_DETECTED",
+      "username": "lockoutuser-1768076306252",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:31.524260"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "lockoutuser-1768076306252",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=9 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:26.962179"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=A7ED3E444A8CF6301929099A51F34F7F",
+      "timestamp": "2026-01-10 15:18:23.603990"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=000C1718AA08ABC2EA502C32FBB83B79",
+      "timestamp": "2026-01-10 15:18:20.833899"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=71BCAC168ECA36D524ADDC6FADAEC05F",
+      "timestamp": "2026-01-10 15:18:18.933848"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:18:10.111744"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:18:10.100743"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "test",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=8 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:03.181928"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "root",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=7 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:02.555700"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "admin",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=6 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:18:01.220882"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.0.100:8080/api",
+      "timestamp": "2026-01-10 15:17:59.141761"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.1.1/router",
+      "timestamp": "2026-01-10 15:17:59.127755"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://172.16.0.1/api",
+      "timestamp": "2026-01-10 15:17:59.114754"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://10.0.0.1/admin",
+      "timestamp": "2026-01-10 15:17:59.100744"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:59.937420"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=7C7A0CF75E498982CFC21798911DFA54",
+      "timestamp": "2026-01-10 15:17:59.302000"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.170.2/v2/metadata",
+      "timestamp": "2026-01-10 15:17:57.205404"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/metadata/instance",
+      "timestamp": "2026-01-10 15:17:57.190565"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://metadata.google.internal/computeMetadata/v1/",
+      "timestamp": "2026-01-10 15:17:57.179232"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/latest/meta-data/",
+      "timestamp": "2026-01-10 15:17:57.165819"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:57.161065"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=FEAA1445533850EB6BA8B341D31F2B69",
+      "timestamp": "2026-01-10 15:17:57.609880"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://[::1]:8080/api/admin",
+      "timestamp": "2026-01-10 15:17:54.900973"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://0.0.0.0:8080/admin",
+      "timestamp": "2026-01-10 15:17:54.887137"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://127.0.0.1:8080/api/security/dashboard",
+      "timestamp": "2026-01-10 15:17:54.874426"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://localhost:8080/api/security/events",
+      "timestamp": "2026-01-10 15:17:54.859899"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:54.856893"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=D8D3E090BE48644E0AF7AB30428E47D3",
+      "timestamp": "2026-01-10 15:17:54.758810"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///proc/self/environ",
+      "timestamp": "2026-01-10 15:17:52.949778"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file://localhost/etc/passwd",
+      "timestamp": "2026-01-10 15:17:52.936751"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///C:/Windows/System32/drivers/etc/hosts",
+      "timestamp": "2026-01-10 15:17:52.924757"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///etc/passwd",
+      "timestamp": "2026-01-10 15:17:52.911752"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:52.908767"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=3E98D0DF9D68C353D59C6992D31C5F7E",
+      "timestamp": "2026-01-10 15:17:52.823268"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/cart/clear | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:17:49.512861"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:48.420836"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "XSS pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:48.417844"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:48.415855"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:48.212958"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "XSS pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 15:17:46.612379"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 15:17:46.611383"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=<img src=x onerror=alert('XSS')> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:46.606382"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=' OR '1'='1",
+      "timestamp": "2026-01-10 15:17:45.321260"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:45.313260"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=4 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:43.729079"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:43.725072"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:43.514715"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' OR 1=1--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:42.789093"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:42.580008"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "admin'--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:41.961480"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:41.756526"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' OR '1'='1",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:41.161667"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:17:40.885896"
+    },
+    {
+      "event_type": "RACE_CONDITION_DETECTED",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Checkout race condition: 2 concurrent checkouts succeeded",
+      "suspected_threat": "Multiple simultaneous checkout attempts succeeded - potential double charging",
+      "timestamp": "2026-01-10 15:17:38.779743"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:38.726198"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=071339672E3005E39BAC5E2BD69E59DB",
+      "timestamp": "2026-01-10 15:17:37.193433"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:34.705168"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=FDD6E2C7AFBCECA2A6848EF280D3E324",
+      "timestamp": "2026-01-10 15:17:14.213508"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:17:09.959838"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=6D54EA4E20F495FDD9860B67DDA230D1",
+      "timestamp": "2026-01-10 15:17:07.630486"
+    },
+    {
+      "event_type": "CART_MANIPULATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid cart quantity submitted",
+      "suspected_threat": "quantity=0",
+      "timestamp": "2026-01-10 15:17:04.975847"
+    },
+    {
+      "event_type": "CART_MANIPULATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unexpected pricing parameters submitted",
+      "suspected_threat": "params=[_csrf, productId, quantity, price]",
+      "timestamp": "2026-01-10 15:17:02.774148"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Currency parameter supplied in product listing",
+      "suspected_threat": "currency=USD",
+      "timestamp": "2026-01-10 15:17:01.409440"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid quantity submitted",
+      "suspected_threat": "value=1.5 | path=/cart/update",
+      "timestamp": "2026-01-10 15:16:59.619507"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:16:59.604511"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid cart quantity update",
+      "suspected_threat": "quantity=-1",
+      "timestamp": "2026-01-10 15:16:57.278628"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:16:57.272613"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Checkout total mismatch detected",
+      "suspected_threat": "client_total=1.0 | server_total=999.99",
+      "timestamp": "2026-01-10 15:16:55.350118"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=FE8C8053BDAE784832925B588028E235",
+      "timestamp": "2026-01-10 15:16:54.281060"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:16:51.812648"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:16:51.763091"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=1F81B57DE68F47489DDFA90870589DAB",
+      "timestamp": "2026-01-10 15:16:51.670530"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:16:49.573827"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=1D6DA58196E12EC557A78490C5BBE64D",
+      "timestamp": "2026-01-10 15:16:49.459718"
+    },
+    {
+      "event_type": "ACCESS_CONTROL_VIOLATION",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Order access blocked for non-owner",
+      "suspected_threat": "orderId=1",
+      "timestamp": "2026-01-10 15:16:47.484206"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=97833413884D99DCF8E989312CE94E06",
+      "timestamp": "2026-01-10 15:16:47.468187"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=8A85606F859A216C96B2AE0BF4976895",
+      "timestamp": "2026-01-10 15:16:47.130644"
+    },
+    {
+      "event_type": "ACCESS_CONTROL_VIOLATION",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Cart update blocked for non-owner session",
+      "suspected_threat": "cartItemId=1 | path=/cart/update",
+      "timestamp": "2026-01-10 15:16:45.271416"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.0.0 Safari/537.36",
+      "timestamp": "2026-01-10 15:16:45.180143"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=98E07D4842CA52752A65F5E10C76937F",
+      "timestamp": "2026-01-10 15:16:45.929090"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=67E057E6B96C9F918182AB14EF2D4DDA",
+      "timestamp": "2026-01-10 15:16:02.755054"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:16:00.223427"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:16:00.203883"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:15:58.919245"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "admin",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=0A3F0FFBCE007DDCBD9117CED3FD79DA",
+      "timestamp": "2026-01-10 15:15:58.817998"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:15:56.984285"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:15:56.981284"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=E35788534072AB41EFA2C138F66BFB24",
+      "timestamp": "2026-01-10 15:15:56.883625"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:15:54.635283"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 15:15:54.632276"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=66A10068E6F46CE82DF0955D137CD352",
+      "timestamp": "2026-01-10 15:15:54.535035"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=C902225A4962FBDF5DB43835A3C8F82A",
+      "timestamp": "2026-01-10 15:15:52.172430"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=F1832A474E7D378C3B4BF2A8494AC7E7",
+      "timestamp": "2026-01-10 15:15:50.508455"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid session identifier presented",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 15:15:48.147659"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=691695A198439BE773B55164C5C5C58B",
+      "timestamp": "2026-01-10 15:15:47.864939"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=53D3C31E4FE1704BE4BDCAFCA80E186B",
+      "timestamp": "2026-01-10 15:15:45.966163"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=72569B893AC191651DACAF76012D3045",
+      "timestamp": "2026-01-10 15:15:43.928177"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=229",
+      "timestamp": "2026-01-10 15:15:13.235915"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=228",
+      "timestamp": "2026-01-10 15:15:13.109973"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=227",
+      "timestamp": "2026-01-10 15:15:12.985368"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=226",
+      "timestamp": "2026-01-10 15:15:12.861280"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=225",
+      "timestamp": "2026-01-10 15:15:12.737068"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=224",
+      "timestamp": "2026-01-10 15:15:12.607461"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=223",
+      "timestamp": "2026-01-10 15:15:12.482354"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=222",
+      "timestamp": "2026-01-10 15:15:12.357407"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=221",
+      "timestamp": "2026-01-10 15:15:12.233088"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=220",
+      "timestamp": "2026-01-10 15:15:12.216247"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=219",
+      "timestamp": "2026-01-10 15:15:12.206257"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=218",
+      "timestamp": "2026-01-10 15:15:12.195897"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=217",
+      "timestamp": "2026-01-10 15:15:12.185879"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=216",
+      "timestamp": "2026-01-10 15:15:12.175876"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=215",
+      "timestamp": "2026-01-10 15:15:12.163876"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=214",
+      "timestamp": "2026-01-10 15:15:12.153856"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=213",
+      "timestamp": "2026-01-10 15:15:12.143333"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=212",
+      "timestamp": "2026-01-10 15:15:12.132305"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=211",
+      "timestamp": "2026-01-10 15:15:12.120290"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=210",
+      "timestamp": "2026-01-10 15:15:12.106290"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=209",
+      "timestamp": "2026-01-10 15:15:12.922930"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=208",
+      "timestamp": "2026-01-10 15:15:12.802860"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=207",
+      "timestamp": "2026-01-10 15:15:12.692860"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=206",
+      "timestamp": "2026-01-10 15:15:12.582870"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=205",
+      "timestamp": "2026-01-10 15:15:12.473290"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=204",
+      "timestamp": "2026-01-10 15:15:12.343070"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=203",
+      "timestamp": "2026-01-10 15:15:12.243400"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=202",
+      "timestamp": "2026-01-10 15:15:12.139980"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=201",
+      "timestamp": "2026-01-10 15:15:12.979000"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=200",
+      "timestamp": "2026-01-10 15:15:11.990979"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=199",
+      "timestamp": "2026-01-10 15:15:11.976984"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=198",
+      "timestamp": "2026-01-10 15:15:11.965990"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=197",
+      "timestamp": "2026-01-10 15:15:11.953992"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=196",
+      "timestamp": "2026-01-10 15:15:11.942441"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=195",
+      "timestamp": "2026-01-10 15:15:11.930414"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=194",
+      "timestamp": "2026-01-10 15:15:11.918881"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=193",
+      "timestamp": "2026-01-10 15:15:11.904868"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=192",
+      "timestamp": "2026-01-10 15:15:11.892866"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=191",
+      "timestamp": "2026-01-10 15:15:11.879866"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=190",
+      "timestamp": "2026-01-10 15:15:11.869120"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=189",
+      "timestamp": "2026-01-10 15:15:11.852690"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=188",
+      "timestamp": "2026-01-10 15:15:11.841688"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=187",
+      "timestamp": "2026-01-10 15:15:11.830678"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=186",
+      "timestamp": "2026-01-10 15:15:11.819062"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=185",
+      "timestamp": "2026-01-10 15:15:11.806000"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=184",
+      "timestamp": "2026-01-10 15:15:11.794705"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=183",
+      "timestamp": "2026-01-10 15:15:11.782668"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=182",
+      "timestamp": "2026-01-10 15:15:11.771115"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=181",
+      "timestamp": "2026-01-10 15:15:11.759719"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=180",
+      "timestamp": "2026-01-10 15:15:11.747375"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=179",
+      "timestamp": "2026-01-10 15:15:11.736362"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=178",
+      "timestamp": "2026-01-10 15:15:11.723362"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=177",
+      "timestamp": "2026-01-10 15:15:11.707161"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=176",
+      "timestamp": "2026-01-10 15:15:11.694161"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=175",
+      "timestamp": "2026-01-10 15:15:11.682159"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=174",
+      "timestamp": "2026-01-10 15:15:11.670157"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=173",
+      "timestamp": "2026-01-10 15:15:11.655155"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=172",
+      "timestamp": "2026-01-10 15:15:11.643034"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=171",
+      "timestamp": "2026-01-10 15:15:11.632027"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=170",
+      "timestamp": "2026-01-10 15:15:11.621019"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=169",
+      "timestamp": "2026-01-10 15:15:11.609016"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=168",
+      "timestamp": "2026-01-10 15:15:11.598021"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=167",
+      "timestamp": "2026-01-10 15:15:11.585013"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=166",
+      "timestamp": "2026-01-10 15:15:11.572011"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=165",
+      "timestamp": "2026-01-10 15:15:11.561010"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=164",
+      "timestamp": "2026-01-10 15:15:11.550377"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=163",
+      "timestamp": "2026-01-10 15:15:11.540376"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=162",
+      "timestamp": "2026-01-10 15:15:11.528365"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=161",
+      "timestamp": "2026-01-10 15:15:11.515377"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=160",
+      "timestamp": "2026-01-10 15:15:11.481361"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=159",
+      "timestamp": "2026-01-10 15:15:11.469362"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=158",
+      "timestamp": "2026-01-10 15:15:11.459362"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=157",
+      "timestamp": "2026-01-10 15:15:11.448805"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=156",
+      "timestamp": "2026-01-10 15:15:11.435779"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=155",
+      "timestamp": "2026-01-10 15:15:11.424780"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=154",
+      "timestamp": "2026-01-10 15:15:11.412779"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=153",
+      "timestamp": "2026-01-10 15:15:11.402765"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=152",
+      "timestamp": "2026-01-10 15:15:11.391763"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=151",
+      "timestamp": "2026-01-10 15:15:11.380591"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=150",
+      "timestamp": "2026-01-10 15:15:11.368593"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=149",
+      "timestamp": "2026-01-10 15:15:11.353590"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=148",
+      "timestamp": "2026-01-10 15:15:11.338041"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=147",
+      "timestamp": "2026-01-10 15:15:11.301021"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=146",
+      "timestamp": "2026-01-10 15:15:11.289018"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=145",
+      "timestamp": "2026-01-10 15:15:11.277027"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=144",
+      "timestamp": "2026-01-10 15:15:11.265012"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=143",
+      "timestamp": "2026-01-10 15:15:11.253017"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=142",
+      "timestamp": "2026-01-10 15:15:11.240952"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=141",
+      "timestamp": "2026-01-10 15:15:11.221955"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=140",
+      "timestamp": "2026-01-10 15:15:11.210940"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=139",
+      "timestamp": "2026-01-10 15:15:11.197939"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=138",
+      "timestamp": "2026-01-10 15:15:11.184940"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=137",
+      "timestamp": "2026-01-10 15:15:11.173935"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=136",
+      "timestamp": "2026-01-10 15:15:11.162938"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=135",
+      "timestamp": "2026-01-10 15:15:11.149831"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=134",
+      "timestamp": "2026-01-10 15:15:11.139829"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=133",
+      "timestamp": "2026-01-10 15:15:11.126819"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=132",
+      "timestamp": "2026-01-10 15:15:11.116820"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=131",
+      "timestamp": "2026-01-10 15:15:11.104819"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=130",
+      "timestamp": "2026-01-10 15:15:11.938180"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=129",
+      "timestamp": "2026-01-10 15:15:11.818150"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=128",
+      "timestamp": "2026-01-10 15:15:11.688160"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=127",
+      "timestamp": "2026-01-10 15:15:11.472910"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=126",
+      "timestamp": "2026-01-10 15:15:10.985264"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=125",
+      "timestamp": "2026-01-10 15:15:10.965268"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=124",
+      "timestamp": "2026-01-10 15:15:10.946728"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=123",
+      "timestamp": "2026-01-10 15:15:10.929714"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=122",
+      "timestamp": "2026-01-10 15:15:10.914714"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=121",
+      "timestamp": "2026-01-10 15:15:10.900712"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=120",
+      "timestamp": "2026-01-10 15:15:10.886480"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=119",
+      "timestamp": "2026-01-10 15:15:10.869478"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=118",
+      "timestamp": "2026-01-10 15:15:10.855477"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=117",
+      "timestamp": "2026-01-10 15:15:10.840946"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=116",
+      "timestamp": "2026-01-10 15:15:10.828934"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=115",
+      "timestamp": "2026-01-10 15:15:10.815934"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=114",
+      "timestamp": "2026-01-10 15:15:10.802936"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=113",
+      "timestamp": "2026-01-10 15:15:10.784931"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=112",
+      "timestamp": "2026-01-10 15:15:10.769520"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=111",
+      "timestamp": "2026-01-10 15:15:10.756511"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=110",
+      "timestamp": "2026-01-10 15:15:10.741334"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=109",
+      "timestamp": "2026-01-10 15:15:10.728313"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=108",
+      "timestamp": "2026-01-10 15:15:10.711086"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=107",
+      "timestamp": "2026-01-10 15:15:10.698085"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=106",
+      "timestamp": "2026-01-10 15:15:10.685080"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=105",
+      "timestamp": "2026-01-10 15:15:10.672094"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=104",
+      "timestamp": "2026-01-10 15:15:10.659093"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=103",
+      "timestamp": "2026-01-10 15:15:10.646558"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=102",
+      "timestamp": "2026-01-10 15:15:10.632559"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=101",
+      "timestamp": "2026-01-10 15:15:10.620553"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=100",
+      "timestamp": "2026-01-10 15:15:10.576554"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=99",
+      "timestamp": "2026-01-10 15:15:10.563537"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=98",
+      "timestamp": "2026-01-10 15:15:10.551241"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=97",
+      "timestamp": "2026-01-10 15:15:10.539179"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=96",
+      "timestamp": "2026-01-10 15:15:10.527164"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=95",
+      "timestamp": "2026-01-10 15:15:10.513168"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=94",
+      "timestamp": "2026-01-10 15:15:10.500172"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=93",
+      "timestamp": "2026-01-10 15:15:10.488162"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=92",
+      "timestamp": "2026-01-10 15:15:10.473161"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=91",
+      "timestamp": "2026-01-10 15:15:10.461170"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=90",
+      "timestamp": "2026-01-10 15:15:10.447881"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=89",
+      "timestamp": "2026-01-10 15:15:10.435891"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=88",
+      "timestamp": "2026-01-10 15:15:10.421871"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=87",
+      "timestamp": "2026-01-10 15:15:10.409869"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=86",
+      "timestamp": "2026-01-10 15:15:10.395864"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=85",
+      "timestamp": "2026-01-10 15:15:10.377848"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
+      "timestamp": "2026-01-10 15:15:10.358444"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
+      "timestamp": "2026-01-10 15:15:10.341898"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
+      "timestamp": "2026-01-10 15:15:10.322881"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
+      "timestamp": "2026-01-10 15:15:10.303821"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
+      "timestamp": "2026-01-10 15:15:10.288965"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
+      "timestamp": "2026-01-10 15:15:10.273958"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
+      "timestamp": "2026-01-10 15:15:10.258951"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
+      "timestamp": "2026-01-10 15:15:10.246291"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
+      "timestamp": "2026-01-10 15:15:10.231277"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
+      "timestamp": "2026-01-10 15:15:10.214275"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
+      "timestamp": "2026-01-10 15:15:10.193271"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
+      "timestamp": "2026-01-10 15:15:10.174269"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
+      "timestamp": "2026-01-10 15:15:10.159275"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
+      "timestamp": "2026-01-10 15:15:10.142721"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
+      "timestamp": "2026-01-10 15:15:10.127700"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
+      "timestamp": "2026-01-10 15:15:10.112695"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
+      "timestamp": "2026-01-10 15:15:10.894100"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
+      "timestamp": "2026-01-10 15:15:10.684560"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
+      "timestamp": "2026-01-10 15:15:10.512150"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
+      "timestamp": "2026-01-10 15:15:10.346560"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
+      "timestamp": "2026-01-10 15:15:10.116520"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
+      "timestamp": "2026-01-10 15:15:09.982648"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
+      "timestamp": "2026-01-10 15:15:09.948097"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
+      "timestamp": "2026-01-10 15:15:09.928069"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
+      "timestamp": "2026-01-10 15:15:09.909069"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
+      "timestamp": "2026-01-10 15:15:09.889577"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
+      "timestamp": "2026-01-10 15:15:09.867577"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
+      "timestamp": "2026-01-10 15:15:09.848044"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
+      "timestamp": "2026-01-10 15:15:09.833016"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
+      "timestamp": "2026-01-10 15:15:09.815011"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
+      "timestamp": "2026-01-10 15:15:09.796496"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
+      "timestamp": "2026-01-10 15:15:09.779500"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
+      "timestamp": "2026-01-10 15:15:09.764495"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 15:15:09.744929"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 15:15:07.960700"
+    }
+  ]
 }

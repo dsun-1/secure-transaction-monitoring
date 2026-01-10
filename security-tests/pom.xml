@@ -23,6 +23,12 @@
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-devtools-v143</artifactId>
+            <version>${selenium.version}</version>
+        </dependency>
         
 
         

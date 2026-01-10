@@ -34,12 +34,18 @@ public class UserService implements UserDetailsService {
             
             throw new UsernameNotFoundException("User not found: " + username);
         }
-        return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
+        org.springframework.security.core.userdetails.User.UserBuilder builder =
+            org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
             .password(user.getPassword())
-            .roles(user.getRole())
             .disabled(!user.isActive())
             .accountLocked(user.isAccountLocked()) 
-            .build();
+            ;
+
+        String role = user.getRole();
+        if (role != null && role.startsWith("ROLE_")) {
+            return builder.authorities(role).build();
+        }
+        return builder.roles(role != null ? role : "USER").build();
     }
 
     

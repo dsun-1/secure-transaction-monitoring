@@ -151,11 +151,21 @@ def main():
     JIRA_USERNAME = os.getenv('JIRA_USERNAME')
     JIRA_API_TOKEN = os.getenv('JIRA_API_TOKEN')
     PROJECT_KEY = os.getenv('JIRA_PROJECT_KEY', 'KAN')
+    JIRA_DRY_RUN = os.getenv('JIRA_DRY_RUN', '').lower() in ('1', 'true', 'yes')
                                                         
     dry_run = False
-    if not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN]):
+    if JIRA_DRY_RUN:
+        logger.warning('JIRA_DRY_RUN enabled — running in dry-run mode (no tickets will be created).')
+        dry_run = True
+    elif not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN]):
         logger.warning('JIRA credentials not provided — running in dry-run mode (no tickets will be created).')
         dry_run = True
+    else:
+        try:
+            requests.get(JIRA_URL, timeout=5)
+        except Exception as e:
+            logger.warning('JIRA URL unreachable (%s) — running in dry-run mode.', e)
+            dry_run = True
 
                                                                                
     if len(sys.argv) < 2:

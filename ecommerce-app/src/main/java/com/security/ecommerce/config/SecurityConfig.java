@@ -2,6 +2,7 @@ package com.security.ecommerce.config;
 
 import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -28,15 +29,18 @@ public class SecurityConfig {
     private final SecurityAccessDeniedHandler securityAccessDeniedHandler;
     private final ApiAuthEntryPoint apiAuthEntryPoint;
     private final CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
+    private final boolean demoMode;
 
     public SecurityConfig(SecurityEventService securityEventService,
                           @Lazy UserService userService,
                           SecurityAccessDeniedHandler securityAccessDeniedHandler,
-                          ApiAuthEntryPoint apiAuthEntryPoint) {
+                          ApiAuthEntryPoint apiAuthEntryPoint,
+                          @Value("${security.demo-mode:false}") boolean demoMode) {
         this.securityEventService = securityEventService;
         this.userService = userService;
         this.securityAccessDeniedHandler = securityAccessDeniedHandler;
         this.apiAuthEntryPoint = apiAuthEntryPoint;
+        this.demoMode = demoMode;
     }
 
     @Bean
@@ -180,7 +184,9 @@ public class SecurityConfig {
                 // use cookie token for ui forms; allow h2 console in dev
                 .csrfTokenRepository(csrfTokenRepository)
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers("/h2-console/**")
+                .ignoringRequestMatchers(demoMode
+                    ? new String[]{"/h2-console/**", "/perform_login"}
+                    : new String[]{"/h2-console/**"})
             )
             .sessionManagement(session -> session
                 // limit concurrent sessions per user

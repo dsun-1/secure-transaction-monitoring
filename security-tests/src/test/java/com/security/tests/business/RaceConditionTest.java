@@ -6,6 +6,7 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriverException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
@@ -46,18 +47,30 @@ public class RaceConditionTest extends BaseTest {
         
         // Navigate to cart to get cart item ID
         driver.get(baseUrl + "/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            driver.get(baseUrl + "/products");
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+            driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+            driver.get(baseUrl + "/cart");
+            if (driver.getPageSource().contains("Your cart is empty")) {
+                forceAddToCartViaApi(wait);
+                driver.get(baseUrl + "/cart");
+            }
+        }
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
         
         // Extract cart item ID and CSRF token from the page
-        String cartItemId = driver.findElement(By.name("itemId")).getAttribute("value");
+        String cartItemId = driver.findElement(By.cssSelector("form[action='/cart/remove'] input[name='cartItemId']"))
+            .getAttribute("value");
         String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
         
         // Get session cookie
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
         
         // Get initial quantity
-        String initialQuantityStr = driver.findElement(By.name("quantity")).getAttribute("value");
+        String initialQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
         int initialQuantity = Integer.parseInt(initialQuantityStr);
         
         System.out.println("Initial cart state - Item ID: " + cartItemId + ", Quantity: " + initialQuantity);
@@ -76,7 +89,9 @@ public class RaceConditionTest extends BaseTest {
                     Response response = RestAssured.given()
                         .baseUri(baseUrl)
                         .cookie("JSESSIONID", sessionId)
-                        .formParam("itemId", cartItemId)
+                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .formParam("cartItemId", cartItemId)
                         .formParam("quantity", String.valueOf(initialQuantity + 1))
                         .formParam("_csrf", csrfToken)
                         .post("/cart/update");
@@ -106,7 +121,7 @@ public class RaceConditionTest extends BaseTest {
         driver.navigate().refresh();
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
         
-        String finalQuantityStr = driver.findElement(By.name("quantity")).getAttribute("value");
+        String finalQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
         int finalQuantity = Integer.parseInt(finalQuantityStr);
         
         System.out.println("Final cart state - Quantity: " + finalQuantity);
@@ -129,10 +144,10 @@ public class RaceConditionTest extends BaseTest {
             );
             eventLogger.logSecurityEvent(event);
             
-            System.out.println("⚠ Warning: Race condition detected - final quantity " + finalQuantity + 
+            System.out.println("Warning: Race condition detected - final quantity " + finalQuantity +
                              " doesn't match expected " + expectedQuantity);
         } else {
-            System.out.println("✓ Cart updates handled correctly with proper synchronization");
+            System.out.println("OK: Cart updates handled correctly with proper synchronization");
         }
         
         // Test passes either way - we just log the race condition if found
@@ -160,6 +175,7 @@ public class RaceConditionTest extends BaseTest {
         driver.get(baseUrl + "/cart");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
         String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
         
         // Clear cart first
         driver.get(baseUrl + "/cart");
@@ -181,7 +197,7 @@ public class RaceConditionTest extends BaseTest {
         AtomicInteger successCount = new AtomicInteger(0);
         
         // Get a product ID to add
-        driver.get(baseUrl + "/products");
+        safeNavigate("/products");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
         String productId = driver.findElements(By.cssSelector("button.add-to-cart"))
                                 .get(0)
@@ -200,6 +216,8 @@ public class RaceConditionTest extends BaseTest {
                     Response response = RestAssured.given()
                         .baseUri(baseUrl)
                         .cookie("JSESSIONID", sessionId)
+                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
                         .formParam("productId", finalProductId)
                         .formParam("quantity", "1")
                         .formParam("_csrf", csrfToken)
@@ -248,9 +266,9 @@ public class RaceConditionTest extends BaseTest {
             );
             eventLogger.logSecurityEvent(event);
             
-            System.out.println("⚠ Warning: Race condition - duplicate cart items created");
+            System.out.println("Warning: Race condition - duplicate cart items created");
         } else {
-            System.out.println("✓ Cart item additions handled correctly");
+            System.out.println("OK: Cart item additions handled correctly");
         }
         
         Assert.assertTrue(true, "Concurrent item addition test completed");
@@ -288,6 +306,7 @@ public class RaceConditionTest extends BaseTest {
         // Attempt concurrent checkouts (simulate double-click or network retry)
         AtomicInteger checkoutAttempts = new AtomicInteger(0);
         AtomicInteger checkoutSuccesses = new AtomicInteger(0);
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
         
         Thread thread1 = new Thread(() -> {
             try {
@@ -295,8 +314,15 @@ public class RaceConditionTest extends BaseTest {
                 Response response = RestAssured.given()
                     .baseUri(baseUrl)
                     .cookie("JSESSIONID", sessionId)
+                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
                     .formParam("_csrf", csrfToken)
-                    .post("/checkout");
+                    .formParam("cardNumber", "4532123456789012")
+                    .formParam("cardName", "Race Tester")
+                    .formParam("expiryDate", "12/25")
+                    .formParam("cvv", "123")
+                    .formParam("clientTotal", "999.99")
+                    .post("/checkout/process");
                 
                 if (response.statusCode() == 200 || response.statusCode() == 302) {
                     checkoutSuccesses.incrementAndGet();
@@ -312,8 +338,15 @@ public class RaceConditionTest extends BaseTest {
                 Response response = RestAssured.given()
                     .baseUri(baseUrl)
                     .cookie("JSESSIONID", sessionId)
+                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
                     .formParam("_csrf", csrfToken)
-                    .post("/checkout");
+                    .formParam("cardNumber", "4532123456789012")
+                    .formParam("cardName", "Race Tester")
+                    .formParam("expiryDate", "12/25")
+                    .formParam("cvv", "123")
+                    .formParam("clientTotal", "999.99")
+                    .post("/checkout/process");
                 
                 if (response.statusCode() == 200 || response.statusCode() == 302) {
                     checkoutSuccesses.incrementAndGet();
@@ -343,11 +376,47 @@ public class RaceConditionTest extends BaseTest {
             );
             eventLogger.logSecurityEvent(event);
             
-            System.out.println("⚠ Critical: Checkout race condition - multiple checkouts succeeded!");
+            System.out.println("Critical: Checkout race condition - multiple checkouts succeeded!");
         } else {
-            System.out.println("✓ Checkout properly synchronized");
+            System.out.println("OK: Checkout properly synchronized");
         }
         
         Assert.assertTrue(true, "Checkout race condition test completed");
+    }
+
+    private void safeNavigate(String path) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                driver.get(baseUrl + path);
+                return;
+            } catch (WebDriverException ex) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+        driver.get(baseUrl + path);
+    }
+
+    private void forceAddToCartViaApi(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+
+        RestAssured.given()
+            .baseUri(baseUrl)
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
     }
 }

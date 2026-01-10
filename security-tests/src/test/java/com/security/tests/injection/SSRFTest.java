@@ -27,6 +27,7 @@ public class SSRFTest extends BaseTest {
         
         wait.until(ExpectedConditions.urlContains("/products"));
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        waitForRateLimitReset();
         
         // ===== SSRF ATTACK: Attempt to read local files via file:// protocol =====
         RestAssured.baseURI = baseUrl;
@@ -47,7 +48,16 @@ public class SSRFTest extends BaseTest {
                 .cookie("JSESSIONID", sessionCookie.getValue())
                 .queryParam("imageUrl", fileUrl)
                 .get("/products");
-            
+
+            if (response.statusCode() == 429) {
+                waitForRateLimitReset();
+                response = RestAssured
+                    .given()
+                    .cookie("JSESSIONID", sessionCookie.getValue())
+                    .queryParam("imageUrl", fileUrl)
+                    .get("/products");
+            }
+
             Assert.assertEquals(response.statusCode(), 400,
                 "SSRF file payload should be blocked: " + fileUrl);
         }
@@ -67,6 +77,7 @@ public class SSRFTest extends BaseTest {
         
         wait.until(ExpectedConditions.urlContains("/products"));
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        waitForRateLimitReset();
         
         // ===== SSRF ATTACK: Attempt to access internal services =====
         RestAssured.baseURI = baseUrl;
@@ -84,7 +95,16 @@ public class SSRFTest extends BaseTest {
                 .cookie("JSESSIONID", sessionCookie.getValue())
                 .queryParam("imageUrl", internalUrl)
                 .get("/products");
-            
+
+            if (response.statusCode() == 429) {
+                waitForRateLimitReset();
+                response = RestAssured
+                    .given()
+                    .cookie("JSESSIONID", sessionCookie.getValue())
+                    .queryParam("imageUrl", internalUrl)
+                    .get("/products");
+            }
+
             // Application should block localhost/127.0.0.1 access
             Assert.assertEquals(response.statusCode(), 400,
                 "SSRF localhost payload should be blocked: " + internalUrl);
@@ -105,6 +125,7 @@ public class SSRFTest extends BaseTest {
         
         wait.until(ExpectedConditions.urlContains("/products"));
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        waitForRateLimitReset();
         
         // ===== SSRF ATTACK: Attempt to access cloud provider metadata =====
         RestAssured.baseURI = baseUrl;
@@ -122,7 +143,16 @@ public class SSRFTest extends BaseTest {
                 .cookie("JSESSIONID", sessionCookie.getValue())
                 .queryParam("imageUrl", metadataUrl)
                 .get("/products");
-            
+
+            if (response.statusCode() == 429) {
+                waitForRateLimitReset();
+                response = RestAssured
+                    .given()
+                    .cookie("JSESSIONID", sessionCookie.getValue())
+                    .queryParam("imageUrl", metadataUrl)
+                    .get("/products");
+            }
+
             // Application should block access to cloud metadata endpoints
             // This is critical for cloud deployments
             Assert.assertEquals(response.statusCode(), 400,
@@ -144,6 +174,7 @@ public class SSRFTest extends BaseTest {
         
         wait.until(ExpectedConditions.urlContains("/products"));
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        waitForRateLimitReset();
         
         // ===== SSRF ATTACK: Attempt to access private network ranges =====
         RestAssured.baseURI = baseUrl;
@@ -161,12 +192,37 @@ public class SSRFTest extends BaseTest {
                 .cookie("JSESSIONID", sessionCookie.getValue())
                 .queryParam("imageUrl", privateUrl)
                 .get("/products");
-            
+
+            if (response.statusCode() == 429) {
+                waitForRateLimitReset();
+                response = RestAssured
+                    .given()
+                    .cookie("JSESSIONID", sessionCookie.getValue())
+                    .queryParam("imageUrl", privateUrl)
+                    .get("/products");
+            }
+
             // Application should block private IP ranges
             // Prevents access to internal corporate networks
             Assert.assertEquals(response.statusCode(), 400,
                 "SSRF private IP payload should be blocked: " + privateUrl);
         }
         assertSecurityEventLogged("SSRF_ATTEMPT");
+    }
+
+    private void waitForRateLimitReset() {
+        RestAssured.baseURI = baseUrl;
+        for (int i = 0; i < 8; i++) {
+            Response response = RestAssured.given().get("/products");
+            if (response.statusCode() != 429) {
+                return;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
     }
 }

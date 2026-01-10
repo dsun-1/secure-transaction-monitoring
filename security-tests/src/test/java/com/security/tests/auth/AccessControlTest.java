@@ -5,12 +5,15 @@ import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class AccessControlTest extends BaseTest {
 
@@ -19,39 +22,17 @@ public class AccessControlTest extends BaseTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         // ===== USER A: Login as testuser and add item to cart =====
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//button[contains(text(), 'Add to Cart')]")));
-        driver.findElement(By.xpath("//button[contains(text(), 'Add to Cart')]")).click();
+        loginUser(wait, "testuser", "password123");
+        ensureCartHasItem(wait);
 
         // Capture cart item ID for User A
-        driver.get(baseUrl + "/cart");
-        if (driver.getPageSource().contains("Your cart is empty")) {
-            driver.get(baseUrl + "/products");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//button[contains(text(), 'Add to Cart')]")));
-            driver.findElement(By.xpath("//button[contains(text(), 'Add to Cart')]")).click();
-            driver.get(baseUrl + "/cart");
-        }
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("form[action='/cart/remove']")));
         String cartItemId = driver.findElement(By.name("cartItemId")).getAttribute("value");
 
         // Start a clean browser session for User B
         driver.manage().deleteAllCookies();
         
         // ===== USER B: Login as different user (paymentuser) =====
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("paymentuser");
-        driver.findElement(By.name("password")).sendKeys("Paym3nt@123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
+        loginUser(wait, "paymentuser", "Paym3nt@123");
         
         // ===== ATTACK: User B tries to update User A's cart item =====
         RestAssured.baseURI = baseUrl;
@@ -78,50 +59,77 @@ public class AccessControlTest extends BaseTest {
     
     @Test(priority = 2, description = "OWASP A01 - Test IDOR (Insecure Direct Object Reference) in order access")
     public void testIDORVulnerability() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-         
-        // Login as testuser
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Add product to cart
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//button[contains(text(), 'Add to Cart')]")));
-        driver.findElement(By.xpath("//button[contains(text(), 'Add to Cart')]")).click();
-        // Complete checkout to create an order
-        driver.get(baseUrl + "/checkout");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("cardNumber")));
-        driver.findElement(By.name("cardNumber")).sendKeys("4532123456789012");
-        driver.findElement(By.name("cardName")).sendKeys("Test User");
-        driver.findElement(By.name("expiryDate")).sendKeys("12/25");
-        driver.findElement(By.name("cvv")).sendKeys("123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
+        RestAssured.baseURI = baseUrl;
 
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".transaction-id strong")));
-        String orderIdText = driver.findElement(By.cssSelector(".transaction-id strong")).getText();
-        Long orderId = Long.valueOf(orderIdText.trim());
+        // Login as testuser using API to keep the flow stable in headless runs.
+        Response loginResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", "testuser")
+            .formParam("password", "password123")
+            .post("/perform_login");
 
-        // Start a clean browser session for User B
-        driver.manage().deleteAllCookies();
+        String sessionId = loginResponse.getCookie("JSESSIONID");
+        String csrfToken = loginResponse.getCookie("XSRF-TOKEN");
+        Assert.assertNotNull(sessionId, "Expected session cookie after login");
+
+        Response productsResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionId)
+            .get("/products");
+        String productsHtml = productsResponse.getBody().asString();
+        if (csrfToken == null || csrfToken.isBlank()) {
+            csrfToken = extractHiddenValue(productsHtml, "_csrf");
+        }
+        String productId = extractHiddenValue(productsHtml, "productId");
+        Assert.assertNotNull(productId, "Expected product id in products page");
+        Assert.assertNotNull(csrfToken, "Expected CSRF token for cart update");
+
+        Response addResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("JSESSIONID", sessionId)
+            .cookie("XSRF-TOKEN", csrfToken)
+            .header("X-XSRF-TOKEN", csrfToken)
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
+        Assert.assertTrue(addResponse.statusCode() == 200 || addResponse.statusCode() == 302,
+            "Add-to-cart should succeed");
+
+        Response checkoutResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("JSESSIONID", sessionId)
+            .cookie("XSRF-TOKEN", csrfToken)
+            .header("X-XSRF-TOKEN", csrfToken)
+            .formParam("_csrf", csrfToken)
+            .formParam("cardNumber", "4532123456789012")
+            .formParam("cardName", "Test User")
+            .formParam("expiryDate", "12/25")
+            .formParam("cvv", "123")
+            .post("/checkout/process");
+
+        Assert.assertEquals(checkoutResponse.statusCode(), 200, "Checkout should return confirmation HTML");
+        String body = checkoutResponse.getBody().asString();
+        Matcher matcher = Pattern.compile("Transaction ID:\\s*<strong>(\\d+)</strong>").matcher(body);
+        Assert.assertTrue(matcher.find(), "Checkout confirmation should include a transaction id");
+        Long orderId = Long.valueOf(matcher.group(1));
 
         // Login as paymentuser and attempt to access testuser order
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("paymentuser");
-        driver.findElement(By.name("password")).sendKeys("Paym3nt@123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        wait.until(ExpectedConditions.urlContains("/products"));
+        Response paymentLogin = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", "paymentuser")
+            .formParam("password", "Paym3nt@123")
+            .post("/perform_login");
+        String paymentSessionId = paymentLogin.getCookie("JSESSIONID");
+        Assert.assertNotNull(paymentSessionId, "Expected session cookie for paymentuser");
 
-        RestAssured.baseURI = baseUrl;
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         Response response = RestAssured
             .given()
-            .cookie("JSESSIONID", sessionCookie.getValue())
+            .cookie("JSESSIONID", paymentSessionId)
             .get("/orders/" + orderId);
 
         Assert.assertEquals(response.statusCode(), 403,
@@ -134,13 +142,7 @@ public class AccessControlTest extends BaseTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         // Login as regular user
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
+        loginUser(wait, "testuser", "password123");
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         
         // ===== ATTACK: Try to bypass authorization with tampered parameters =====
@@ -187,13 +189,7 @@ public class AccessControlTest extends BaseTest {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
         // Login as regular user
-        driver.get(baseUrl + "/login");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.xpath("//button[@type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
+        loginUser(wait, "testuser", "password123");
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         
         // ===== ATTACK: Try to access admin endpoints by direct URL manipulation =====
@@ -219,6 +215,92 @@ public class AccessControlTest extends BaseTest {
             Assert.assertNotEquals(response.statusCode(), 200,
                 "Forced browsing should not succeed for: " + adminPath);
         }
+    }
+
+    private void ensureCartHasItem(WebDriverWait wait) {
+        addFirstProductToCart(wait);
+        driver.get(baseUrl + "/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            forceAddToCartViaApi(wait);
+            driver.get(baseUrl + "/cart");
+        }
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("form[action='/cart/remove']")));
+    }
+
+    private void addFirstProductToCart(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+    }
+
+    private void forceAddToCartViaApi(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+
+        RestAssured.baseURI = baseUrl;
+        RestAssured.given()
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
+    }
+
+    private void loginUser(WebDriverWait wait, String username, String password) {
+        WebDriverWait loginWait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        for (int attempt = 0; attempt < 2; attempt++) {
+            driver.get(baseUrl + "/login");
+            loginWait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
+            driver.findElement(By.name("username")).clear();
+            driver.findElement(By.name("username")).sendKeys(username);
+            driver.findElement(By.name("password")).clear();
+            driver.findElement(By.name("password")).sendKeys(password);
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+
+            try {
+                loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+                return;
+            } catch (TimeoutException ignored) {
+                driver.manage().deleteAllCookies();
+            }
+        }
+        // Fallback: login via REST and inject session cookies for stability in demos.
+        RestAssured.baseURI = baseUrl;
+        Response response = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", username)
+            .formParam("password", password)
+            .post("/perform_login");
+
+        String sessionId = response.getCookie("JSESSIONID");
+        String csrfToken = response.getCookie("XSRF-TOKEN");
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new TimeoutException("Login failed for user: " + username);
+        }
+
+        driver.get(baseUrl + "/");
+        driver.manage().addCookie(new Cookie("JSESSIONID", sessionId));
+        if (csrfToken != null && !csrfToken.isBlank()) {
+            driver.manage().addCookie(new Cookie("XSRF-TOKEN", csrfToken));
+        }
+        driver.get(baseUrl + "/products");
+        loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+    }
+
+    private String extractHiddenValue(String html, String name) {
+        if (html == null) {
+            return null;
+        }
+        Pattern pattern = Pattern.compile("name=\"" + Pattern.quote(name) + "\"\\s+value=\"(\\d+|[^\"]+)\"");
+        Matcher matcher = pattern.matcher(html);
+        return matcher.find() ? matcher.group(1) : null;
     }
     
 }

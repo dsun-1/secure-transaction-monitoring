@@ -19,7 +19,7 @@ public class BruteForceTest extends BaseTest {
     public void testBruteForceProtection() {
         navigateToUrl("/login");
         
-        String testUsername = "lockoutuser";
+        String testUsername = "lockoutuser-" + System.currentTimeMillis();
         String wrongPassword = "wrongpassword";
         int attemptCount = 10; 
         
@@ -68,7 +68,7 @@ public class BruteForceTest extends BaseTest {
     
     @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
     public void testDistributedBruteForce() {
-        String testUsername = "user@example.com";
+        String testUsername = "distuser-" + System.currentTimeMillis();
         int totalAttempts = 15;
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
@@ -101,11 +101,12 @@ public class BruteForceTest extends BaseTest {
     
     @Test(priority = 3, description = "Test credential stuffing with leaked credentials")
     public void testCredentialStuffing() {
+        String suffix = String.valueOf(System.currentTimeMillis());
         String[][] leakedCredentials = {
-            {"admin", "admin123"},
-            {"user@test.com", "password123"},
-            {"testuser", "Test@1234"},
-            {"john.doe", "Summer2023!"}
+            {"leakeduser1-" + suffix, "BadPass!1"},
+            {"leakeduser2-" + suffix, "BadPass!2"},
+            {"leakeduser3-" + suffix, "BadPass!3"},
+            {"leakeduser4-" + suffix, "BadPass!4"}
         };
         
         for (String[] credential : leakedCredentials) {

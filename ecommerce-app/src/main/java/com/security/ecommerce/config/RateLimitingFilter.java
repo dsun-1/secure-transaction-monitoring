@@ -1,5 +1,6 @@
 package com.security.ecommerce.config;
 
+import com.security.ecommerce.service.SecurityEventService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +14,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -21,6 +24,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     private static final long WINDOW_MS = 5_000L;
     private static final int MAX_REQUESTS = 50;
     private static final ConcurrentHashMap<String, Window> WINDOWS = new ConcurrentHashMap<>();
+
+    private final SecurityEventService securityEventService;
+
+    public RateLimitingFilter(SecurityEventService securityEventService) {
+        this.securityEventService = securityEventService;
+    }
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
@@ -33,6 +42,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String key = request.getRemoteAddr() + ":" + rateLimitKey(path);
         long now = System.currentTimeMillis();
+        pruneExpiredWindows(now);
         Window window = WINDOWS.compute(key, (k, existing) -> {
             if (existing == null || now - existing.windowStart >= WINDOW_MS) {
                 return new Window(now);
@@ -45,6 +55,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             response.setStatus(429);
             response.setContentType("text/plain");
             response.getWriter().write("Too Many Requests");
+            logRateLimitEvent(request, count);
             return;
         }
 
@@ -62,6 +73,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return "/products";
     }
 
+    private void pruneExpiredWindows(long now) {
+        WINDOWS.entrySet().removeIf(entry -> now - entry.getValue().windowStart >= WINDOW_MS);
+    }
+
     private static class Window {
         private final long windowStart;
         private final AtomicInteger count = new AtomicInteger(0);
@@ -69,5 +84,23 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         private Window(long windowStart) {
             this.windowStart = windowStart;
         }
+    }
+
+    private void logRateLimitEvent(HttpServletRequest request, int currentCount) {
+        securityEventService.logHighSeverityEvent(
+            "RATE_LIMIT_EXCEEDED",
+            resolveUsername(),
+            "Sliding window rate limiting triggered",
+            "ip=" + request.getRemoteAddr() + " | path=" + request.getRequestURI() +
+                " | count=" + currentCount
+        );
+    }
+
+    private String resolveUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return "anonymous";
+        }
+        return auth.getName();
     }
 }
