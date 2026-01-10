@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Transactional
@@ -16,6 +17,9 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${security.lockout.enabled:true}")
+    private boolean lockoutEnabled;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -26,12 +30,6 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
-            
-            User lockedUser = userRepository.findByUsername(username).orElse(null);
-            if (lockedUser != null && lockedUser.isAccountLocked()) {
-                throw new UsernameNotFoundException("User account is locked");
-            }
-            
             throw new UsernameNotFoundException("User not found: " + username);
         }
         return org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
@@ -43,10 +41,31 @@ public class UserService implements UserDetailsService {
     }
 
     
-    public void incrementFailedAttempts(String username) {
+    public boolean incrementFailedAttempts(String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) {
-            user.incrementFailedAttempts();
+            boolean wasLocked = !user.isAccountNonLocked();
+            if (lockoutEnabled) {
+                user.incrementFailedAttempts();
+            } else {
+                user.setLastFailedLogin(java.time.LocalDateTime.now());
+                user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+                user.setAccountNonLocked(true);
+                user.setAccountLockedUntil(null);
+            }
+            userRepository.save(user);
+            boolean nowLocked = lockoutEnabled && !user.isAccountNonLocked();
+            return !wasLocked && nowLocked;
+        }
+        return false;
+    }
+
+    public void resetFailedAttempts(String username) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user != null) {
+            user.resetFailedAttempts();
+            user.setAccountNonLocked(true);
+            user.setAccountLockedUntil(null);
             userRepository.save(user);
         }
     }
@@ -54,17 +73,6 @@ public class UserService implements UserDetailsService {
 
     public User findByUsername(String username) {
         return userRepository.findByUsername(username).orElse(null);
-    }
-
-    public User registerUser(String username, String email, String password) {
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setRole("USER");
-        user.setActive(true);
-        
-        return userRepository.save(user);
     }
 
     public User save(@NonNull User user) {

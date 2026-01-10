@@ -7,11 +7,9 @@ import com.security.ecommerce.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-@Profile("demo")
 public class DataInitializer {
     
     @Bean
@@ -32,6 +30,7 @@ public class DataInitializer {
                 testUser.resetFailedAttempts();
                 testUser.setAccountNonLocked(true);
                 testUser.setAccountLockedUntil(null);
+                testUser.setPassword(passwordEncoder.encode("password123"));
                 testUser.setActive(true);
             }
             userRepository.save(testUser);
@@ -48,6 +47,7 @@ public class DataInitializer {
                 admin.resetFailedAttempts();
                 admin.setAccountNonLocked(true);
                 admin.setAccountLockedUntil(null);
+                admin.setPassword(passwordEncoder.encode("admin123"));
                 admin.setActive(true);
             }
             userRepository.save(admin);
@@ -64,6 +64,7 @@ public class DataInitializer {
                 paymentUser.resetFailedAttempts();
                 paymentUser.setAccountNonLocked(true);
                 paymentUser.setAccountLockedUntil(null);
+                paymentUser.setPassword(passwordEncoder.encode("Paym3nt@123"));
                 paymentUser.setActive(true);
             }
             userRepository.save(paymentUser);
@@ -75,7 +76,6 @@ public class DataInitializer {
                 product1.setDescription("High-performance laptop for developers");
                 product1.setPrice(java.math.BigDecimal.valueOf(999.99));
                 product1.setStock(50);
-                product1.setActive(true);
                 productRepository.save(product1);
                 
                 Product product2 = new Product();
@@ -83,7 +83,6 @@ public class DataInitializer {
                 product2.setDescription("Ergonomic wireless mouse");
                 product2.setPrice(java.math.BigDecimal.valueOf(29.99));
                 product2.setStock(100);
-                product2.setActive(true);
                 productRepository.save(product2);
                 
                 Product product3 = new Product();
@@ -91,7 +90,6 @@ public class DataInitializer {
                 product3.setDescription("RGB mechanical keyboard with Cherry MX switches");
                 product3.setPrice(java.math.BigDecimal.valueOf(149.99));
                 product3.setStock(75);
-                product3.setActive(true);
                 productRepository.save(product3);
                 
                 Product product4 = new Product();
@@ -99,7 +97,6 @@ public class DataInitializer {
                 product4.setDescription("4K UHD monitor with HDR support");
                 product4.setPrice(java.math.BigDecimal.valueOf(399.99));
                 product4.setStock(30);
-                product4.setActive(true);
                 productRepository.save(product4);
                 
                 Product product5 = new Product();
@@ -107,7 +104,6 @@ public class DataInitializer {
                 product5.setDescription("7-in-1 USB-C hub with HDMI and ethernet");
                 product5.setPrice(java.math.BigDecimal.valueOf(49.99));
                 product5.setStock(150);
-                product5.setActive(true);
                 productRepository.save(product5);
                 
                 Product product6 = new Product();
@@ -115,7 +111,6 @@ public class DataInitializer {
                 product6.setDescription("1080p HD webcam for video calls");
                 product6.setPrice(java.math.BigDecimal.valueOf(79.99));
                 product6.setStock(60);
-                product6.setActive(true);
                 productRepository.save(product6);
                 
                 Product product7 = new Product();
@@ -123,7 +118,6 @@ public class DataInitializer {
                 product7.setDescription("Noise-cancelling wireless headset");
                 product7.setPrice(java.math.BigDecimal.valueOf(199.99));
                 product7.setStock(40);
-                product7.setActive(true);
                 productRepository.save(product7);
                 
                 Product product8 = new Product();
@@ -131,7 +125,6 @@ public class DataInitializer {
                 product8.setDescription("1TB portable SSD");
                 product8.setPrice(java.math.BigDecimal.valueOf(129.99));
                 product8.setStock(80);
-                product8.setActive(true);
                 productRepository.save(product8);
                 
                 System.out.println("INFO: Created 8 test products");

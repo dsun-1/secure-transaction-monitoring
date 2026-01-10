@@ -20,7 +20,7 @@ class SecurityEventAnalyzer:
         if db_path is None:
             # Resolve path relative to this script file
             script_dir = os.path.dirname(os.path.abspath(__file__))
-            db_path = os.path.join(script_dir, '../../ecommerce-app/data/security-events')
+            db_path = os.path.join(script_dir, '../../data/security-events')
 
         # connect to the same event store used by the app and tests
         self.db_url = f"jdbc:h2:{db_path};AUTO_SERVER=TRUE"
@@ -163,31 +163,10 @@ class SecurityEventAnalyzer:
         try:
             cursor.execute("SELECT 1 FROM transaction_anomalies LIMIT 1")
         except Exception:
-            logger.warning("'transaction_anomalies' table not found — creating sample table and inserting demo row.")
-            try:
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS transaction_anomalies (
-                        transaction_id VARCHAR(64),
-                        username VARCHAR(64),
-                        anomaly_type VARCHAR(64),
-                        original_amount DECIMAL(19,4),
-                        modified_amount DECIMAL(19,4),
-                        anomaly_details VARCHAR(1024),
-                        detection_timestamp TIMESTAMP
-                    )
-                """)
-                                           
-                cursor.execute("""
-                    INSERT INTO transaction_anomalies (
-                        transaction_id, username, anomaly_type, original_amount, modified_amount, anomaly_details, detection_timestamp
-                    ) VALUES (
-                        'demo-tx-001', 'testuser', 'NEGATIVE_MODIFICATION', 100.00, -100.00, 'Demo negative amount modification detected', CURRENT_TIMESTAMP()
-                    )
-                """)
-                conn.commit()
-                logger.info("Inserted demo transaction anomaly for demo purposes")
-            except Exception as e:
-                logger.error("Failed to create demo transaction_anomalies table: %s", e)
+            logger.warning("'transaction_anomalies' table not found; skipping transaction anomaly detection.")
+            cursor.close()
+            conn.close()
+            return []
 
         query = """
             SELECT transaction_id, username, anomaly_type, 
@@ -375,7 +354,7 @@ class SecurityEventAnalyzer:
         
                               
                                                                                 
-        report_file = "siem_incident_report.json"
+        report_file = os.getenv("REPORT_FILE", "siem_incident_report.json")
         
         with open(report_file, 'w') as f:
             json.dump({
@@ -399,7 +378,10 @@ if __name__ == "__main__":
         
                                                                
         high_severity_count = len([i for i in incidents if i.get('severity') == 'HIGH'])
-        sys.exit(1 if high_severity_count > 0 else 0)
+        fail_on_high = os.getenv("FAIL_ON_HIGH_SEVERITY", "true").strip().lower() in ("1", "true", "yes")
+        if high_severity_count > 0 and fail_on_high:
+            sys.exit(1)
+        sys.exit(0)
         
     except Exception as e:
         print(f"\nERROR: {str(e)}")

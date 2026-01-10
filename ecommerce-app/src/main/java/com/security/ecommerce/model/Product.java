@@ -37,18 +37,4 @@ public class Product {
     private String category;
 
     private String imageUrl;
-
-    private boolean active = true;
-
-    public boolean isInStock() {
-        return stock != null && stock > 0;
-    }
-
-    public void decrementStock(int quantity) {
-        if (stock >= quantity) {
-            stock -= quantity;
-        } else {
-            throw new IllegalStateException("Insufficient stock");
-        }
-    }
 }

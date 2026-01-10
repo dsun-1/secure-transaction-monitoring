@@ -29,7 +29,7 @@ public class TransactionService {
         this.securityEventService = securityEventService;
     }
     
-    public Transaction createTransaction(User user, BigDecimal amount, String lastFourDigits, String shippingAddress) {
+    public Transaction createTransaction(User user, BigDecimal amount, String lastFourDigits) {
         Transaction transaction = new Transaction();
         transaction.setTransactionId(UUID.randomUUID().toString());
         transaction.setUser(user);
@@ -50,6 +50,14 @@ public class TransactionService {
                 "Negative transaction amount attempted",
                 "Amount: " + amount
             );
+            securityEventService.recordTransactionAnomaly(
+                transaction.getTransactionId(),
+                username,
+                "NEGATIVE_AMOUNT",
+                amount.doubleValue(),
+                amount.doubleValue(),
+                "Negative transaction amount attempted"
+            );
         } else if (amount.compareTo(new BigDecimal("10000")) > 0) {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
             transaction.setFailureReason("Amount exceeds limit");
@@ -59,6 +67,14 @@ public class TransactionService {
                 "Suspiciously high transaction amount",
                 "Amount: " + amount
             );
+            securityEventService.recordTransactionAnomaly(
+                transaction.getTransactionId(),
+                username,
+                "HIGH_AMOUNT",
+                amount.doubleValue(),
+                amount.doubleValue(),
+                "Suspiciously high transaction amount"
+            );
         }
         
         Transaction saved = transactionRepository.save(transaction);
@@ -67,62 +83,20 @@ public class TransactionService {
         return saved;
     }
     
-    public Transaction createTransaction(String username, String transactionId, 
-                                         double amount, String paymentMethod) {
-        Transaction transaction = new Transaction();
-        transaction.setTransactionId(transactionId);
-        transaction.setAmount(BigDecimal.valueOf(amount));
-        transaction.setOriginalAmount(BigDecimal.valueOf(amount));
-        transaction.setPaymentMethod(paymentMethod);
-        transaction.setStatus(Transaction.TransactionStatus.PENDING);
-        transaction.setTransactionDate(LocalDateTime.now());
-        
-        
-        if (amount < 0) {
-            transaction.setStatus(Transaction.TransactionStatus.FAILED);
-            transaction.setFailureReason("Negative amount not allowed");
-            securityEventService.logHighSeverityEvent(
-                "TRANSACTION_ANOMALY",
-                username,
-                "Negative transaction amount attempted",
-                "Amount: " + amount
-            );
-        } else if (amount > 10000) {
-            transaction.setStatus(Transaction.TransactionStatus.FAILED);
-            transaction.setFailureReason("Amount exceeds limit");
-            securityEventService.logHighSeverityEvent(
-                "TRANSACTION_ANOMALY",
-                username,
-                "Suspiciously high transaction amount",
-                "Amount: " + amount
-            );
-        }
-        
-        Transaction saved = transactionRepository.save(transaction);
-        logger.info("Transaction created: {} - ${} - {}", transactionId, amount, transaction.getStatus());
-        
-        return saved;
-    }
-    
-    public Transaction processTransaction(@NonNull Long transactionId, boolean success, String failureReason) {
-        Transaction transaction = transactionRepository.findById(transactionId)
-            .orElseThrow(() -> new RuntimeException("Transaction not found"));
-        
-        transaction.setStatus(success ? Transaction.TransactionStatus.COMPLETED : 
-                                       Transaction.TransactionStatus.FAILED);
-        if (!success) {
-            transaction.setFailureReason(failureReason);
-        }
-        
-        return transactionRepository.save(transaction);
-    }
-    
     public List<Transaction> getAnomalousTransactions() {
         return transactionRepository.findAnomalousTransactions();
     }
-    
+
     public List<Transaction> getRecentFailedTransactions(int hours) {
         LocalDateTime since = LocalDateTime.now().minusHours(hours);
         return transactionRepository.findRecentFailedTransactions(since);
+    }
+
+    public List<Transaction> getAllTransactions() {
+        return transactionRepository.findAll();
+    }
+
+    public Transaction getTransactionById(@NonNull Long id) {
+        return transactionRepository.findById(id).orElse(null);
     }
 }

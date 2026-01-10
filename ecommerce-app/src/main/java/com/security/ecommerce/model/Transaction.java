@@ -35,49 +35,14 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionStatus status;
 
-    private String sessionId;
-
-    private String ipAddress;
-
-    private String userAgent;
+    private boolean suspicious = false;
 
     private LocalDateTime transactionDate = LocalDateTime.now();
 
     private String failureReason;
 
-    private Integer attemptCount = 1;
-
-    private boolean suspicious = false;
-
-    private String suspicionReason;
-
-    
-    private String couponCode;
-
-    private BigDecimal discountAmount;
-
     public enum TransactionStatus {
-        PENDING,
-        AUTHORIZED,
         COMPLETED,
-        FAILED,
-        DECLINED,
-        SUSPICIOUS,
-        FRAUDULENT
-    }
-
-    
-    public boolean isAmountTampered() {
-        if (originalAmount != null && amount != null) {
-            return originalAmount.compareTo(amount) != 0;
-        }
-        return false;
-    }
-
-    
-    public void markSuspicious(String reason) {
-        this.suspicious = true;
-        this.suspicionReason = reason;
-        this.status = TransactionStatus.SUSPICIOUS;
+        FAILED
     }
 }

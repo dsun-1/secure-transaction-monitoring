@@ -1,7 +1,6 @@
 package com.security.tests.business;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
@@ -39,13 +38,7 @@ public class CartManipulationTest extends BaseTest {
         assertTrue(totalText.contains("999.99"),
             "Cart total should reflect server-side price, not tampered client input");
 
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CART_MANIPULATION_TEST",
-            "test_user",
-            "tampering_attempt",
-            "Tested cart price tampering protection"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("CART_MANIPULATION");
     }
     
     @Test(description = "Test cart quantity manipulation")
@@ -61,19 +54,13 @@ public class CartManipulationTest extends BaseTest {
         WebElement quantityInput = addToCartForm.findElement(By.name("quantity"));
         quantityInput.clear();
         quantityInput.sendKeys("0");
-        addToCartForm.findElement(By.tagName("button")).click();
+        ((JavascriptExecutor) driver).executeScript("arguments[0].submit();", addToCartForm);
 
         navigateToUrl("/cart");
         boolean emptyCart = driver.getPageSource().contains("Your cart is empty");
         assertTrue(emptyCart, "Cart should remain empty when quantity is zero");
 
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "CART_MANIPULATION_TEST",
-            "test_user",
-            "tampering_attempt",
-            "Tested cart quantity manipulation"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("CART_MANIPULATION");
     }
 
     private void clearCartIfNeeded(WebDriverWait wait) {

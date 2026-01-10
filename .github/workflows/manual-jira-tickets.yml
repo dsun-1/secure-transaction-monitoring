@@ -1,5 +1,6 @@
 name: Manual JIRA Ticket Generation
 
+# NOTE: This repository is a demo project for a security internship role, not production code.
 on:
   workflow_dispatch:
     inputs:
@@ -54,6 +55,9 @@ jobs:
             </mirrors>
           </settings>
           EOF
+
+      - name: Set up Chrome
+        uses: browser-actions/setup-chrome@v1
       
       - name: Build application
         run: mvn clean install -DskipTests
@@ -61,7 +65,7 @@ jobs:
       - name: Start application in background
         run: |
           cd ecommerce-app
-          nohup mvn spring-boot:run > app.log 2>&1 &
+          nohup mvn -Dspring-boot.run.profiles=demo -DskipTests spring-boot:run > app.log 2>&1 &
           echo $! > app.pid
           sleep 40
           # Verify app is running
@@ -71,7 +75,7 @@ jobs:
       - name: Run security tests
         run: |
           cd security-tests
-          mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080 || true
+          mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
           echo "Security tests completed"
       
       - name: Stop application
@@ -85,6 +89,9 @@ jobs:
           pkill -f spring-boot:run || true
       
       - name: Analyze security events
+        env:
+          FAIL_ON_HIGH_SEVERITY: "false"
+          REPORT_FILE: siem_incident_report.json
         run: |
           cd scripts/python
           python security_analyzer_h2.py
@@ -96,6 +103,8 @@ jobs:
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
           JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          INCIDENT_TYPE: ${{ inputs.incident_type }}
+          REPORT_FILE: siem_incident_report.json
         run: |
           cd scripts/python
           # --- FIX: Changed REPORT_FILE to static filename ---
@@ -103,9 +112,9 @@ jobs:
           if [ -f "$REPORT_FILE" ]; then
             echo "Found incident report: $REPORT_FILE"
             python jira_ticket_generator.py "$REPORT_FILE"
-            echo "✅ JIRA tickets created successfully"
+            echo "JIRA tickets created successfully"
           else
-            echo "⚠️ No incident report found - no security incidents detected"
+            echo "No incident report found - no security incidents detected"
           fi
       
       - name: Upload incident report

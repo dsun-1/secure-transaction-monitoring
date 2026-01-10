@@ -12,15 +12,18 @@
             <class name="com.security.tests.api.RateLimitingTest"/>
             <class name="com.security.tests.auth.SessionFixationTest"/>
             <class name="com.security.tests.auth.SessionHijackingTest"/>
+            <class name="com.security.tests.auth.PrivilegeEscalationTest"/>
+            <class name="com.security.tests.auth.AccessControlTest"/>
             <class name="com.security.tests.payment.AmountTamperingTest"/>
             <class name="com.security.tests.business.CartManipulationTest"/>
+            <class name="com.security.tests.business.RaceConditionTest"/>
             <class name="com.security.tests.injection.SQLInjectionTest"/>
             <class name="com.security.tests.injection.XSSTest"/>
             <class name="com.security.tests.injection.CSRFTest"/>
-            <class name="com.security.tests.crypto.CryptographicFailuresTest"/>
+            <class name="com.security.tests.injection.SSRFTest"/>
             <class name="com.security.tests.config.SecurityMisconfigurationTest"/>
-            <class name="com.security.tests.components.VulnerableComponentsTest"/>
-            <class name="com.security.tests.integrity.SoftwareIntegrityTest"/>
+            <class name="com.security.tests.crypto.TLSEnforcementTest"/>
+            <class name="com.security.tests.crypto.DataExposureTest"/>
         </classes>
     </test>
 

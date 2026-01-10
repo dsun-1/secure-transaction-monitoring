@@ -2,6 +2,7 @@ package com.security.ecommerce.controller;
 
 import com.security.ecommerce.model.SecurityEvent;
 import com.security.ecommerce.model.Transaction;
+import java.math.BigDecimal;
 import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.TransactionService;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -35,13 +37,19 @@ public class SecurityApiController {
     }
     
     @GetMapping("/transactions/anomalies")
-    public List<Transaction> getAnomalousTransactions() {
-        return transactionService.getAnomalousTransactions();
+    public List<TransactionSummary> getAnomalousTransactions() {
+        return transactionService.getAnomalousTransactions()
+            .stream()
+            .map(this::toSummary)
+            .collect(Collectors.toList());
     }
     
     @GetMapping("/transactions/failed")
-    public List<Transaction> getFailedTransactions(@RequestParam(defaultValue = "24") int hours) {
-        return transactionService.getRecentFailedTransactions(hours);
+    public List<TransactionSummary> getFailedTransactions(@RequestParam(defaultValue = "24") int hours) {
+        return transactionService.getRecentFailedTransactions(hours)
+            .stream()
+            .map(this::toSummary)
+            .collect(Collectors.toList());
     }
     
     @GetMapping("/dashboard")
@@ -49,8 +57,14 @@ public class SecurityApiController {
         Map<String, Object> dashboard = new HashMap<>();
         
         List<SecurityEvent> highSeverityEvents = securityEventService.getRecentHighSeverityEvents(24);
-        List<Transaction> anomalousTransactions = transactionService.getAnomalousTransactions();
-        List<Transaction> failedTransactions = transactionService.getRecentFailedTransactions(24);
+        List<TransactionSummary> anomalousTransactions = transactionService.getAnomalousTransactions()
+            .stream()
+            .map(this::toSummary)
+            .collect(Collectors.toList());
+        List<TransactionSummary> failedTransactions = transactionService.getRecentFailedTransactions(24)
+            .stream()
+            .map(this::toSummary)
+            .collect(Collectors.toList());
         
         dashboard.put("high_severity_events_count", highSeverityEvents.size());
         dashboard.put("anomalous_transactions_count", anomalousTransactions.size());
@@ -71,4 +85,27 @@ public class SecurityApiController {
             payload.getOrDefault("additionalData", "Test data")
         );
     }
+
+    private TransactionSummary toSummary(Transaction tx) {
+        String username = tx.getUser() != null ? tx.getUser().getUsername() : "guest";
+        return new TransactionSummary(
+            tx.getId(),
+            tx.getTransactionId(),
+            tx.getAmount(),
+            tx.getStatus().name(),
+            tx.isSuspicious(),
+            tx.getTransactionDate(),
+            username
+        );
+    }
+
+    public record TransactionSummary(
+        Long id,
+        String transactionId,
+        BigDecimal amount,
+        String status,
+        boolean suspicious,
+        java.time.LocalDateTime transactionDate,
+        String username
+    ) {}
 }

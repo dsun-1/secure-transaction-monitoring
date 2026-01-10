@@ -66,11 +66,17 @@ try {
         }
     }
 
+    Write-Host "Step 1: Build the application"
+    & mvn -f ecommerce-app/pom.xml clean package -DskipTests
+    if ($LASTEXITCODE -ne 0) {
+        throw "Build failed"
+    }
+
     Write-Host "Step 1: Start the Secure Transaction Monitor (Spring Boot App)"
-    $appProcess = Start-Process -FilePath "mvn" `
-        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=demo" `
-        -WorkingDirectory $repoRoot `
-        -PassThru -NoNewWindow
+    $appProcess = Start-Process -FilePath "java" `
+        -ArgumentList "`"-Dspring.profiles.active=demo`"", "-jar", "target/ecommerce-app-1.0.0.jar" `
+        -WorkingDirectory (Join-Path $repoRoot "ecommerce-app") `
+        -PassThru
     $startedApp = $true
 
     if (-not (Wait-ForApp)) {
@@ -78,9 +84,11 @@ try {
     }
 
     Write-Host "Step 2: Run Attack Simulation (Selenium + TestNG)"
-    & mvn -f security-tests/pom.xml test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
+    & mvn -f security-tests/pom.xml test -Dbrowser=chrome -DbaseUrl=http://localhost:8080
 
     Write-Host "Step 3: Run SIEM Threat Detection (Python)"
+    $env:REPORT_FILE = (Join-Path $repoRoot "siem_incident_report.json")
+    $env:FAIL_ON_HIGH_SEVERITY = "false"
     & python scripts/python/security_analyzer_h2.py
 
     Write-Host "Step 4: Generate Incident Tickets (JIRA Integration)"

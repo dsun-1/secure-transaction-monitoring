@@ -27,10 +27,6 @@ public class User {
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Pattern(
-        regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
-        message = "Password must contain at least 8 characters, one uppercase, one lowercase, one digit, and one special character"
-    )
     private String password;
 
     @NotBlank(message = "Email is required")
@@ -38,7 +34,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    private String role = "ROLE_USER";
+    private String role = "USER";
 
     private boolean accountNonLocked = true;
 

@@ -26,10 +26,6 @@ public class ProductService {
         return productRepository.findById(id).orElse(null);
     }
 
-    public List<Product> getActiveProducts() {
-        return productRepository.findByActiveTrue();
-    }
-
     public Product save(@NonNull Product product) {
         return productRepository.save(product);
     }

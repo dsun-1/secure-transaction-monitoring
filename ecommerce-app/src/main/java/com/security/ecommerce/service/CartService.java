@@ -27,6 +27,13 @@ public class CartService {
         return cartItemRepository.findBySessionId(sessionId);
     }
 
+    public CartItem getCartItemById(Long cartItemId) {
+        if (cartItemId == null) {
+            return null;
+        }
+        return cartItemRepository.findById(cartItemId).orElse(null);
+    }
+
     public CartItem addToCart(String sessionId, Long productId, Integer quantity) {
         if (productId == null || quantity == null || quantity <= 0) {
             return null;
@@ -98,12 +105,5 @@ public class CartService {
         return items.stream()
                 .map(CartItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public int getCartItemCount(String sessionId) {
-        List<CartItem> items = cartItemRepository.findBySessionId(sessionId);
-        return items.stream()
-                .mapToInt(CartItem::getQuantity)
-                .sum();
     }
 }

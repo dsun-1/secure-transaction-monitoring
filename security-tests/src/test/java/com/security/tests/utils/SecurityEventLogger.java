@@ -2,6 +2,7 @@ package com.security.tests.utils;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,23 +12,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-// writes test-generated security events into the h2 demo siem store
 public class SecurityEventLogger {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventLogger.class);
-    // shared db path so app and tests write to the same event store
-    private static final String DB_PATH = "../ecommerce-app/data/security-events";
+    private static final String DB_PATH = "../data/security-events";
     private static final String DB_URL = "jdbc:h2:" + DB_PATH + ";AUTO_SERVER=TRUE";
     private static final String DB_USER = "sa";
     private static final String DB_PASSWORD = "";
-    // keep event types normalized to match app enums and analyzer queries
     private static final Set<String> ALLOWED_EVENT_TYPES = Set.of(
         "ACCOUNT_LOCKED",
+        "ACCOUNT_ENUMERATION",
+        "ACCESS_CONTROL_VIOLATION",
         "AMOUNT_TAMPERING",
+        "API_AUTH_FAILURE",
         "BRUTE_FORCE_DETECTED",
+        "BRUTE_FORCE_PREVENTION_SUCCESS",
+        "DISTRIBUTED_BRUTE_FORCE",
+        "CREDENTIAL_STUFFING",
         "CART_MANIPULATION",
         "COUPON_ABUSE",
+        "CRYPTOGRAPHIC_FAILURE",
         "CSRF_VIOLATION",
+        "DESERIALIZATION_ATTEMPT",
+        "INFO_DISCLOSURE",
         "INVALID_PAYMENT",
         "LOGIN_ATTEMPT",
         "LOGIN_FAILURE",
@@ -35,12 +42,20 @@ public class SecurityEventLogger {
         "LOGOUT",
         "PASSWORD_CHANGE",
         "PRIVILEGE_ESCALATION_ATTEMPT",
+        "RACE_CONDITION_DETECTED",
         "SESSION_HIJACK_ATTEMPT",
+        "SESSION_FIXATION_ATTEMPT",
+        "RATE_LIMIT_EXCEEDED",
+        "SECURITY_HEADERS_MISSING",
+        "SECURITY_MISCONFIGURATION",
+        "SOFTWARE_INTEGRITY_VIOLATION",
         "SQL_INJECTION_ATTEMPT",
+        "SSRF_ATTEMPT",
         "SUSPICIOUS_ACTIVITY",
+        "UNSAFE_HTTP_METHOD",
+        "VULNERABLE_COMPONENTS",
         "XSS_ATTEMPT"
     );
-    // normalized severities so analytics can key on consistent values
     private static final Set<String> ALLOWED_SEVERITIES = Set.of(
         "INFO",
         "LOW",
@@ -50,9 +65,8 @@ public class SecurityEventLogger {
     );
     
     public static void initializeDatabase() {
-        // create local db directory and tables for event storage
         try {
-            Path dbDir = Paths.get("../ecommerce-app/data");
+            Path dbDir = Paths.get("../data");
             Files.createDirectories(dbDir);
         } catch (Exception e) {
             logger.warn("Unable to ensure H2 data directory exists: {}", e.getMessage());
@@ -61,7 +75,6 @@ public class SecurityEventLogger {
              Statement stmt = conn.createStatement()) {
             
             
-            // core security event table used by siem analyzer
             String createTable = """
                 CREATE TABLE IF NOT EXISTS security_events (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -87,7 +100,6 @@ public class SecurityEventLogger {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON security_events(timestamp)");
             
             
-            // login attempt history used for brute-force analysis
             String createAuthTable = """
                 CREATE TABLE IF NOT EXISTS authentication_attempts (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -104,7 +116,6 @@ public class SecurityEventLogger {
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_success ON authentication_attempts(success)");
             
             
-            // anomaly table used for transaction tampering signals
             String createTxTable = """
                 CREATE TABLE IF NOT EXISTS transaction_anomalies (
                     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -130,7 +141,6 @@ public class SecurityEventLogger {
     }
     
     public void logSecurityEvent(SecurityEvent event) {
-        // insert a normalized event record for downstream detection
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
              PreparedStatement pstmt = conn.prepareStatement(buildInsertSql(conn))) {
             
@@ -175,7 +185,6 @@ public class SecurityEventLogger {
         }
     }
 
-    // map arbitrary event labels to the allowed enum values
     private String mapEventType(String rawEventType) {
         if (rawEventType == null || rawEventType.isBlank()) {
             return "SUSPICIOUS_ACTIVITY";
@@ -195,6 +204,9 @@ public class SecurityEventLogger {
         }
         if (normalized.contains("BRUTE_FORCE") || normalized.contains("CREDENTIAL")) {
             return "BRUTE_FORCE_DETECTED";
+        }
+        if (normalized.contains("FIXATION")) {
+            return "SESSION_FIXATION_ATTEMPT";
         }
         if (normalized.contains("SESSION")) {
             return "SESSION_HIJACK_ATTEMPT";
@@ -229,7 +241,6 @@ public class SecurityEventLogger {
         return "SUSPICIOUS_ACTIVITY";
     }
 
-    // map free-form severity to a known tier
     private String mapSeverity(String rawSeverity) {
         if (rawSeverity == null || rawSeverity.isBlank()) {
             return "LOW";
@@ -254,14 +265,12 @@ public class SecurityEventLogger {
         return existing + " | " + addition;
     }
 
-    // detect legacy vs current schema column names
     private boolean usesDescriptionColumns(Connection conn) throws SQLException {
         return columnExists(conn, "SECURITY_EVENTS", "DESCRIPTION")
             && columnExists(conn, "SECURITY_EVENTS", "ADDITIONAL_DATA")
             && columnExists(conn, "SECURITY_EVENTS", "SUCCESSFUL");
     }
 
-    // pick insert statement based on schema shape
     private String buildInsertSql(Connection conn) throws SQLException {
         if (usesDescriptionColumns(conn)) {
             return """
@@ -288,7 +297,6 @@ public class SecurityEventLogger {
     
     public void logAuthenticationAttempt(String username, boolean success, 
                                         String ipAddress, String failureReason) {
-        // store auth attempts for brute-force correlation
         String sql = """
             INSERT INTO authentication_attempts 
             (username, success, ip_address, failure_reason, attempt_timestamp)
@@ -314,7 +322,6 @@ public class SecurityEventLogger {
     public void logTransactionAnomaly(String transactionId, String username, 
                                      String anomalyType, Double originalAmount, 
                                      Double modifiedAmount, String details) {
-        // store transaction anomalies for fraud-style detection
         String sql = """
             INSERT INTO transaction_anomalies 
             (transaction_id, username, anomaly_type, original_amount, 
@@ -339,5 +346,42 @@ public class SecurityEventLogger {
         } catch (SQLException e) {
             logger.error("Failed to log transaction anomaly", e);
         }
+    }
+
+    public boolean waitForEvent(String eventType, LocalDateTime since, Duration timeout) {
+        long deadline = System.currentTimeMillis() + timeout.toMillis();
+        while (System.currentTimeMillis() < deadline) {
+            if (countEvents(eventType, since) > 0) {
+                return true;
+            }
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        return false;
+    }
+
+    public int countEvents(String eventType, LocalDateTime since) {
+        String sql = """
+            SELECT COUNT(*) FROM security_events
+            WHERE event_type = ? AND timestamp >= ?
+        """;
+        String normalizedType = mapEventType(eventType);
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, normalizedType);
+            pstmt.setTimestamp(2, Timestamp.valueOf(since));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            logger.error("Failed to query security events", e);
+        }
+        return 0;
     }
 }

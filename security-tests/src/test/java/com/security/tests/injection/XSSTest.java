@@ -1,7 +1,6 @@
 package com.security.tests.injection;
 
 import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
@@ -29,13 +28,7 @@ public class XSSTest extends BaseTest {
         Assert.assertFalse(pageSource.contains("<script>alert('XSS')</script>"),
             "XSS payload should be escaped");
         
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "XSS_TEST",
-            "test_user",
-            "injection_attempt",
-            "Tested XSS in login form"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("XSS_ATTEMPT");
     }
     
     @Test(description = "Test reflected XSS")
@@ -48,12 +41,6 @@ public class XSSTest extends BaseTest {
         Assert.assertFalse(pageSource.contains("onerror=alert"),
             "Reflected XSS should be escaped");
         
-        SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-            "XSS_TEST",
-            "test_user",
-            "injection_attempt",
-            "Tested reflected XSS"
-        );
-        eventLogger.logSecurityEvent(event);
+        assertSecurityEventLogged("XSS_ATTEMPT");
     }
 }
