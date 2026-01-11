@@ -1,5 +1,0 @@
-# Auto-normalize text files
-* text=auto
-
-# Keep shell scripts using LF on checkout
-*.sh text eol=lf

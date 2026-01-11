@@ -1,108 +1,151 @@
-# Secure E-Commerce Transaction Monitor
+# Secure E-Commerce Transaction Monitor Details
 
-Security engineering demo for internship interview showcasing runtime security monitoring, SIEM integration, and automated incident response on a Spring Boot e-commerce application.
+## Complete Technology Stack
 
-## Project Overview
+### Backend Framework & Runtime
 
-This project demonstrates a complete **Attack -> Detect -> Analyze -> Respond** workflow using modern security engineering practices:
+- **Java 21**: LTS runtime with modern language features
+- **Spring Boot 3.5.0**: Application framework with auto-configuration
+- **Spring MVC**: Web layer with RESTful controllers
+- **Spring Security 6.x**: Authentication, authorization, and security filters
+- **Spring Data JPA**: Data access with Hibernate ORM
+- **Embedded Tomcat**: Servlet container (managed by Spring Boot)
 
-1. **Attack Simulation**: Automated TestNG test suite with Selenium WebDriver simulates OWASP Top 10 threats
-2. **Runtime Detection**: Spring Boot application detects attacks in real-time and logs structured security events to H2 database
-3. **SIEM Analysis**: Python analyzer correlates events, identifies attack patterns, and generates incident reports
-4. **Incident Response**: JIRA integration creates tickets for security teams (with dry-run fallback)
+### Data Layer
 
-## Quick Start (Demo Mode)
+- **H2 Database 2.2.224**: File-based SQL database (`../data/security-events`)
+- **Jakarta Persistence API (JPA)**: ORM specification
+- **Hibernate**: JPA implementation
+- **HikariCP**: High-performance JDBC connection pool
+- **Jakarta Validation**: Bean validation (JSR-380)
 
-### Prerequisites
+### Security Implementation
 
-- **Java 21**: Download from [Adoptium](https://adoptium.net/) or Oracle
-- **Maven 3.8+**: Build automation tool
-- **Python 3.9+**: For SIEM analyzer and JIRA integration
-- **Chrome Browser**: Required for Selenium WebDriver tests (Firefox also supported)
-- **Git**: Version control (for cloning repository)
+- **BCrypt Password Hashing**: Using Spring Security's `PasswordEncoder`
+- **CSRF Protection**: Token-based with `CookieCsrfTokenRepository`
+- **Session Management**: Concurrent session control, fixation protection
+- **Rate Limiting**: Custom in-memory sliding window filter (50 req/5s)
+- **Security Headers**: X-Content-Type-Options (nosniff), X-Frame-Options (sameOrigin)
+- **Custom Authentication**: `ApiAuthEntryPoint` for 401 responses
+- **Access Denied Handler**: `SecurityAccessDeniedHandler` for 403 responses
+- **Pattern-based Detection**: SQLi/XSS detection in ProductController and SecurityConfig
 
-### Python Dependencies
+### Frontend & Templates
 
-```bash
-pip install -r scripts/python/requirements.txt
-# Installs: JayDeBeApi (1.2.3), JPype1 (1.4.0), requests
-```
+- **Thymeleaf**: Server-side HTML template engine
+- **Bootstrap 5**: CSS framework for responsive UI
+- **HTML5/CSS3**: Modern web standards
+- **JavaScript**: Client-side interactions
 
-### Option A: One-Command Demo (Recommended)
+### Testing & Automation
 
-```powershell
-.\demo-interview.ps1
-```
+- **Selenium WebDriver 4.27.0**: Browser automation for attack simulation
+- **TestNG 7.9.0**: Testing framework with annotations and parallel execution
+- **WebDriverManager**: Automatic browser driver management
+- **RestAssured**: REST API testing for header validation
+- **Chrome/Firefox Drivers**: Headless browser support
 
-This script automatically:
+### SIEM & Analytics
 
-1. Builds the Spring Boot JAR (`mvn clean package -DskipTests`)
-2. Starts the application in a separate window with demo profile
-3. Waits for application to be ready (health check on port 8080)
-4. Runs the complete TestNG attack simulation suite
-5. Analyzes security events with Python SIEM (`security_analyzer_h2.py`)
-6. Generates JIRA incident tickets (`jira_ticket_generator.py`)
-7. Displays summary of attacks detected, incidents created, and severity breakdown
+- **Python 3.9+**: SIEM analyzer runtime
+- **JayDeBeApi 1.2.3**: Python-to-JDBC bridge for H2 access
+- **JPype1 1.4.0**: Java Virtual Machine integration for Python
 
-**Expected Results:**
+### Incident Management
 
-- **Tests**: 55 tests executed across 16 test classes
-- **Security Events**: 80+ HIGH/MEDIUM severity events logged
-- **SIEM Incidents**: Brute force, enumeration, transaction anomalies, and event-based alerts
-- **OWASP Coverage**: 8 out of 10 categories
-- **JIRA Tickets**: Created if credentials are configured
+- **JIRA REST API**: Ticket creation for incidents
+- **Python Requests**: HTTP client for JIRA integration
+- **JSON**: Incident report format
 
-### Option B: Manual Step-by-Step
+### Build & Deployment
 
-#### 1. Build the Application
+- **Maven 3.8+**: Multi-module build tool
+- **Maven Surefire**: Test execution plugin
+- **Maven Compiler Plugin**: Java 21 compilation
+- **Spring Boot Maven Plugin**: JAR packaging with embedded server
+- **PowerShell**: Demo orchestration script
 
-```bash
-cd ecommerce-app
-mvn clean package -DskipTests
-```
+### CI/CD & DevOps
 
-#### 2. Start Application with Demo Profile
+- **GitHub Actions**: Automated testing workflows
+- **YAML**: Workflow configuration
+- **Git**: Version control
 
-```bash
-# Option A: Using Maven
-mvn spring-boot:run -Dspring-boot.run.profiles=demo
+## Security Controls Implemented
 
-# Option B: Using JAR
-java -Dspring.profiles.active=demo -jar target/ecommerce-app-1.0.0.jar
-```
+### Authentication & Authorization
 
-Application starts on **http://localhost:8080** with:
+- **Role-Based Access Control (RBAC)**: `USER`, `ADMIN` roles with `@PreAuthorize` annotations
+- **BCrypt Password Hashing**: Salted adaptive hashing (cost factor 10)
+- **Form-Based Authentication**: Username/password login with Spring Security
+- **Session-Based Auth**: HTTP sessions with secure cookie attributes
+- **Concurrent Session Control**: Maximum 1 session per user
+- **Session Fixation Protection**: New session ID on authentication
 
-- Demo users seeded (testuser, admin, paymentuser)
-- H2 database at `../data/security-events`
-- Security event logging enabled
+### Input Validation & Sanitization
 
-#### 3. Run Attack Simulation Suite (New Terminal)
+- **Jakarta Validation**: `@NotBlank`, `@Size`, `@Min`, `@Max` constraints on entities
+- **Pattern-Based Detection**: SQL injection keywords detection in login/search
+- **XSS Pattern Detection**: Script tag and event handler detection
+- **Parameterized Queries**: JPA `@Query` with named parameters, JDBC `PreparedStatement`
+- **Thymeleaf Auto-Escaping**: HTML entity encoding by default
 
-```bash
-cd security-tests
-mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
-```
+### CSRF Protection
 
-#### 4. Run SIEM Analysis
+- **Token Validation**: `CookieCsrfTokenRepository` with double-submit cookies
+- **Form Integration**: Thymeleaf `th:action` auto-includes CSRF tokens
+- **Stateless CSRF**: Cookie-based tokens (no server-side storage)
 
-```bash
-python scripts/python/security_analyzer_h2.py
-```
+### Secure Headers
 
-#### 5. Generate JIRA Tickets (Optional)
+- **X-Content-Type-Options**: `nosniff` prevents MIME sniffing
+- **X-Frame-Options**: `sameOrigin` prevents clickjacking
+- **X-XSS-Protection**: Enabled for legacy browser support
+- **Cache-Control**: `no-cache, no-store, must-revalidate` for sensitive pages
 
-```bash
-# Dry-run mode (no JIRA credentials required)
-python scripts/python/jira_ticket_generator.py
+### Rate Limiting
 
-# Production mode (requires environment variables)
-$env:JIRA_URL = "https://your-domain.atlassian.net"
-$env:JIRA_USERNAME = "your-email@example.com"
-$env:JIRA_API_TOKEN = "your-api-token"
-$env:JIRA_PROJECT_KEY = "SEC"
-python scripts/python/jira_ticket_generator.py
-```
+- **Sliding Window Algorithm**: In-memory tracker per IP address
+- **Threshold**: 50 requests per 5 seconds
+- **Protected Endpoints**: `/products`, `/api/security/**`
+- **Custom Filter**: `RateLimitingFilter` integrated in Spring Security chain
+- **Bypass Detection**: IP spoofing detection (X-Forwarded-For), session rotation attacks, slowloris-style threshold evasion
+
+### Security Event Logging
+
+- **Structured Events**: Security events with type, severity, username, IP, timestamp
+- **Event Types**: 36 event types including `SQL_INJECTION_ATTEMPT`, `XSS_ATTEMPT`, `BRUTE_FORCE_DETECTED`, `CSRF_VIOLATION`, `RATE_LIMIT_EXCEEDED`, `RACE_CONDITION_DETECTED`, `CRYPTOGRAPHIC_FAILURE`, `PRIVILEGE_ESCALATION_ATTEMPT`
+- **Database Persistence**: H2 tables for `security_events`, `authentication_attempts`, `transaction_anomalies`
+- **Indexed Queries**: Optimized for SIEM correlation
+
+### Transactional Integrity
+
+- **ACID Transactions**: `@Transactional` on service layer methods
+- **Rollback on Exception**: Automatic rollback for runtime exceptions
+- **Optimistic Locking**: JPA `@Version` for concurrent updates
+
+## SIEM Analysis Capabilities
+
+### Pattern Detection
+
+- **Brute Force Detection**: >5 failed logins within 5 minutes for same username
+- **Distributed Brute Force**: >10 failed logins within 5 minutes across usernames
+- **Account Enumeration**: >3 enumeration attempts within 2 minutes
+- **Transaction Anomalies**: Price tampering, cart manipulation correlation
+
+### Incident Severity Classification
+
+- **CRITICAL**: Successful exploitation, data breach indicators
+- **HIGH**: Active attack patterns (brute force, injection attempts)
+- **MEDIUM**: Suspicious behavior (enumeration, reconnaissance)
+- **LOW**: Policy violations, minor misconfigurations
+
+### Correlation Logic
+
+- **Time Window Analysis**: Event correlation within configurable time windows
+- **Username Grouping**: Attack pattern tracking per user account
+- **IP Address Tracking**: Source attribution for distributed attacks
+- **Event Type Clustering**: Related event aggregation
 
 ## Demo User Credentials
 
@@ -167,7 +210,7 @@ spring.thymeleaf.cache=false
 
 - **Thread Count**: 5 (parallel test execution)
 - **Verbose Level**: 1 (minimal output)
-- **Test Classes**: 16 active test classes (13 functional security tests, 1 destructive test, 2 cryptographic tests)
+- **Test Classes**: 16 active test classes
 - **Listener**: ExtentReports for HTML test reports
 - **Headless Mode**: Enabled by default (no browser UI)
 
@@ -230,19 +273,18 @@ JIRA_PROJECT_KEY=SEC
 ```sql
 CREATE TABLE security_events (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,           -- SQL_INJECTION_ATTEMPT, XSS_ATTEMPT, etc.
-    severity VARCHAR(20) NOT NULL,             -- INFO, LOW, MEDIUM, HIGH, CRITICAL
-    username VARCHAR(100),                     -- Affected user account
-    session_id VARCHAR(255),                   -- HTTP session ID
-    ip_address VARCHAR(45),                    -- Source IP address
-    user_agent VARCHAR(500),                   -- Browser/client identifier
-    description TEXT,                          -- Event details
-    successful BOOLEAN,                        -- Attack success indicator
-    timestamp TIMESTAMP NOT NULL,              -- Event occurrence time
-    additional_data TEXT                       -- JSON/structured metadata
+    event_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    username VARCHAR(100),
+    session_id VARCHAR(255),
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    description TEXT,
+    successful BOOLEAN,
+    timestamp TIMESTAMP NOT NULL,
+    additional_data TEXT
 );
 
--- Indexes for SIEM query performance
 CREATE INDEX idx_event_type ON security_events(event_type);
 CREATE INDEX idx_severity ON security_events(severity);
 CREATE INDEX idx_username ON security_events(username);
@@ -272,7 +314,7 @@ CREATE TABLE transaction_anomalies (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     transaction_id VARCHAR(100),
     username VARCHAR(100),
-    anomaly_type VARCHAR(50) NOT NULL,         -- AMOUNT_TAMPERING, CART_MANIPULATION
+    anomaly_type VARCHAR(50) NOT NULL,
     original_amount DECIMAL(10,2),
     modified_amount DECIMAL(10,2),
     anomaly_details TEXT,
@@ -388,13 +430,3 @@ Stop-Process -Id <PID> -Force
 # Delete lock files
 Remove-Item data/security-events.*.db -Force
 ```
-## References
-
-- [OWASP Top 10 2021](https://owasp.org/www-project-top-ten/)
-- [Spring Security Documentation](https://docs.spring.io/spring-security/reference/)
-- [MITRE ATT&CK Framework](https://attack.mitre.org/)
-- [CWE Top 25](https://cwe.mitre.org/top25/)
-
-## More Details
-
-See `DETAILS.md` for the full technology stack, security controls, SIEM analysis capabilities, configuration, schema, and CI/CD documentation.

@@ -4,19 +4,19 @@ target/
 *.war
 *.ear
 
-.idea/
-*.iml
-.vscode/
-.settings/
-.project
-.classpath
-
 .mvn/
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
 release.properties
+
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
 
 __pycache__/
 *.py[cod]
@@ -32,6 +32,7 @@ reports/
 screenshots/
 *.log
 logs/
+repomix-output.md
 
 *.db
 *.sqlite
@@ -41,6 +42,7 @@ logs/
 *.pem
 secrets.properties
 fortify-token.txt
+jira-config.properties
 
 .DS_Store
 Thumbs.db
@@ -55,5 +57,3 @@ scripts/python/siem_incident_report.json
 
 .fortify/
 fortify-results/
-
-jira-config.properties

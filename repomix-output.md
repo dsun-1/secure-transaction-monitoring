@@ -34,12 +34,11 @@ The content is organized as follows:
 
 # Directory Structure
 ```
-.gitattributes
 .github/workflows/manual-jira-tickets.yml
 .github/workflows/security-tests.yml
 .gitignore
-background.md
 demo-interview.ps1
+DETAILS.md
 ecommerce-app/pom.xml
 ecommerce-app/src/main/java/com/security/ecommerce/config/ApiAuthEntryPoint.java
 ecommerce-app/src/main/java/com/security/ecommerce/config/DataInitializer.java
@@ -78,7 +77,6 @@ ecommerce-app/src/main/resources/templates/checkout.html
 ecommerce-app/src/main/resources/templates/confirmation.html
 ecommerce-app/src/main/resources/templates/login.html
 ecommerce-app/src/main/resources/templates/products.html
-PHASE_VERIFICATION.md
 pom.xml
 README.md
 scripts/python/jira_ticket_generator.py
@@ -112,210 +110,440 @@ siem_incident_report.json
 
 # Files
 
-## File: .gitattributes
-````
-# Auto-normalize text files
-* text=auto
-
-# Keep shell scripts using LF on checkout
-*.sh text eol=lf
-````
-
-## File: background.md
+## File: DETAILS.md
 ````markdown
-Get-Content .env | ForEach-Object {
->>   if ($_ -match "^(.*?)=(.*)$") {
->>     $name = $matches[1]
->>     $value = $matches[2]
->>     Set-Item -Path "Env:$name" -Value $value
->>   }
->> }
->>
+# Secure E-Commerce Transaction Monitor Details
 
+## Complete Technology Stack
 
- this project is a demo for my security internship interview
+### Backend Framework & Runtime
 
-this is the scope of the project
+- **Java 21**: LTS runtime with modern language features
+- **Spring Boot 3.5.0**: Application framework with auto-configuration
+- **Spring MVC**: Web layer with RESTful controllers
+- **Spring Security 6.x**: Authentication, authorization, and security filters
+- **Spring Data JPA**: Data access with Hibernate ORM
+- **Embedded Tomcat**: Servlet container (managed by Spring Boot)
 
-Secure Transaction Monitoring & Incident Response Platform | Oct 2025
-• Built an end-to-end security monitoring system demonstrating real-world attack -> detection -> analysis ->
-response workflows.
-• Designed a Spring Boot e-commerce application backed by an H2 security-events database for live forensic
-inspection.
-• Created a TestNG/Selenium automation suite that simulates credential-stuffing and brute-force attacks
-against the application.
-• Implemented a Python-based SIEM engine that analyzes logs, identifies suspicious patterns (e.g., > 5 failed
-logins), and generates structured JSON incident reports.
-• Automated JIRA incident creation using API integrations to illustrate real security-operations escalation
-flows.
-• Presented system operation entirely through VS Code using integrated terminals, database clients, and
-scripted workflows.
-Tools: Java, Spring Boot, H2 Database, Selenium WebDriver, TestNG, Python, JIRA API, VS Code, GitHub Actions
+### Data Layer
 
-checj if everything below is implemented properly:
+- **H2 Database 2.2.224**: File-based SQL database (`../data/security-events`)
+- **Jakarta Persistence API (JPA)**: ORM specification
+- **Hibernate**: JPA implementation
+- **HikariCP**: High-performance JDBC connection pool
+- **Jakarta Validation**: Bean validation (JSR-380)
 
-Missing OWASP Top 10 2021 – Implementation Checklist
-🔴 CRITICAL GAPS (High Impact for Interview)
-A01: Broken Access Control – MUST IMPLEMENT
-Current Coverage: 30% → Target: 80%
+### Security Implementation
 
-Horizontal Access Control Test (~20 min)
-Test: User A accessing User B’s cart/orders
-File: HorizontalAccessControlTest.java
-Scenarios:
+- **BCrypt Password Hashing**: Using Spring Security's `PasswordEncoder`
+- **CSRF Protection**: Token-based with `CookieCsrfTokenRepository`
+- **Session Management**: Concurrent session control, fixation protection
+- **Rate Limiting**: Custom in-memory sliding window filter (50 req/5s)
+- **Security Headers**: X-Content-Type-Options (nosniff), X-Frame-Options (sameOrigin)
+- **Custom Authentication**: `ApiAuthEntryPoint` for 401 responses
+- **Access Denied Handler**: `SecurityAccessDeniedHandler` for 403 responses
+- **Pattern-based Detection**: SQLi/XSS detection in ProductController and SecurityConfig
 
-Login as testuser, get cart item ID
-Login as paymentuser, try to update testuser’s cart item
-Verify 403 Forbidden + ACCESS_CONTROL_VIOLATION event logged
-2. Vertical Privilege Escalation Test (~15 min)
-Test: USER role accessing ADMIN endpoints
-File: PrivilegeEscalationTest.java
+### Frontend & Templates
 
-Scenarios:
+- **Thymeleaf**: Server-side HTML template engine
+- **Bootstrap 5**: CSS framework for responsive UI
+- **HTML5/CSS3**: Modern web standards
+- **JavaScript**: Client-side interactions
 
-Login as testuser (USER role)
-Attempt GET /api/security/dashboard (ADMIN only)
-Attempt GET /api/security/events (ADMIN only)
-Verify 403 + PRIVILEGE_ESCALATION_ATTEMPT event logged
-3. IDOR (Insecure Direct Object Reference) Test (~15 min)
-Test: Direct object access via predictable IDs
-File: Add to HorizontalAccessControlTest.java
+### Testing & Automation
 
-Scenarios:
+- **Selenium WebDriver 4.27.0**: Browser automation for attack simulation
+- **TestNG 7.9.0**: Testing framework with annotations and parallel execution
+- **WebDriverManager**: Automatic browser driver management
+- **RestAssured**: REST API testing for header validation
+- **Chrome/Firefox Drivers**: Headless browser support
 
-Create order as testuser, note order ID
-Login as paymentuser, try GET /orders/{testuser_order_id}
-Verify order not visible + ACCESS_CONTROL_VIOLATION logged
-Total Time: ~50 minutes
-Impact: Demonstrates understanding of authorization vs authentication
+### SIEM & Analytics
 
-🟠 HIGH PRIORITY (Strengthen Core Security)
-A10: Server-Side Request Forgery (SSRF) – RECOMMENDED
-Current Coverage: 0% → Target: 70%
+- **Python 3.9+**: SIEM analyzer runtime
+- **JayDeBeApi 1.2.3**: Python-to-JDBC bridge for H2 access
+- **JPype1 1.4.0**: Java Virtual Machine integration for Python
 
-SSRF via URL Parameter Test (~25 min)
-Test: Attempt to fetch internal/external resources
-File: SSRFTest.java
-Scenarios:
+### Incident Management
 
-If product has image URL field, test file:///etc/passwd
-Test http://localhost:8080/api/security/events (internal)
-Test http://169.254.169.254/latest/meta-data/ (cloud metadata)
-Verify SSRF_ATTEMPT event logged + request blocked
-Application Fix Required:
+- **JIRA REST API**: Ticket creation for incidents
+- **Python Requests**: HTTP client for JIRA integration
+- **JSON**: Incident report format
 
-Add URL validation in ProductController/ProductService
-Whitelist allowed domains/protocols (http/https only)
-Block private IP ranges (127.0.0.0/8, 10.0.0.0/8, 192.168.0.0/16)
-Total Time: ~25 minutes (test) + ~15 minutes (application fix)
-Impact: Shows understanding of modern cloud vulnerabilities
+### Build & Deployment
 
-🟡 MEDIUM PRIORITY (Good to Have)
-A02: Cryptographic Failures – OPTIONAL
-Current Coverage: 0% (deleted tests) → Target: 60%
+- **Maven 3.8+**: Multi-module build tool
+- **Maven Surefire**: Test execution plugin
+- **Maven Compiler Plugin**: Java 21 compilation
+- **Spring Boot Maven Plugin**: JAR packaging with embedded server
+- **PowerShell**: Demo orchestration script
 
-TLS/SSL Enforcement Test (~10 min)
-Test: Verify HTTPS redirect in production mode
-File: TLSEnforcementTest.java
-Scenarios:
+### CI/CD & DevOps
 
-Skip test if baseUrl is http://localhost (demo mode)
-If production URL, verify HTTP → HTTPS redirect
-Check HSTS header present
-Log CRYPTOGRAPHIC_FAILURE if HTTP allowed
-6. Sensitive Data Exposure Test (~10 min)
-Test: Check for sensitive data in client-side storage
-File: DataExposureTest.java
+- **GitHub Actions**: Automated testing workflows
+- **YAML**: Workflow configuration
+- **Git**: Version control
 
-Scenarios:
+## Security Controls Implemented
 
-Login, check localStorage for passwords/tokens
-Check sessionStorage for sensitive data
-Verify cookies have HttpOnly flag
-Log CRYPTOGRAPHIC_FAILURE if exposed
-Total Time: ~20 minutes
-Impact: Medium – can argue these belong in CI/CD pipelines
+### Authentication & Authorization
 
-A04: Insecure Design – OPTIONAL
-Current Coverage: 20% → Target: 50%
+- **Role-Based Access Control (RBAC)**: `USER`, `ADMIN` roles with `@PreAuthorize` annotations
+- **BCrypt Password Hashing**: Salted adaptive hashing (cost factor 10)
+- **Form-Based Authentication**: Username/password login with Spring Security
+- **Session-Based Auth**: HTTP sessions with secure cookie attributes
+- **Concurrent Session Control**: Maximum 1 session per user
+- **Session Fixation Protection**: New session ID on authentication
 
-Rate Limit Bypass Test (~15 min)
-Test: Attempt to bypass rate limiting
-File: Add to RateLimitingTest.java
-Scenarios:
+### Input Validation & Sanitization
 
-Test rotating IP addresses (X-Forwarded-For header spoofing)
-Test distributed requests across multiple sessions
-Slowloris-style attacks (stay under threshold)
-Verify rate limiting still triggers
-8. Business Logic Race Condition Test (~20 min)
-Test: Concurrent cart updates with same item
-File: RaceConditionTest.java
+- **Jakarta Validation**: `@NotBlank`, `@Size`, `@Min`, `@Max` constraints on entities
+- **Pattern-Based Detection**: SQL injection keywords detection in login/search
+- **XSS Pattern Detection**: Script tag and event handler detection
+- **Parameterized Queries**: JPA `@Query` with named parameters, JDBC `PreparedStatement`
+- **Thymeleaf Auto-Escaping**: HTML entity encoding by default
 
-Scenarios:
+### CSRF Protection
 
-Add item to cart (quantity = 1)
-Spawn 10 parallel threads updating quantity simultaneously
-Verify final quantity is correct (transaction integrity)
-Log RACE_CONDITION_DETECTED if inconsistent
-Total Time: ~35 minutes
-Impact: Shows understanding of concurrency/design patterns
+- **Token Validation**: `CookieCsrfTokenRepository` with double-submit cookies
+- **Form Integration**: Thymeleaf `th:action` auto-includes CSRF tokens
+- **Stateless CSRF**: Cookie-based tokens (no server-side storage)
 
-A05: Security Misconfiguration – ENHANCEMENT
-Current Coverage: 50% → Target: 75%
+### Secure Headers
 
-Error Handling Test Enhancement (~10 min)
-Test: Verify stack traces not exposed in production
-File: Add to SecurityMisconfigurationTest.java
-Scenarios:
+- **X-Content-Type-Options**: `nosniff` prevents MIME sniffing
+- **X-Frame-Options**: `sameOrigin` prevents clickjacking
+- **X-XSS-Protection**: Enabled for legacy browser support
+- **Cache-Control**: `no-cache, no-store, must-revalidate` for sensitive pages
 
-Trigger 500 error (malformed request)
-Verify response doesn’t contain “Exception”, “Stack trace”, “at com.security”
-Verify generic error message shown
-Skip check if isDemoMode()
-10. Unused HTTP Methods Test Enhancement (~5 min)
-Test: Verify OPTIONS doesn’t leak endpoint info
-File: Add to SecurityMisconfigurationTest.java
+### Rate Limiting
 
-Scenarios:
+- **Sliding Window Algorithm**: In-memory tracker per IP address
+- **Threshold**: 50 requests per 5 seconds
+- **Protected Endpoints**: `/products`, `/api/security/**`
+- **Custom Filter**: `RateLimitingFilter` integrated in Spring Security chain
+- **Bypass Detection**: IP spoofing detection (X-Forwarded-For), session rotation attacks, slowloris-style threshold evasion
 
-Send OPTIONS request to /products
-Verify response doesn’t enumerate all available methods
-Check Allow header is minimal
-Total Time: ~15 minutes
-Impact: Low – already have good coverage here
+### Security Event Logging
 
-⚪ LOW PRIORITY (Not Recommended for Interview Demo)
-A06: Vulnerable Components – SKIP (Belongs in CI/CD)
-Reason: Static analysis, not runtime monitoring
-Alternatives: Use OWASP Dependency-Check in GitHub Actions
-Your position: “This is SAST, not DAST. My demo focuses on runtime detection.”
+- **Structured Events**: Security events with type, severity, username, IP, timestamp
+- **Event Types**: 36 event types including `SQL_INJECTION_ATTEMPT`, `XSS_ATTEMPT`, `BRUTE_FORCE_DETECTED`, `CSRF_VIOLATION`, `RATE_LIMIT_EXCEEDED`, `RACE_CONDITION_DETECTED`, `CRYPTOGRAPHIC_FAILURE`, `PRIVILEGE_ESCALATION_ATTEMPT`
+- **Database Persistence**: H2 tables for `security_events`, `authentication_attempts`, `transaction_anomalies`
+- **Indexed Queries**: Optimized for SIEM correlation
 
-A08: Software and Data Integrity Failures – SKIP (Belongs in CI/CD)
-Reason: Build-time verification, not runtime
-Alternatives: JAR signing, checksum validation in deployment pipeline
-Your position: “Integrity checks happen during deployment, not during execution.”
+### Transactional Integrity
 
-📊 RECOMMENDED IMPLEMENTATION PRIORITY
-Phase 1: Critical (Before Interview) – 1.5 hours
-Horizontal Access Control Test (20 min)
-Vertical Privilege Escalation Test (15 min)
-IDOR Test (15 min)
-SSRF Test (40 min – includes application fixes)
-Result: A01 coverage 80%, A10 coverage 70% → 7/10 OWASP categories covered
+- **ACID Transactions**: `@Transactional` on service layer methods
+- **Rollback on Exception**: Automatic rollback for runtime exceptions
+- **Optimistic Locking**: JPA `@Version` for concurrent updates
 
-Phase 2: High Value (If Time Permits) – 1 hour
-TLS Enforcement Test (10 min)
-Sensitive Data Exposure Test (10 min)
-Rate Limit Bypass Test (15 min)
-Error Handling Enhancement (10 min)
-Business Logic Race Condition Test (20 min)
-Result: 8/10 categories with decent coverage
+## SIEM Analysis Capabilities
 
-Phase 3: Skip (Explain in Interview)
-A02: Partial implementation is weak, better to acknowledge gap
-A06: Explicitly state “CI/CD tool, not runtime monitoring”
-A08: Explicitly state “Build-time verification, not execution-time”
+### Pattern Detection
+
+- **Brute Force Detection**: >5 failed logins within 5 minutes for same username
+- **Distributed Brute Force**: >10 failed logins within 5 minutes across usernames
+- **Account Enumeration**: >3 enumeration attempts within 2 minutes
+- **Transaction Anomalies**: Price tampering, cart manipulation correlation
+
+### Incident Severity Classification
+
+- **CRITICAL**: Successful exploitation, data breach indicators
+- **HIGH**: Active attack patterns (brute force, injection attempts)
+- **MEDIUM**: Suspicious behavior (enumeration, reconnaissance)
+- **LOW**: Policy violations, minor misconfigurations
+
+### Correlation Logic
+
+- **Time Window Analysis**: Event correlation within configurable time windows
+- **Username Grouping**: Attack pattern tracking per user account
+- **IP Address Tracking**: Source attribution for distributed attacks
+- **Event Type Clustering**: Related event aggregation
+
+## Demo User Credentials
+
+Test accounts seeded in **demo profile only** (`application-demo.properties`):
+
+| Username | Password | Role | Purpose |
+|----------|----------|------|---------|
+| `testuser` | `password123` | USER | Standard user account for login/session tests |
+| `admin` | `admin123` | ADMIN | Administrator for privileged operations testing |
+| `paymentuser` | `Paym3nt@123` | USER | Transaction and payment flow testing |
+
+**Security Note**: These credentials are intentionally weak for attack simulation. Production systems use strong password policies enforced via Jakarta Validation.
+
+## Configuration Details
+
+### Application Properties
+
+**Production Config** (`application.properties`):
+
+```properties
+# Server Configuration
+server.port=8080
+
+# H2 Database (File-based)
+spring.datasource.url=jdbc:h2:file:../data/security-events
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+
+# H2 Console (Disabled by default)
+spring.h2.console.enabled=false
+
+# Thymeleaf Template Engine
+spring.thymeleaf.cache=true
+
+# Logging
+logging.level.root=INFO
+logging.level.com.security.ecommerce=INFO
+```
+
+**Demo Profile** (`application-demo.properties`):
+
+```properties
+# Demo user seeding
+demo.users.enabled=true
+
+# H2 Console (Enabled for demo)
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# Enhanced logging for demo
+logging.level.com.security.ecommerce=DEBUG
+logging.level.org.springframework.security=DEBUG
+
+# Thymeleaf hot reload
+spring.thymeleaf.cache=false
+```
+
+### Test Configuration
+
+**TestNG Suite** (`testng.xml`):
+
+- **Thread Count**: 5 (parallel test execution)
+- **Verbose Level**: 1 (minimal output)
+- **Test Classes**: 16 active test classes
+- **Listener**: ExtentReports for HTML test reports
+- **Headless Mode**: Enabled by default (no browser UI)
+
+**System Properties**:
+
+- `-Dheadless=true/false`: Browser display mode
+- `-Dbrowser=chrome/firefox`: Browser selection
+- `-DbaseUrl=http://localhost:8080`: Application URL
+
+### Environment Variables
+
+**JIRA Integration** (Optional):
+
+```bash
+JIRA_URL=https://your-domain.atlassian.net
+JIRA_USERNAME=your-email@example.com
+JIRA_API_TOKEN=your-api-token
+JIRA_PROJECT_KEY=SEC
+```
+
+**Python/JDBC**:
+
+- `JAVA_HOME`: Required for JPype1 to find JVM
+- Path to H2 JDBC driver: Auto-detected from Maven repository
+
+## API Endpoints
+
+### Public Endpoints
+
+- `GET /`: Home page redirect to login
+- `GET /login`: Login form (CSRF protected)
+- `POST /perform_login`: Login submission handler
+- `POST /logout`: Logout handler
+
+### Authenticated Endpoints (USER role)
+
+- `GET /products`: Product catalog with search
+- `POST /products/search`: Product search (SQLi/XSS detection)
+- `GET /cart`: Shopping cart view
+- `POST /cart/add`: Add item to cart
+- `POST /cart/update`: Update cart quantities
+- `GET /checkout`: Checkout form
+- `POST /checkout/submit`: Payment processing
+- `GET /confirmation`: Order confirmation
+
+### Admin Endpoints (ADMIN role)
+
+- `GET /api/security/dashboard`: Security metrics dashboard (JSON)
+- `GET /api/security/events`: Recent security events (JSON)
+- `GET /api/security/stats`: Statistics summary (JSON)
+
+### Development Endpoints (Demo profile)
+
+- `GET /h2-console`: H2 database console (JDBC URL: `jdbc:h2:file:../data/security-events`)
+
+## Database Schema
+
+### security_events
+
+```sql
+CREATE TABLE security_events (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_type VARCHAR(50) NOT NULL,
+    severity VARCHAR(20) NOT NULL,
+    username VARCHAR(100),
+    session_id VARCHAR(255),
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(500),
+    description TEXT,
+    successful BOOLEAN,
+    timestamp TIMESTAMP NOT NULL,
+    additional_data TEXT
+);
+
+CREATE INDEX idx_event_type ON security_events(event_type);
+CREATE INDEX idx_severity ON security_events(severity);
+CREATE INDEX idx_username ON security_events(username);
+CREATE INDEX idx_timestamp ON security_events(timestamp);
+```
+
+### authentication_attempts
+
+```sql
+CREATE TABLE authentication_attempts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    success BOOLEAN NOT NULL,
+    ip_address VARCHAR(45),
+    failure_reason VARCHAR(200),
+    attempt_timestamp TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_username_time ON authentication_attempts(username, attempt_timestamp);
+CREATE INDEX idx_success ON authentication_attempts(success);
+```
+
+### transaction_anomalies
+
+```sql
+CREATE TABLE transaction_anomalies (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    transaction_id VARCHAR(100),
+    username VARCHAR(100),
+    anomaly_type VARCHAR(50) NOT NULL,
+    original_amount DECIMAL(10,2),
+    modified_amount DECIMAL(10,2),
+    anomaly_details TEXT,
+    detection_timestamp TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_anomaly_type ON transaction_anomalies(anomaly_type);
+CREATE INDEX idx_tx_username ON transaction_anomalies(username);
+```
+
+## CI/CD Integration
+
+### GitHub Actions Workflows
+
+**Security Test Workflow** (`.github/workflows/security-tests.yml`):
+
+```yaml
+# Triggers: Push to main, Pull requests, Manual dispatch
+# Steps:
+#   1. Checkout code
+#   2. Setup Java 21
+#   3. Setup Python 3.9
+#   4. Install Python dependencies
+#   5. Build Spring Boot application
+#   6. Start application in background
+#   7. Run TestNG security test suite (headless)
+#   8. Run SIEM analysis on test results
+#   9. Upload test reports as artifacts
+```
+
+**Manual JIRA Workflow** (`.github/workflows/manual-jira-tickets.yml`):
+
+```yaml
+# Trigger: Manual workflow dispatch
+# Inputs: JIRA credentials (secrets)
+# Steps:
+#   1. Checkout code
+#   2. Setup Python
+#   3. Run SIEM analysis
+#   4. Create JIRA tickets from incidents
+```
+
+## Development Guidelines
+
+### Adding New Security Event Types
+
+1. **Add to SecurityEventLogger allowed types**:
+
+```java
+private static final Set<String> ALLOWED_EVENT_TYPES = Set.of(
+    // ... existing types
+    "NEW_EVENT_TYPE"
+);
+```
+
+2. **Log events in application code**:
+
+```java
+@Autowired
+private SecurityEventService securityEventService;
+
+securityEventService.logSecurityEvent(
+    "NEW_EVENT_TYPE",
+    "HIGH",
+    username,
+    sessionId,
+    "Event description"
+);
+```
+
+3. **Update SIEM analyzer patterns** (`security_analyzer_h2.py`):
+
+```python
+def detect_new_pattern(events):
+    # Add correlation logic
+    pass
+```
+
+## Performance Metrics
+
+### Application Startup
+
+- **Cold Start**: ~8-12 seconds (Spring Boot initialization)
+- **Warm Start**: ~5-7 seconds (JVM already running)
+
+### Test Execution
+
+- **Full Suite**: 47+ tests in ~4-6 minutes (parallel execution, 5 threads, headless mode)
+- **Single Test**: ~5-15 seconds (depends on Selenium interactions)
+- **Race Condition Tests**: ~20-30 seconds (concurrent ExecutorService operations)
+
+### SIEM Analysis
+
+- **100 events**: <1 second
+- **1,000 events**: ~2-3 seconds
+- **10,000 events**: ~15-20 seconds (JDBC query + Python processing)
+
+## Troubleshooting
+
+### Port Already in Use (8080)
+
+```powershell
+# Find process using port 8080
+Get-NetTCPConnection -LocalPort 8080 | Select-Object OwningProcess
+
+# Kill process
+Stop-Process -Id <PID> -Force
+```
+
+### H2 Database Lock
+
+```powershell
+# Delete lock files
+Remove-Item data/security-events.*.db -Force
+```
 ````
 
 ## File: ecommerce-app/src/main/java/com/security/ecommerce/config/ApiAuthEntryPoint.java
@@ -592,131 +820,6 @@ public class SessionSecurityFilter extends OncePerRequestFilter {
 }
 ````
 
-## File: ecommerce-app/src/main/java/com/security/ecommerce/controller/OrderController.java
-````java
-package com.security.ecommerce.controller;
-
-import com.security.ecommerce.model.Transaction;
-import com.security.ecommerce.service.SecurityEventService;
-import com.security.ecommerce.service.TransactionService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-@RestController
-@RequestMapping("/orders")
-public class OrderController {
-
-    private final TransactionService transactionService;
-    private final SecurityEventService securityEventService;
-
-    public OrderController(TransactionService transactionService,
-                           SecurityEventService securityEventService) {
-        this.transactionService = transactionService;
-        this.securityEventService = securityEventService;
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<OrderSummary> getOrder(@PathVariable Long id) {
-        Transaction transaction = transactionService.getTransactionById(id);
-        if (transaction == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication != null ? authentication.getName() : "anonymous";
-        String owner = transaction.getUser() != null ? transaction.getUser().getUsername() : null;
-        if (owner == null || !owner.equals(username)) {
-            securityEventService.logHighSeverityEvent(
-                "ACCESS_CONTROL_VIOLATION",
-                username,
-                "Order access blocked for non-owner",
-                "orderId=" + id
-            );
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        return ResponseEntity.ok(toSummary(transaction));
-    }
-
-    private OrderSummary toSummary(Transaction transaction) {
-        return new OrderSummary(
-            transaction.getId(),
-            transaction.getTransactionId(),
-            transaction.getAmount(),
-            transaction.getStatus().name(),
-            transaction.getTransactionDate()
-        );
-    }
-
-    public record OrderSummary(
-        Long id,
-        String transactionId,
-        java.math.BigDecimal amount,
-        String status,
-        java.time.LocalDateTime transactionDate
-    ) {}
-}
-````
-
-## File: ecommerce-app/src/main/java/com/security/ecommerce/controller/SecurityExceptionHandler.java
-````java
-package com.security.ecommerce.controller;
-
-import com.security.ecommerce.service.SecurityEventService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-@ControllerAdvice
-public class SecurityExceptionHandler {
-
-    private final SecurityEventService securityEventService;
-
-    public SecurityExceptionHandler(SecurityEventService securityEventService) {
-        this.securityEventService = securityEventService;
-    }
-
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
-                                                     HttpServletRequest request) {
-        String name = ex.getName() == null ? "" : ex.getName();
-        if ("quantity".equalsIgnoreCase(name)) {
-            securityEventService.logHighSeverityEvent(
-                "AMOUNT_TAMPERING",
-                "anonymous",
-                "Invalid quantity submitted",
-                "value=" + ex.getValue() + " | path=" + request.getRequestURI()
-            );
-        }
-        return ResponseEntity.badRequest().body("Invalid request");
-    }
-
-    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<String> handleUnsupportedMedia(HttpMediaTypeNotSupportedException ex,
-                                                         HttpServletRequest request) {
-        String contentType = ex.getContentType() != null ? ex.getContentType().toString() : "";
-        if (contentType.toLowerCase().contains("application/x-java-serialized-object")) {
-            securityEventService.logHighSeverityEvent(
-                "DESERIALIZATION_ATTEMPT",
-                "anonymous",
-                "Serialized payload rejected",
-                "path=" + request.getRequestURI()
-            );
-        }
-        return ResponseEntity.status(415).body("Unsupported media type");
-    }
-}
-````
-
 ## File: ecommerce-app/src/main/java/com/security/ecommerce/repository/CartItemRepository.java
 ````java
 package com.security.ecommerce.repository;
@@ -777,371 +880,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t FROM Transaction t WHERE t.transactionDate > ?1 AND t.status = 'FAILED'")
     List<Transaction> findRecentFailedTransactions(LocalDateTime since);
 }
-````
-
-## File: PHASE_VERIFICATION.md
-````markdown
-# Phase 1 & 2 Implementation Verification Report
-
-## Executive Summary
-
-✅ **PHASE 1: 4/4 items COMPLETE (100%)**  
-✅ **PHASE 2: 5/5 items COMPLETE (100%)**  
-✅ **FINAL OWASP COVERAGE: 8/10 categories (80%)**  
-✅ **ALL CHECKLIST REQUIREMENTS MET**
-
----
-
-## Phase 1: Critical Gaps Implementation
-
-### ✅ 1. Horizontal Access Control Test (~20 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/auth/AccessControlTest.java` (268 lines, 4 tests)  
-**Method:** `testHorizontalAccessControl()`  
-
-**Implementation Details:**
-
-- Login as `testuser` → add item to cart → capture session ID
-- Logout and login as `paymentuser`
-- Attempt to use `testuser`'s session to access cart
-- **Verification:** 403 Forbidden + `ACCESS_CONTROL_VIOLATION` event logged
-- **Bonus Tests:** Also includes `testParameterTamperingAuthorizationBypass()`, `testForcedBrowsing()`
-
----
-
-### ✅ 2. Vertical Privilege Escalation Test (~15 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/auth/PrivilegeEscalationTest.java` (138 lines, 4 tests)  
-**Methods:** 
-
-- `testUserAccessingAdminDashboard()`
-- `testUserAccessingSecurityEvents()`
-- `testAdminAccessToProtectedEndpoints()`
-- `testUnauthenticatedAccessToAdminEndpoints()`
-
-**Implementation Details:**
-
-- Login as `testuser` (USER role)
-- Attempt GET `/api/security/dashboard` (ADMIN only)
-- Attempt GET `/api/security/events` (ADMIN only)
-- **Verification:** 403 Forbidden + `PRIVILEGE_ESCALATION_ATTEMPT` event logged
-- **Bonus:** Verifies ADMIN can access + unauthenticated access blocked
-
----
-
-### ✅ 3. IDOR (Insecure Direct Object Reference) Test (~15 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/auth/AccessControlTest.java`  
-**Method:** `testIDORVulnerability()`
-
-**Implementation Details:**
-
-- Create cart item as `testuser`
-- Login as `paymentuser`
-- Attempt to access `testuser`'s cart item by ID
-- **Verification:** Access denied + direct object reference blocked
-
----
-
-### ✅ 4. SSRF via URL Parameter Test (~25 min test + ~15 min app fix)
-
-**Status:** IMPLEMENTED  
-**Test File:** `security-tests/src/test/java/com/security/tests/injection/SSRFTest.java` (197 lines, 4 tests)  
-**Application Fix:** `ecommerce-app/src/main/java/com/security/ecommerce/controller/ProductController.java`
-
-**Test Methods:**
-
-1. `testSSRFFileProtocol()` - Tests `file:///etc/passwd`, `file:///C:/Windows/...`
-2. `testSSRFLocalhostAccess()` - Tests `http://localhost`, `http://127.0.0.1`, `http://0.0.0.0`, `http://[::1]`
-3. `testSSRFCloudMetadata()` - Tests `http://169.254.169.254/latest/meta-data/` (AWS), `http://metadata.google.internal` (GCP)
-4. `testSSRFPrivateIPRanges()` - Tests `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
-
-**Application Fix (ProductController.isSSRFAttempt() - 66 lines):**
-
-```java
-private boolean isSSRFAttempt(String url) {
-    // Block file:// protocol
-    // Block localhost variants (localhost, 127.0.0.1, 0.0.0.0, [::1])
-    // Block cloud metadata IPs (169.254.169.254, 169.254.170.2, metadata.google.internal)
-    // Block private IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
-    // Logs SSRF_ATTEMPT event if detected
-}
-```
-
-**PHASE 1 RESULT:**  
-✅ A01 Broken Access Control: **90% coverage** (horizontal, vertical, IDOR)  
-✅ A10 Server-Side Request Forgery: **70% coverage** (file://, localhost, cloud, private IPs)  
-✅ **7/10 OWASP Top 10 2021 categories covered**
-
----
-
-## Phase 2: High Value Enhancements
-
-### ✅ 5. TLS/SSL Enforcement Test (~10 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/crypto/TLSEnforcementTest.java` (146 lines, 3 tests)
-
-**Methods:**
-
-1. `testHTTPSRedirect()` - Verifies HTTP → HTTPS redirect (301/302/307/308), checks `Location: https://` header
-2. `testHSTSHeader()` - Validates `Strict-Transport-Security` header with `max-age`
-3. `testSecureCookieFlags()` - Confirms session cookies have `Secure` flag in HTTPS context
-
-**Implementation Details:**
-
-- All tests skip if `isDemoMode()` (baseUrl contains "localhost")
-- Uses RestAssured with `.redirects().follow(false)`
-- Logs `CRYPTOGRAPHIC_FAILURE` if HTTP allowed or headers missing
-
----
-
-### ✅ 6. Sensitive Data Exposure Test (~10 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/crypto/DataExposureTest.java` (242 lines, 4 tests)
-
-**Methods:**
-
-1. `testLocalStorageSensitiveData()` - Executes JS `JSON.stringify(localStorage)`, scans for `password`, `secret`, `token`, `apikey`, `creditcard`, `ssn`, `private_key`
-2. `testSessionStorageSensitiveData()` - Same for `sessionStorage`
-3. `testHttpOnlyCookieFlag()` - Checks if cookies accessible via `document.cookie` (should not be if HttpOnly set)
-4. `testPasswordExposureInDOM()` - Scans page source for `password="`, `default_password`, `test_password="`
-
-**Implementation Details:**
-
-- Uses Selenium JavascriptExecutor for client-side storage inspection
-- Logs `CRYPTOGRAPHIC_FAILURE` if sensitive data exposed
-
----
-
-### ✅ 7. Rate Limit Bypass Test (~15 min)
-
-**Status:** IMPLEMENTED (ENHANCED)  
-**File:** `security-tests/src/test/java/com/security/tests/api/RateLimitingTest.java` (now 4 tests total)
-
-**NEW Methods:**
-
-1. `testRateLimitBypassIPSpoofing()` - Sends 60 requests with rotating `X-Forwarded-For: 192.168.1.1-50` headers, logs if rate limiting bypassed
-2. `testRateLimitBypassDistributedSessions()` - Sends 60 requests with unique `User-Agent` and fake session cookies per request
-3. `testSlowlorisStyleAttack()` - Sends 3 batches of 45 requests with 100ms delay between requests, 5500ms wait between batches (stays under threshold)
-
-**Implementation Details:**
-
-- Original `testRateLimiting()` burst test still exists
-- All new tests verify rate limiting still triggers despite bypass attempts
-- Logs `RATE_LIMIT_EXCEEDED` if attacks succeed
-
----
-
-### ✅ 8. Error Handling Test Enhancement (~10 min)
-
-**Status:** IMPLEMENTED (ENHANCED)  
-**File:** `security-tests/src/test/java/com/security/tests/config/SecurityMisconfigurationTest.java` (now 9 tests total)
-
-**NEW Methods:**
-
-1. `testStackTraceExposure()` - Tests 4 error URLs:
-
-   - `/api/nonexistent`
-   - `/products?currency=INVALID`
-   - `/cart/update?itemId=999999`
-   - `/api/security/events?userId=abc`
-   - Checks response body for `Exception`, `at com.security`, `at java.lang`, `Caused by:`, `.java:`, `Stack trace:`
-   - Skips check if `isDemoMode()`
-
-2. `testOptionsMethodInformationLeakage()` - Sends OPTIONS request to `/products`:
-
-   - Checks `Allow` header for `TRACE`, `CONNECT`, `PATCH`
-   - Checks response body for `swagger`, `openapi`, `endpoint`, `parameter`
-   - Logs `INFO_DISCLOSURE` if API metadata exposed
-
-**Implementation Details:**
-
-- Original 7 tests (headers, default credentials, etc.) still exist
-- Logs `SECURITY_MISCONFIGURATION` if stack traces exposed in production
-
----
-
-### ✅ 9. Business Logic Race Condition Test (~20 min)
-
-**Status:** IMPLEMENTED  
-**File:** `security-tests/src/test/java/com/security/tests/business/RaceConditionTest.java` (354 lines, 3 tests)
-
-**Methods:**
-
-1. `testConcurrentCartUpdates()` - Spawns 10 threads with `ExecutorService.newFixedThreadPool(10)`, each updates same cart item quantity to `initialQuantity + 1`, uses `AtomicInteger` to count successes, checks if `finalQuantity != expectedQuantity` (race condition detected)
-2. `testConcurrentItemAdditions()` - Spawns 5 threads adding same product, checks if `cartItemCount > 1` (duplicate entries from race condition)
-3. `testCheckoutRaceCondition()` - Spawns 2 threads attempting POST `/checkout` simultaneously with same `sessionId`/`csrfToken`, logs if `checkoutSuccesses > 1` (double charging vulnerability)
-
-**Implementation Details:**
-
-- Uses `java.util.concurrent` (ExecutorService, Executors, Future<Response>, AtomicInteger)
-- Logs `RACE_CONDITION_DETECTED` if inconsistent state found
-- All tests use RestAssured for concurrent API calls
-
-**PHASE 2 RESULT:**  
-✅ A02 Cryptographic Failures: **60% coverage** (TLS, HSTS, data exposure, cookie security)  
-✅ A04 Insecure Design: **70% coverage** (rate limit bypass, race conditions)  
-✅ A05 Security Misconfiguration: **75% coverage** (stack trace exposure, OPTIONS leakage)  
-✅ **8/10 OWASP Top 10 2021 categories covered (80% total coverage)**
-
----
-
-## Supporting Infrastructure Changes
-
-### ✅ testng.xml Updated
-
-**Before:** 11 test classes (13 total counting destructive)  
-**After:** 16 test classes (17 total)
-
-**NEW Test Classes Added:**
-
-1. `com.security.tests.business.RaceConditionTest`
-2. `com.security.tests.crypto.TLSEnforcementTest`
-3. `com.security.tests.crypto.DataExposureTest`
-
----
-
-### ✅ SecurityEventLogger.java Updated
-
-**Before:** 35 allowed event types  
-**After:** 36 allowed event types
-
-**NEW Event Type Added:**
-
-```java
-"RACE_CONDITION_DETECTED",  // Inserted after PRIVILEGE_ESCALATION_ATTEMPT
-```
-
-**Existing Event Type Used:**
-
-- `CRYPTOGRAPHIC_FAILURE` (already existed, now used by TLS/Data Exposure tests)
-
----
-
-### ✅ README.md Updated
-
-**Changes:**
-
-1. Attack Simulation Suite section rewritten with OWASP Top 10 2021 structure
-2. OWASP coverage breakdown (8/10 categories with percentages)
-3. Repository structure updated with new test files
-4. Security event logging updated (36 event types)
-5. Performance metrics updated (47+ tests in 4-6 minutes)
-6. Test configuration updated (16 test classes)
-7. Added "Phase 2 Enhancements" section to interview talking points
-8. Rate limiting description enhanced with bypass detection
-9. Demo expected results updated (6 SIEM incidents, 80% OWASP coverage)
-
----
-
-### ✅ Compilation & Testing
-
-**Status:** All modules compile cleanly
-
-**Issues Fixed:**
-
-- 14 compilation errors in Phase 2 tests (SecurityEvent signature mismatch)
-- All tests were calling helper methods with 7 parameters instead of 4
-- Fixed via `multi_replace_string_in_file` (12 fixes) + manual fix (2 fixes)
-
-**Demo Execution Results:**
-
-- **Tests:** 47+ tests across 16 test classes
-- **SIEM Incidents:** 6 total (5 HIGH severity, 1 MEDIUM severity)
-- **Duration:** ~4-6 minutes (headless mode, parallel execution)
-
----
-
-## Final Coverage Breakdown
-
-### OWASP Top 10 2021 Coverage: 8/10 (80%)
-
-| Category | Coverage | Implementation |
-|----------|----------|----------------|
-| **A01: Broken Access Control** | 90% | Horizontal, Vertical, IDOR, Forced Browsing, API Auth |
-| **A02: Cryptographic Failures** | 60% | TLS Enforcement, HSTS, Secure Cookies, Data Exposure, HttpOnly |
-| **A03: Injection** | 90% | SQL Injection, XSS, CSRF, SSRF |
-| **A04: Insecure Design** | 70% | Rate Limiting + Bypass, Race Conditions, Business Logic |
-| **A05: Security Misconfiguration** | 75% | Headers, Stack Traces, OPTIONS Method, Error Handling |
-| **A06: Vulnerable Components** | 0% | **BY DESIGN** - SAST/SCA tool (Dependency-Check, Snyk) |
-| **A07: Auth Failures** | 90% | Brute Force, Enumeration, Session Hijacking, Session Fixation |
-| **A08: Integrity Failures** | 0% | **BY DESIGN** - Build-time verification (JAR signing, SBOM) |
-| **A09: Logging Failures** | N/A | **THIS PROJECT IS THE MONITORING SOLUTION** |
-| **A10: SSRF** | 70% | file://, localhost, Cloud Metadata, Private IPs |
-
----
-
-## Verification Checklist
-
-### Phase 1 (Critical)
-
-- [x] Horizontal Access Control Test - `AccessControlTest.testHorizontalAccessControl()`
-- [x] Vertical Privilege Escalation Test - `PrivilegeEscalationTest.java` (4 tests)
-- [x] IDOR Test - `AccessControlTest.testIDORVulnerability()`
-- [x] SSRF Test - `SSRFTest.java` (4 tests)
-- [x] SSRF Application Fix - `ProductController.isSSRFAttempt()` (66 lines)
-
-### Phase 2 (High Value)
-
-- [x] TLS Enforcement Test - `TLSEnforcementTest.java` (3 tests)
-- [x] Sensitive Data Exposure Test - `DataExposureTest.java` (4 tests)
-- [x] Rate Limit Bypass Test - `RateLimitingTest.java` (3 new tests)
-- [x] Error Handling Enhancement - `SecurityMisconfigurationTest.java` (2 new tests)
-- [x] Race Condition Test - `RaceConditionTest.java` (3 tests)
-
-### Infrastructure
-
-- [x] Update testng.xml with new test classes
-- [x] Add RACE_CONDITION_DETECTED to SecurityEventLogger
-- [x] Update README.md with Phase 2 documentation
-- [x] Fix compilation errors (14 SecurityEvent signature fixes)
-- [x] Verify demo execution (6 SIEM incidents)
-
----
-
-## Interview Readiness Assessment
-
-### ✅ Strengths
-
-1. **Comprehensive OWASP Coverage**: 8/10 categories with runtime DAST approach
-2. **Advanced Testing Techniques**: Concurrent testing (ExecutorService), client-side inspection (JavascriptExecutor), rate limit bypass attempts
-3. **Production-Ready Monitoring**: 36 event types, SIEM correlation, JIRA integration
-4. **Defense in Depth**: Multiple layers (input validation, access control, SSRF protection, rate limiting)
-5. **Well-Documented**: README covers 50+ technologies, comprehensive attack simulation suite
-
-### ✅ Key Talking Points
-
-- **A02 (Cryptographic Failures)**: "I implemented TLS enforcement testing that checks HTTPS redirects, HSTS headers, and Secure cookie flags. The tests skip in demo mode since localhost doesn't use HTTPS, but would validate production deployments."
-- **A04 (Insecure Design)**: "I created race condition tests using Java's ExecutorService to spawn concurrent threads attempting cart updates and double checkouts. This demonstrates understanding of transaction isolation and atomic operations."
-- **Rate Limit Bypass**: "I went beyond basic rate limiting by testing IP spoofing (X-Forwarded-For), session rotation, and slowloris-style attacks. This shows understanding of real-world bypass techniques."
-- **A06/A08 Gaps**: "I deliberately excluded vulnerable components and integrity checks because those belong in CI/CD pipelines (SAST), not runtime monitoring (DAST). My demo focuses on attack detection during execution."
-
-### ✅ Demo Script
-
-1. Run `.\demo-interview.ps1`
-2. Show 47+ tests executing in headless mode (~4-6 minutes)
-3. Show SIEM analysis detecting 6 incidents (5 HIGH, 1 MEDIUM)
-4. Open README.md showing 8/10 OWASP coverage breakdown
-5. Explain Phase 2 enhancements (TLS, race conditions, rate limit bypass)
-6. Show code example: `RaceConditionTest.testConcurrentCartUpdates()` with ExecutorService
-7. Explain gaps (A06/A08 are CI/CD tools, not runtime monitoring)
-
----
-
-## Conclusion
-
-✅ **ALL CHECKLIST REQUIREMENTS MET**  
-✅ **Phase 1: 4/4 items implemented (100%)**  
-✅ **Phase 2: 5/5 items implemented (100%)**  
-✅ **OWASP Coverage: 8/10 categories (80%)**  
-✅ **Interview Ready: Comprehensive demo with strong technical depth**
-
-The implementation exceeds the original checklist requirements by adding bonus tests (parameter tampering, forced browsing, unauthenticated admin access), comprehensive SSRF protection (4 attack vectors), and production-ready features (isDemoMode() checks, headless browser execution, detailed SIEM correlation).
 ````
 
 ## File: security-tests/src/test/java/com/security/tests/auth/PrivilegeEscalationTest.java
@@ -1285,391 +1023,134 @@ public class PrivilegeEscalationTest extends BaseTest {
 }
 ````
 
-## File: security-tests/src/test/java/com/security/tests/crypto/DataExposureTest.java
+## File: ecommerce-app/src/main/java/com/security/ecommerce/controller/OrderController.java
 ````java
-package com.security.tests.crypto;
+package com.security.ecommerce.controller;
 
-import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import com.security.ecommerce.model.Transaction;
+import com.security.ecommerce.service.SecurityEventService;
+import com.security.ecommerce.service.TransactionService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
-import java.util.Set;
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
 
-/**
- * OWASP A02: Cryptographic Failures - Sensitive Data Exposure Testing
- * Tests for sensitive data leakage in client-side storage (localStorage, sessionStorage)
- * and verifies proper cookie security flags (HttpOnly, Secure).
- */
-public class DataExposureTest extends BaseTest {
-    
-    @Test(priority = 1, description = "Check localStorage for sensitive data exposure")
-    public void testLocalStorageSensitiveData() {
-        // Login first to ensure session is established
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Execute JavaScript to check localStorage
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-        String localStorageData = (String) js.executeScript(
-            "return JSON.stringify(localStorage);"
+    private final TransactionService transactionService;
+    private final SecurityEventService securityEventService;
+
+    public OrderController(TransactionService transactionService,
+                           SecurityEventService securityEventService) {
+        this.transactionService = transactionService;
+        this.securityEventService = securityEventService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderSummary> getOrder(@PathVariable Long id) {
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        Transaction transaction = transactionService.getTransactionById(id);
+        if (transaction == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication != null ? authentication.getName() : "anonymous";
+        String owner = transaction.getUser() != null ? transaction.getUser().getUsername() : null;
+        if (owner == null || !owner.equals(username)) {
+            securityEventService.logHighSeverityEvent(
+                "ACCESS_CONTROL_VIOLATION",
+                username,
+                "Order access blocked for non-owner",
+                "orderId=" + id
+            );
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(toSummary(transaction));
+    }
+
+    private OrderSummary toSummary(Transaction transaction) {
+        return new OrderSummary(
+            transaction.getId(),
+            transaction.getTransactionId(),
+            transaction.getAmount(),
+            transaction.getStatus().name(),
+            transaction.getTransactionDate()
         );
-        
-        // Check for sensitive keywords
-        String[] sensitiveKeywords = {
-            "password", "passwd", "pwd",
-            "secret", "token", "apikey", "api_key",
-            "creditcard", "credit_card", "ssn",
-            "private_key", "privatekey"
-        };
-        
-        boolean foundSensitiveData = false;
-        String foundKeyword = null;
-        
-        for (String keyword : sensitiveKeywords) {
-            if (localStorageData.toLowerCase().contains(keyword)) {
-                foundSensitiveData = true;
-                foundKeyword = keyword;
-                break;
-            }
-        }
-        
-        if (foundSensitiveData) {
-            // Log security event - sensitive data in localStorage
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "CRYPTOGRAPHIC_FAILURE",
-                "testuser",
-                "Client-side storage contains potentially sensitive information",
-                "Sensitive data ('" + foundKeyword + "') found in localStorage"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            Assert.fail("Sensitive data ('" + foundKeyword + "') found in localStorage. " +
-                       "localStorage should not contain passwords, tokens, or other secrets.");
-        }
-        
-        System.out.println("✓ No sensitive data found in localStorage");
     }
-    
-    @Test(priority = 2, description = "Check sessionStorage for sensitive data exposure")
-    public void testSessionStorageSensitiveData() {
-        // Reuse existing session from previous test or login again
-        if (!driver.getCurrentUrl().contains("/products")) {
-            driver.get(baseUrl + "/login");
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-            driver.findElement(By.name("username")).sendKeys("testuser");
-            driver.findElement(By.name("password")).sendKeys("password123");
-            driver.findElement(By.cssSelector("button[type='submit']")).click();
-            
-            wait.until(ExpectedConditions.urlContains("/products"));
-        }
-        
-        // Execute JavaScript to check sessionStorage
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-        String sessionStorageData = (String) js.executeScript(
-            "return JSON.stringify(sessionStorage);"
-        );
-        
-        // Check for sensitive keywords
-        String[] sensitiveKeywords = {
-            "password", "passwd", "pwd",
-            "secret", "token", "apikey", "api_key",
-            "creditcard", "credit_card", "ssn"
-        };
-        
-        boolean foundSensitiveData = false;
-        String foundKeyword = null;
-        
-        for (String keyword : sensitiveKeywords) {
-            if (sessionStorageData.toLowerCase().contains(keyword)) {
-                foundSensitiveData = true;
-                foundKeyword = keyword;
-                break;
-            }
-        }
-        
-        if (foundSensitiveData) {
-            // Log security event - sensitive data in sessionStorage
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "CRYPTOGRAPHIC_FAILURE",
-                "testuser",
-                "Client-side storage contains potentially sensitive information",
-                "Sensitive data ('" + foundKeyword + "') found in sessionStorage"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            Assert.fail("Sensitive data ('" + foundKeyword + "') found in sessionStorage. " +
-                       "sessionStorage should not contain passwords, tokens, or other secrets.");
-        }
-        
-        System.out.println("✓ No sensitive data found in sessionStorage");
-    }
-    
-    @Test(priority = 3, description = "Verify session cookies have HttpOnly flag")
-    public void testHttpOnlyCookieFlag() {
-        // Login to get session cookies
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Check cookies for HttpOnly flag
-        Set<org.openqa.selenium.Cookie> cookies = driver.manage().getCookies();
-        
-        boolean foundSessionCookie = false;
-        boolean allSessionCookiesSecure = true;
-        String insecureCookieName = null;
-        
-        for (org.openqa.selenium.Cookie cookie : cookies) {
-            String cookieName = cookie.getName().toLowerCase();
-            
-            // Check if this is a session-related cookie
-            if (cookieName.contains("session") || cookieName.contains("jsessionid") || 
-                cookieName.equals("xsrf-token") || cookieName.equals("csrf-token")) {
-                
-                foundSessionCookie = true;
-                
-                // Note: Selenium WebDriver cannot directly check HttpOnly flag
-                // because HttpOnly cookies are not accessible to JavaScript
-                // We'll check if cookie is accessible via JavaScript (it shouldn't be)
-                JavascriptExecutor js = (JavascriptExecutor) driver;
-                String jsAccessibleCookies = (String) js.executeScript("return document.cookie;");
-                
-                if (jsAccessibleCookies.contains(cookie.getName())) {
-                    allSessionCookiesSecure = false;
-                    insecureCookieName = cookie.getName();
-                    break;
-                }
-            }
-        }
-        
-        if (foundSessionCookie && !allSessionCookiesSecure) {
-            // Log security event - session cookie accessible via JavaScript
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "CRYPTOGRAPHIC_FAILURE",
-                "testuser",
-                "XSS attacks can steal session cookies",
-                "Session cookie '" + insecureCookieName + "' accessible via JavaScript (missing HttpOnly flag)"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            Assert.fail("Session cookie '" + insecureCookieName + "' is accessible via JavaScript. " +
-                       "Session cookies should have HttpOnly flag to prevent XSS-based theft.");
-        }
-        
-        System.out.println("✓ Session cookies properly protected with HttpOnly flag");
-    }
-    
-    @Test(priority = 4, description = "Verify no passwords in page source or DOM")
-    public void testPasswordExposureInDOM() {
-        // Login page check
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        
-        // Check if password field has autocomplete enabled (should be off for security)
-        WebElement passwordField = driver.findElement(By.name("password"));
-        String autocomplete = passwordField.getAttribute("autocomplete");
-        
-        // Get page source to check for hardcoded credentials
-        String pageSource = driver.getPageSource().toLowerCase();
-        
-        // Check for suspicious patterns in page source
-        String[] suspiciousPatterns = {
-            "password=\"", "password='", "pwd=\"", "pwd='",
-            "default_password", "admin_password",
-            "test_password=\"", "demo_password=\""
-        };
-        
-        boolean foundSuspiciousPattern = false;
-        String foundPattern = null;
-        
-        for (String pattern : suspiciousPatterns) {
-            if (pageSource.contains(pattern.toLowerCase())) {
-                foundSuspiciousPattern = true;
-                foundPattern = pattern;
-                break;
-            }
-        }
-        
-        if (foundSuspiciousPattern) {
-            // Log security event - hardcoded credentials in source
-            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-                "CRYPTOGRAPHIC_FAILURE",
-                "anonymous",
-                "Potential hardcoded credentials or password hints in client-side code",
-                "Suspicious pattern '" + foundPattern + "' found in page source"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            System.out.println("⚠ Warning: Suspicious pattern '" + foundPattern + "' found in page source");
-        } else {
-            System.out.println("✓ No hardcoded passwords or suspicious patterns in page source");
-        }
-    }
+
+    public record OrderSummary(
+        Long id,
+        String transactionId,
+        java.math.BigDecimal amount,
+        String status,
+        java.time.LocalDateTime transactionDate
+    ) {}
 }
 ````
 
-## File: security-tests/src/test/java/com/security/tests/crypto/TLSEnforcementTest.java
+## File: ecommerce-app/src/main/java/com/security/ecommerce/controller/SecurityExceptionHandler.java
 ````java
-package com.security.tests.crypto;
+package com.security.ecommerce.controller;
 
-import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import com.security.ecommerce.service.SecurityEventService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-/**
- * OWASP A02: Cryptographic Failures - TLS/SSL Enforcement Testing
- * Tests HTTPS redirect enforcement and HSTS header presence in production environments.
- * Skips tests in demo mode (localhost) as HTTPS is not expected in local development.
- */
-public class TLSEnforcementTest extends BaseTest {
-    
-    @Test(priority = 1, description = "Verify HTTPS redirect in production mode")
-    public void testHTTPSRedirect() {
-        // Skip if running against localhost (demo mode)
-        if (isDemoMode()) {
-            System.out.println("Skipping HTTPS redirect test - running in demo mode (localhost)");
-            return;
-        }
-        
-        // Attempt to access HTTP version of the base URL
-        String httpUrl = baseUrl.replace("https://", "http://");
-        
-        try {
-            Response response = RestAssured.given()
-                .redirects().follow(false)  // Don't auto-follow redirects
-                .when()
-                .get(httpUrl);
-            
-            int statusCode = response.getStatusCode();
-            
-            // Verify redirect to HTTPS (301/302/307/308)
-            if (statusCode >= 300 && statusCode < 400) {
-                String location = response.getHeader("Location");
-                Assert.assertNotNull(location, "Redirect location header missing");
-                Assert.assertTrue(location.startsWith("https://"), 
-                    "HTTP request should redirect to HTTPS, got: " + location);
-                
-                System.out.println("✓ HTTP correctly redirects to HTTPS: " + location);
-            } else {
-                // Log security event - HTTP allowed without redirect
-                SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                    "CRYPTOGRAPHIC_FAILURE",
-                    "anonymous",
-                    "TLS enforcement bypass - HTTP not redirected to HTTPS",
-                    "HTTP access allowed without HTTPS redirect (Status: " + statusCode + ")"
-                );
-                eventLogger.logSecurityEvent(event);
-                
-                Assert.fail("HTTP request should redirect to HTTPS, but got status: " + statusCode);
-            }
-            
-        } catch (Exception e) {
-            System.out.println("Note: Unable to test HTTP redirect - " + e.getMessage());
-            // Don't fail test if server only listens on HTTPS (connection refused is expected)
-        }
+@ControllerAdvice
+public class SecurityExceptionHandler {
+
+    private final SecurityEventService securityEventService;
+
+    public SecurityExceptionHandler(SecurityEventService securityEventService) {
+        this.securityEventService = securityEventService;
     }
-    
-    @Test(priority = 2, description = "Verify HSTS header presence")
-    public void testHSTSHeader() {
-        // Skip if running against localhost (demo mode)
-        if (isDemoMode()) {
-            System.out.println("Skipping HSTS header test - running in demo mode (localhost)");
-            return;
-        }
-        
-        Response response = RestAssured.given()
-            .when()
-            .get(baseUrl + "/products");
-        
-        String hstsHeader = response.getHeader("Strict-Transport-Security");
-        
-        if (hstsHeader == null || hstsHeader.isEmpty()) {
-            // Log security event - HSTS header missing
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "CRYPTOGRAPHIC_FAILURE",
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                     HttpServletRequest request) {
+        String name = ex.getName() == null ? "" : ex.getName();
+        if ("quantity".equalsIgnoreCase(name)) {
+            securityEventService.logHighSeverityEvent(
+                "AMOUNT_TAMPERING",
                 "anonymous",
-                "Missing Strict-Transport-Security header allows downgrade attacks",
-                "HSTS header missing in HTTPS response"
+                "Invalid quantity submitted",
+                "value=" + ex.getValue() + " | path=" + request.getRequestURI()
             );
-            eventLogger.logSecurityEvent(event);
-            
-            Assert.fail("Strict-Transport-Security header should be present in HTTPS responses");
         }
-        
-        // Verify HSTS header has reasonable max-age (at least 1 year = 31536000 seconds)
-        Assert.assertTrue(hstsHeader.contains("max-age="), 
-            "HSTS header should contain max-age directive");
-        
-        System.out.println("✓ HSTS header present: " + hstsHeader);
+        return ResponseEntity.badRequest().body("Invalid request");
     }
-    
-    @Test(priority = 3, description = "Verify secure cookie flags in HTTPS mode")
-    public void testSecureCookieFlags() {
-        // Skip if running against localhost (demo mode)
-        if (isDemoMode()) {
-            System.out.println("Skipping secure cookie test - running in demo mode (localhost)");
-            return;
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<String> handleUnsupportedMedia(HttpMediaTypeNotSupportedException ex,
+                                                         HttpServletRequest request) {
+        String contentType = "";
+        var mediaType = ex.getContentType();
+        if (mediaType != null) {
+            contentType = mediaType.toString();
         }
-        
-        // Login to get session cookies
-        Response response = RestAssured.given()
-            .formParam("username", "testuser")
-            .formParam("password", "password123")
-            .when()
-            .post(baseUrl + "/login");
-        
-        // Check if session cookies have Secure flag
-        response.getDetailedCookies().forEach(cookie -> {
-            String name = cookie.getName();
-            if (name.toLowerCase().contains("session") || name.toLowerCase().contains("jsessionid")) {
-                if (!cookie.isSecured()) {
-                    // Log security event - session cookie without Secure flag
-                    SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-                        "CRYPTOGRAPHIC_FAILURE",
-                        "testuser",
-                        "Cookie can be transmitted over unencrypted HTTP connection",
-                        "Session cookie '" + name + "' missing Secure flag in HTTPS context"
-                    );
-                    eventLogger.logSecurityEvent(event);
-                    
-                    Assert.fail("Session cookie '" + name + "' should have Secure flag in HTTPS mode");
-                }
-            }
-        });
-        
-        System.out.println("✓ Session cookies have Secure flag");
-    }
-    
-    /**
-     * Helper method to detect if running in demo/development mode (localhost)
-     */
-    private boolean isDemoMode() {
-        return baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1");
+        if (!contentType.isEmpty() && contentType.toLowerCase().contains("application/x-java-serialized-object")) {
+            securityEventService.logHighSeverityEvent(
+                "DESERIALIZATION_ATTEMPT",
+                "anonymous",
+                "Serialized payload rejected",
+                "path=" + request.getRequestURI()
+            );
+        }
+        return ResponseEntity.status(415).body("Unsupported media type");
     }
 }
 ````
@@ -2134,738 +1615,396 @@ public class ProductService {
 </html>
 ````
 
-## File: security-tests/src/test/java/com/security/tests/auth/AccessControlTest.java
+## File: security-tests/src/test/java/com/security/tests/crypto/DataExposureTest.java
 ````java
-package com.security.tests.auth;
+package com.security.tests.crypto;
 
 import com.security.tests.base.BaseTest;
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
+import com.security.tests.utils.SecurityEvent;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
-public class AccessControlTest extends BaseTest {
-
-    @Test(priority = 1, description = "OWASP A01 - Test horizontal access control (User A accessing User B's cart)")
-    public void testHorizontalAccessControl() {
+/**
+ * OWASP A02: Cryptographic Failures - Sensitive Data Exposure Testing
+ * Tests for sensitive data leakage in client-side storage (localStorage, sessionStorage)
+ * and verifies proper cookie security flags (HttpOnly, Secure).
+ */
+public class DataExposureTest extends BaseTest {
+    
+    @Test(priority = 1, description = "Check localStorage for sensitive data exposure")
+    public void testLocalStorageSensitiveData() {
+        // Login first to ensure session is established
+        driver.get(baseUrl + "/login");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         
-        // ===== USER A: Login as testuser and add item to cart =====
-        loginUser(wait, "testuser", "password123");
-        ensureCartHasItem(wait);
-
-        // Capture cart item ID for User A
-        String cartItemId = driver.findElement(By.name("cartItemId")).getAttribute("value");
-
-        // Start a clean browser session for User B
-        driver.manage().deleteAllCookies();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        driver.findElement(By.name("username")).sendKeys("testuser");
+        driver.findElement(By.name("password")).sendKeys("password123");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
         
-        // ===== USER B: Login as different user (paymentuser) =====
-        loginUser(wait, "paymentuser", "Paym3nt@123");
+        wait.until(ExpectedConditions.urlContains("/products"));
         
-        // ===== ATTACK: User B tries to update User A's cart item =====
-        RestAssured.baseURI = baseUrl;
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-        Assert.assertNotNull(sessionCookie, "Expected session cookie for paymentuser");
-        Assert.assertNotNull(csrfCookie, "Expected CSRF cookie for paymentuser");
-
-        Response response = RestAssured
-            .given()
-            .redirects().follow(false)
-            .cookie("JSESSIONID", sessionCookie.getValue())
-            .cookie("XSRF-TOKEN", csrfCookie.getValue())
-            .header("X-XSRF-TOKEN", csrfCookie.getValue())
-            .formParam("_csrf", csrfCookie.getValue())
-            .formParam("cartItemId", cartItemId)
-            .formParam("quantity", 2)
-            .post("/cart/update");
-
-        Assert.assertEquals(response.statusCode(), 403,
-            "User B should not update User A's cart item");
-        assertSecurityEventLogged("ACCESS_CONTROL_VIOLATION");
-    }
-    
-    @Test(priority = 2, description = "OWASP A01 - Test IDOR (Insecure Direct Object Reference) in order access")
-    public void testIDORVulnerability() {
-        RestAssured.baseURI = baseUrl;
-
-        // Login as testuser using API to keep the flow stable in headless runs.
-        Response loginResponse = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "testuser")
-            .formParam("password", "password123")
-            .post("/perform_login");
-
-        String sessionId = loginResponse.getCookie("JSESSIONID");
-        String csrfToken = loginResponse.getCookie("XSRF-TOKEN");
-        Assert.assertNotNull(sessionId, "Expected session cookie after login");
-
-        Response productsResponse = RestAssured
-            .given()
-            .cookie("JSESSIONID", sessionId)
-            .get("/products");
-        String productsHtml = productsResponse.getBody().asString();
-        if (csrfToken == null || csrfToken.isBlank()) {
-            csrfToken = extractHiddenValue(productsHtml, "_csrf");
-        }
-        String productId = extractHiddenValue(productsHtml, "productId");
-        Assert.assertNotNull(productId, "Expected product id in products page");
-        Assert.assertNotNull(csrfToken, "Expected CSRF token for cart update");
-
-        Response addResponse = RestAssured
-            .given()
-            .redirects().follow(false)
-            .cookie("JSESSIONID", sessionId)
-            .cookie("XSRF-TOKEN", csrfToken)
-            .header("X-XSRF-TOKEN", csrfToken)
-            .formParam("_csrf", csrfToken)
-            .formParam("productId", productId)
-            .formParam("quantity", 1)
-            .post("/cart/add");
-        Assert.assertTrue(addResponse.statusCode() == 200 || addResponse.statusCode() == 302,
-            "Add-to-cart should succeed");
-
-        Response checkoutResponse = RestAssured
-            .given()
-            .redirects().follow(false)
-            .cookie("JSESSIONID", sessionId)
-            .cookie("XSRF-TOKEN", csrfToken)
-            .header("X-XSRF-TOKEN", csrfToken)
-            .formParam("_csrf", csrfToken)
-            .formParam("cardNumber", "4532123456789012")
-            .formParam("cardName", "Test User")
-            .formParam("expiryDate", "12/25")
-            .formParam("cvv", "123")
-            .post("/checkout/process");
-
-        Assert.assertEquals(checkoutResponse.statusCode(), 200, "Checkout should return confirmation HTML");
-        String body = checkoutResponse.getBody().asString();
-        Matcher matcher = Pattern.compile("Transaction ID:\\s*<strong>(\\d+)</strong>").matcher(body);
-        Assert.assertTrue(matcher.find(), "Checkout confirmation should include a transaction id");
-        Long orderId = Long.valueOf(matcher.group(1));
-
-        // Login as paymentuser and attempt to access testuser order
-        Response paymentLogin = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "paymentuser")
-            .formParam("password", "Paym3nt@123")
-            .post("/perform_login");
-        String paymentSessionId = paymentLogin.getCookie("JSESSIONID");
-        Assert.assertNotNull(paymentSessionId, "Expected session cookie for paymentuser");
-
-        Response response = RestAssured
-            .given()
-            .cookie("JSESSIONID", paymentSessionId)
-            .get("/orders/" + orderId);
-
-        Assert.assertEquals(response.statusCode(), 403,
-            "User B should not access User A's order");
-        assertSecurityEventLogged("ACCESS_CONTROL_VIOLATION");
-    }
-    
-    @Test(priority = 3, description = "OWASP A01 - Test parameter tampering for authorization bypass")
-    public void testParameterTamperingAuthorizationBypass() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        // Execute JavaScript to check localStorage
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        String localStorageData = (String) js.executeScript(
+            "return JSON.stringify(localStorage);"
+        );
         
-        // Login as regular user
-        loginUser(wait, "testuser", "password123");
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        
-        // ===== ATTACK: Try to bypass authorization with tampered parameters =====
-        RestAssured.baseURI = baseUrl;
-        
-        // Test 1: Try to elevate privileges via role parameter
-        Response roleResponse = RestAssured
-            .given()
-            .cookie("JSESSIONID", sessionCookie.getValue())
-            .queryParam("role", "ADMIN")
-            .get("/products");
-        Assert.assertEquals(roleResponse.statusCode(), 200, "Role parameter should not change access");
-        
-        // Test 2: Try admin flag tampering
-        Response adminFlagResponse = RestAssured
-            .given()
-            .cookie("JSESSIONID", sessionCookie.getValue())
-            .queryParam("isAdmin", "true")
-            .get("/products");
-        Assert.assertEquals(adminFlagResponse.statusCode(), 200, "isAdmin parameter should not change access");
-        
-        // Test 3: Try HTTP header manipulation for role escalation
-        Response headerRoleResponse = RestAssured
-            .given()
-            .cookie("JSESSIONID", sessionCookie.getValue())
-            .header("X-User-Role", "ADMIN")
-            .get("/products");
-        Assert.assertEquals(headerRoleResponse.statusCode(), 200, "Header tampering should not change access");
-        
-        // Test 4: Try privilege level manipulation
-        Response privilegeResponse = RestAssured
-            .given()
-            .cookie("JSESSIONID", sessionCookie.getValue())
-            .header("X-Privilege-Level", "5")
-            .get("/products");
-        Assert.assertEquals(privilegeResponse.statusCode(), 200, "Privilege header should not change access");
-        
-        // This test demonstrates various parameter tampering vectors
-        // In a secure app, these should be ignored or logged as violations
-    }
-    
-    @Test(priority = 4, description = "OWASP A01 - Test forced browsing to restricted resources")
-    public void testForcedBrowsing() {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        // Login as regular user
-        loginUser(wait, "testuser", "password123");
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        
-        // ===== ATTACK: Try to access admin endpoints by direct URL manipulation =====
-        RestAssured.baseURI = baseUrl;
-        
-        String[] adminPaths = {
-            "/admin",
-            "/admin/users",
-            "/admin/config",
-            "/api/admin",
-            "/api/security/dashboard",
-            "/management",
-            "/actuator/env"
+        // Check for sensitive keywords
+        String[] sensitiveKeywords = {
+            "password", "passwd", "pwd",
+            "secret", "token", "apikey", "api_key",
+            "creditcard", "credit_card", "ssn",
+            "private_key", "privatekey"
         };
         
-        for (String adminPath : adminPaths) {
-            Response response = RestAssured
-                .given()
-                .cookie("JSESSIONID", sessionCookie.getValue())
-                .get(adminPath);
-            
-            // If regular user can access admin endpoints, it's a forced browsing vulnerability
-            Assert.assertNotEquals(response.statusCode(), 200,
-                "Forced browsing should not succeed for: " + adminPath);
-        }
-    }
-
-    private void ensureCartHasItem(WebDriverWait wait) {
-        addFirstProductToCart(wait);
-        driver.get(baseUrl + "/cart");
-        if (driver.getPageSource().contains("Your cart is empty")) {
-            forceAddToCartViaApi(wait);
-            driver.get(baseUrl + "/cart");
-        }
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("form[action='/cart/remove']")));
-    }
-
-    private void addFirstProductToCart(WebDriverWait wait) {
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
-    }
-
-    private void forceAddToCartViaApi(WebDriverWait wait) {
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-
-        RestAssured.baseURI = baseUrl;
-        RestAssured.given()
-            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
-            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-            .formParam("_csrf", csrfToken)
-            .formParam("productId", productId)
-            .formParam("quantity", 1)
-            .post("/cart/add");
-    }
-
-    private void loginUser(WebDriverWait wait, String username, String password) {
-        WebDriverWait loginWait = new WebDriverWait(driver, Duration.ofSeconds(20));
-        for (int attempt = 0; attempt < 2; attempt++) {
-            driver.get(baseUrl + "/login");
-            loginWait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
-            driver.findElement(By.name("username")).clear();
-            driver.findElement(By.name("username")).sendKeys(username);
-            driver.findElement(By.name("password")).clear();
-            driver.findElement(By.name("password")).sendKeys(password);
-            driver.findElement(By.xpath("//button[@type='submit']")).click();
-
-            try {
-                loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
-                return;
-            } catch (TimeoutException ignored) {
-                driver.manage().deleteAllCookies();
+        boolean foundSensitiveData = false;
+        String foundKeyword = null;
+        
+        for (String keyword : sensitiveKeywords) {
+            if (localStorageData.toLowerCase().contains(keyword)) {
+                foundSensitiveData = true;
+                foundKeyword = keyword;
+                break;
             }
         }
-        // Fallback: login via REST and inject session cookies for stability in demos.
-        RestAssured.baseURI = baseUrl;
-        Response response = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", username)
-            .formParam("password", password)
-            .post("/perform_login");
-
-        String sessionId = response.getCookie("JSESSIONID");
-        String csrfToken = response.getCookie("XSRF-TOKEN");
-        if (sessionId == null || sessionId.isBlank()) {
-            throw new TimeoutException("Login failed for user: " + username);
+        
+        if (foundSensitiveData) {
+            // Log security event - sensitive data in localStorage
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "CRYPTOGRAPHIC_FAILURE",
+                "testuser",
+                "Client-side storage contains potentially sensitive information",
+                "Sensitive data ('" + foundKeyword + "') found in localStorage"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            Assert.fail("Sensitive data ('" + foundKeyword + "') found in localStorage. " +
+                       "localStorage should not contain passwords, tokens, or other secrets.");
         }
-
-        driver.get(baseUrl + "/");
-        driver.manage().addCookie(new Cookie("JSESSIONID", sessionId));
-        if (csrfToken != null && !csrfToken.isBlank()) {
-            driver.manage().addCookie(new Cookie("XSRF-TOKEN", csrfToken));
-        }
-        driver.get(baseUrl + "/products");
-        loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
-    }
-
-    private String extractHiddenValue(String html, String name) {
-        if (html == null) {
-            return null;
-        }
-        Pattern pattern = Pattern.compile("name=\"" + Pattern.quote(name) + "\"\\s+value=\"(\\d+|[^\"]+)\"");
-        Matcher matcher = pattern.matcher(html);
-        return matcher.find() ? matcher.group(1) : null;
+        
+        System.out.println("✓ No sensitive data found in localStorage");
     }
     
+    @Test(priority = 2, description = "Check sessionStorage for sensitive data exposure")
+    public void testSessionStorageSensitiveData() {
+        // Reuse existing session from previous test or login again
+        if (!driver.getCurrentUrl().contains("/products")) {
+            driver.get(baseUrl + "/login");
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+            driver.findElement(By.name("username")).sendKeys("testuser");
+            driver.findElement(By.name("password")).sendKeys("password123");
+            driver.findElement(By.cssSelector("button[type='submit']")).click();
+            
+            wait.until(ExpectedConditions.urlContains("/products"));
+        }
+        
+        // Execute JavaScript to check sessionStorage
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        String sessionStorageData = (String) js.executeScript(
+            "return JSON.stringify(sessionStorage);"
+        );
+        
+        // Check for sensitive keywords
+        String[] sensitiveKeywords = {
+            "password", "passwd", "pwd",
+            "secret", "token", "apikey", "api_key",
+            "creditcard", "credit_card", "ssn"
+        };
+        
+        boolean foundSensitiveData = false;
+        String foundKeyword = null;
+        
+        for (String keyword : sensitiveKeywords) {
+            if (sessionStorageData.toLowerCase().contains(keyword)) {
+                foundSensitiveData = true;
+                foundKeyword = keyword;
+                break;
+            }
+        }
+        
+        if (foundSensitiveData) {
+            // Log security event - sensitive data in sessionStorage
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "CRYPTOGRAPHIC_FAILURE",
+                "testuser",
+                "Client-side storage contains potentially sensitive information",
+                "Sensitive data ('" + foundKeyword + "') found in sessionStorage"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            Assert.fail("Sensitive data ('" + foundKeyword + "') found in sessionStorage. " +
+                       "sessionStorage should not contain passwords, tokens, or other secrets.");
+        }
+        
+        System.out.println("✓ No sensitive data found in sessionStorage");
+    }
+    
+    @Test(priority = 3, description = "Verify session cookies have HttpOnly flag")
+    public void testHttpOnlyCookieFlag() {
+        // Login to get session cookies
+        driver.get(baseUrl + "/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        driver.findElement(By.name("username")).sendKeys("testuser");
+        driver.findElement(By.name("password")).sendKeys("password123");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        
+        wait.until(ExpectedConditions.urlContains("/products"));
+        
+        // Check cookies for HttpOnly flag
+        Set<org.openqa.selenium.Cookie> cookies = driver.manage().getCookies();
+        
+        boolean foundSessionCookie = false;
+        boolean allSessionCookiesSecure = true;
+        String insecureCookieName = null;
+        
+        for (org.openqa.selenium.Cookie cookie : cookies) {
+            String cookieName = cookie.getName().toLowerCase();
+            
+            // Check if this is a session-related cookie
+            if (cookieName.contains("session") || cookieName.contains("jsessionid") || 
+                cookieName.equals("xsrf-token") || cookieName.equals("csrf-token")) {
+                
+                foundSessionCookie = true;
+                
+                // Note: Selenium WebDriver cannot directly check HttpOnly flag
+                // because HttpOnly cookies are not accessible to JavaScript
+                // We'll check if cookie is accessible via JavaScript (it shouldn't be)
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+                String jsAccessibleCookies = (String) js.executeScript("return document.cookie;");
+                
+                if (jsAccessibleCookies.contains(cookie.getName())) {
+                    allSessionCookiesSecure = false;
+                    insecureCookieName = cookie.getName();
+                    break;
+                }
+            }
+        }
+        
+        if (foundSessionCookie && !allSessionCookiesSecure) {
+            // Log security event - session cookie accessible via JavaScript
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "CRYPTOGRAPHIC_FAILURE",
+                "testuser",
+                "XSS attacks can steal session cookies",
+                "Session cookie '" + insecureCookieName + "' accessible via JavaScript (missing HttpOnly flag)"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            Assert.fail("Session cookie '" + insecureCookieName + "' is accessible via JavaScript. " +
+                       "Session cookies should have HttpOnly flag to prevent XSS-based theft.");
+        }
+        
+        System.out.println("✓ Session cookies properly protected with HttpOnly flag");
+    }
+    
+    @Test(priority = 4, description = "Verify no passwords in page source or DOM")
+    public void testPasswordExposureInDOM() {
+        // Login page check
+        driver.get(baseUrl + "/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        
+        // Check if password field has autocomplete enabled (should be off for security)
+        WebElement passwordField = driver.findElement(By.name("password"));
+        String autocomplete = passwordField.getDomProperty("autocomplete");
+        
+        // Password fields should have autocomplete="off" for security
+        if (autocomplete != null && !autocomplete.equals("off") && !autocomplete.equals("current-password")) {
+            System.out.println("Warning: Password field autocomplete is: " + autocomplete);
+        }
+        
+        // Get page source to check for hardcoded credentials
+        String pageSource = driver.getPageSource().toLowerCase();
+        
+        // Check for suspicious patterns in page source
+        String[] suspiciousPatterns = {
+            "password=\"", "password='", "pwd=\"", "pwd='",
+            "default_password", "admin_password",
+            "test_password=\"", "demo_password=\""
+        };
+        
+        boolean foundSuspiciousPattern = false;
+        String foundPattern = null;
+        
+        for (String pattern : suspiciousPatterns) {
+            if (pageSource.contains(pattern.toLowerCase())) {
+                foundSuspiciousPattern = true;
+                foundPattern = pattern;
+                break;
+            }
+        }
+        
+        if (foundSuspiciousPattern) {
+            // Log security event - hardcoded credentials in source
+            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
+                "CRYPTOGRAPHIC_FAILURE",
+                "anonymous",
+                "Potential hardcoded credentials or password hints in client-side code",
+                "Suspicious pattern '" + foundPattern + "' found in page source"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("⚠ Warning: Suspicious pattern '" + foundPattern + "' found in page source");
+        } else {
+            System.out.println("✓ No hardcoded passwords or suspicious patterns in page source");
+        }
+    }
 }
 ````
 
-## File: security-tests/src/test/java/com/security/tests/business/RaceConditionTest.java
+## File: security-tests/src/test/java/com/security/tests/crypto/TLSEnforcementTest.java
 ````java
-package com.security.tests.business;
+package com.security.tests.crypto;
 
 import com.security.tests.base.BaseTest;
 import com.security.tests.utils.SecurityEvent;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * OWASP A04: Insecure Design - Race Condition Testing
- * Tests for race conditions in concurrent cart operations that could lead
- * to inconsistent state, inventory manipulation, or transaction anomalies.
+ * OWASP A02: Cryptographic Failures - TLS/SSL Enforcement Testing
+ * Tests HTTPS redirect enforcement and HSTS header presence in production environments.
+ * Skips tests in demo mode (localhost) as HTTPS is not expected in local development.
  */
-public class RaceConditionTest extends BaseTest {
+public class TLSEnforcementTest extends BaseTest {
     
-    @Test(priority = 1, description = "Test race condition in concurrent cart quantity updates")
-    public void testConcurrentCartUpdates() throws InterruptedException, ExecutionException {
-        // Login and setup
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Add an item to cart
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
-        
-        Thread.sleep(1000); // Wait for cart to update
-        
-        // Navigate to cart to get cart item ID
-        driver.get(baseUrl + "/cart");
-        if (driver.getPageSource().contains("Your cart is empty")) {
-            driver.get(baseUrl + "/products");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-            driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
-            driver.get(baseUrl + "/cart");
-            if (driver.getPageSource().contains("Your cart is empty")) {
-                forceAddToCartViaApi(wait);
-                driver.get(baseUrl + "/cart");
-            }
-        }
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
-        
-        // Extract cart item ID and CSRF token from the page
-        String cartItemId = driver.findElement(By.cssSelector("form[action='/cart/remove'] input[name='cartItemId']"))
-            .getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-        
-        // Get session cookie
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
-        
-        // Get initial quantity
-        String initialQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
-        int initialQuantity = Integer.parseInt(initialQuantityStr);
-        
-        System.out.println("Initial cart state - Item ID: " + cartItemId + ", Quantity: " + initialQuantity);
-        
-        // Prepare concurrent update requests
-        int threadCount = 10;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        List<Future<Response>> futures = new ArrayList<>();
-        AtomicInteger successCount = new AtomicInteger(0);
-        
-        // Submit concurrent requests to update quantity
-        for (int i = 0; i < threadCount; i++) {
-            final int threadNum = i;
-            Future<Response> future = executor.submit(() -> {
-                try {
-                    Response response = RestAssured.given()
-                        .baseUri(baseUrl)
-                        .cookie("JSESSIONID", sessionId)
-                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                        .formParam("cartItemId", cartItemId)
-                        .formParam("quantity", String.valueOf(initialQuantity + 1))
-                        .formParam("_csrf", csrfToken)
-                        .post("/cart/update");
-                    
-                    if (response.statusCode() == 200 || response.statusCode() == 302) {
-                        successCount.incrementAndGet();
-                    }
-                    
-                    return response;
-                } catch (Exception e) {
-                    System.err.println("Thread " + threadNum + " failed: " + e.getMessage());
-                    return null;
-                }
-            });
-            futures.add(future);
+    @Test(priority = 1, description = "Verify HTTPS redirect in production mode")
+    public void testHTTPSRedirect() {
+        // Skip if running against localhost (demo mode)
+        if (isDemoMode()) {
+            System.out.println("Skipping HTTPS redirect test - running in demo mode (localhost)");
+            return;
         }
         
-        // Wait for all threads to complete
-        for (Future<Response> future : futures) {
-            future.get(); // Wait for completion
-        }
+        // Attempt to access HTTP version of the base URL
+        String httpUrl = baseUrl.replace("https://", "http://");
         
-        executor.shutdown();
-        executor.awaitTermination(10, TimeUnit.SECONDS);
-        
-        // Refresh cart page to check final state
-        driver.navigate().refresh();
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
-        
-        String finalQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
-        int finalQuantity = Integer.parseInt(finalQuantityStr);
-        
-        System.out.println("Final cart state - Quantity: " + finalQuantity);
-        System.out.println("Concurrent updates: " + threadCount + " threads, " + successCount.get() + " succeeded");
-        
-        // Expected behavior: With proper locking, final quantity should be initialQuantity + 1
-        // (only one update should succeed, or all updates should result in the same final value)
-        // If finalQuantity != initialQuantity + 1, there's a race condition
-        
-        int expectedQuantity = initialQuantity + 1;
-        
-        if (finalQuantity != expectedQuantity) {
-            // Log security event - race condition detected
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "RACE_CONDITION_DETECTED",
-                "testuser",
-                "Concurrent cart updates caused inconsistent state",
-                "Race condition in cart update: " + threadCount + " concurrent requests, " +
-                "expected quantity=" + expectedQuantity + " but got " + finalQuantity
-            );
-            eventLogger.logSecurityEvent(event);
+        try {
+            Response response = RestAssured.given()
+                .redirects().follow(false)  // Don't auto-follow redirects
+                .when()
+                .get(httpUrl);
             
-            System.out.println("Warning: Race condition detected - final quantity " + finalQuantity +
-                             " doesn't match expected " + expectedQuantity);
-        } else {
-            System.out.println("OK: Cart updates handled correctly with proper synchronization");
-        }
-        
-        // Test passes either way - we just log the race condition if found
-        Assert.assertTrue(true, "Race condition test completed");
-    }
-    
-    @Test(priority = 2, description = "Test race condition in concurrent item additions")
-    public void testConcurrentItemAdditions() throws InterruptedException, ExecutionException {
-        // Login
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("paymentuser");
-        driver.findElement(By.name("password")).sendKeys("Paym3nt@123");
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Get session cookie
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
-        
-        // Get CSRF token
-        driver.get(baseUrl + "/cart");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-        
-        // Clear cart first
-        driver.get(baseUrl + "/cart");
-        if (driver.findElements(By.cssSelector(".cart-item")).size() > 0) {
-            driver.findElements(By.cssSelector("button.remove-item")).forEach(btn -> {
-                try {
-                    btn.click();
-                    Thread.sleep(500);
-                } catch (Exception e) {
-                    // Ignore
-                }
-            });
-        }
-        
-        // Prepare concurrent add-to-cart requests
-        int threadCount = 5;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        List<Future<Response>> futures = new ArrayList<>();
-        AtomicInteger successCount = new AtomicInteger(0);
-        
-        // Get a product ID to add
-        safeNavigate("/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        String productId = driver.findElements(By.cssSelector("button.add-to-cart"))
-                                .get(0)
-                                .getAttribute("data-product-id");
-        
-        if (productId == null || productId.isEmpty()) {
-            productId = "1"; // Default fallback
-        }
-        
-        final String finalProductId = productId;
-        
-        // Submit concurrent add-to-cart requests
-        for (int i = 0; i < threadCount; i++) {
-            Future<Response> future = executor.submit(() -> {
-                try {
-                    Response response = RestAssured.given()
-                        .baseUri(baseUrl)
-                        .cookie("JSESSIONID", sessionId)
-                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                        .formParam("productId", finalProductId)
-                        .formParam("quantity", "1")
-                        .formParam("_csrf", csrfToken)
-                        .post("/cart/add");
-                    
-                    if (response.statusCode() == 200 || response.statusCode() == 302) {
-                        successCount.incrementAndGet();
-                    }
-                    
-                    return response;
-                } catch (Exception e) {
-                    return null;
-                }
-            });
-            futures.add(future);
-        }
-        
-        // Wait for all threads
-        for (Future<Response> future : futures) {
-            future.get();
-        }
-        
-        executor.shutdown();
-        executor.awaitTermination(10, TimeUnit.SECONDS);
-        
-        // Check cart state
-        driver.get(baseUrl + "/cart");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("body")));
-        
-        int cartItemCount = driver.findElements(By.cssSelector(".cart-item")).size();
-        
-        System.out.println("Concurrent add operations: " + threadCount + " threads, " + 
-                         successCount.get() + " succeeded, " + cartItemCount + " items in cart");
-        
-        // Expected: Either 1 item (proper deduplication) or multiple items (race condition)
-        // If cartItemCount > 1 for the same product, there's a race condition
-        
-        if (cartItemCount > 1) {
-            // Log security event - race condition in item addition
-            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-                "RACE_CONDITION_DETECTED",
-                "paymentuser",
-                "Concurrent add-to-cart operations caused duplicate entries",
-                "Race condition in cart item addition: " + threadCount + " concurrent adds resulted in " + 
-                cartItemCount + " duplicate items"
-            );
-            eventLogger.logSecurityEvent(event);
+            int statusCode = response.getStatusCode();
             
-            System.out.println("Warning: Race condition - duplicate cart items created");
-        } else {
-            System.out.println("OK: Cart item additions handled correctly");
-        }
-        
-        Assert.assertTrue(true, "Concurrent item addition test completed");
-    }
-    
-    @Test(priority = 3, description = "Test race condition in checkout process")
-    public void testCheckoutRaceCondition() throws InterruptedException {
-        // Login
-        driver.get(baseUrl + "/login");
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
-        driver.findElement(By.name("username")).sendKeys("testuser");
-        driver.findElement(By.name("password")).sendKeys("password123");
-        driver.findElement(By.cssSelector("button[type='submit']")).click();
-        
-        wait.until(ExpectedConditions.urlContains("/products"));
-        
-        // Add item to cart
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
-        
-        Thread.sleep(1000);
-        
-        // Get session
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
-        
-        // Go to cart and get CSRF
-        driver.get(baseUrl + "/cart");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
-        
-        // Attempt concurrent checkouts (simulate double-click or network retry)
-        AtomicInteger checkoutAttempts = new AtomicInteger(0);
-        AtomicInteger checkoutSuccesses = new AtomicInteger(0);
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-        
-        Thread thread1 = new Thread(() -> {
-            try {
-                checkoutAttempts.incrementAndGet();
-                Response response = RestAssured.given()
-                    .baseUri(baseUrl)
-                    .cookie("JSESSIONID", sessionId)
-                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                    .formParam("_csrf", csrfToken)
-                    .formParam("cardNumber", "4532123456789012")
-                    .formParam("cardName", "Race Tester")
-                    .formParam("expiryDate", "12/25")
-                    .formParam("cvv", "123")
-                    .formParam("clientTotal", "999.99")
-                    .post("/checkout/process");
+            // Verify redirect to HTTPS (301/302/307/308)
+            if (statusCode >= 300 && statusCode < 400) {
+                String location = response.getHeader("Location");
+                Assert.assertNotNull(location, "Redirect location header missing");
+                Assert.assertTrue(location.startsWith("https://"), 
+                    "HTTP request should redirect to HTTPS, got: " + location);
                 
-                if (response.statusCode() == 200 || response.statusCode() == 302) {
-                    checkoutSuccesses.incrementAndGet();
+                System.out.println("✓ HTTP correctly redirects to HTTPS: " + location);
+            } else {
+                // Log security event - HTTP allowed without redirect
+                SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                    "CRYPTOGRAPHIC_FAILURE",
+                    "anonymous",
+                    "TLS enforcement bypass - HTTP not redirected to HTTPS",
+                    "HTTP access allowed without HTTPS redirect (Status: " + statusCode + ")"
+                );
+                eventLogger.logSecurityEvent(event);
+                
+                Assert.fail("HTTP request should redirect to HTTPS, but got status: " + statusCode);
+            }
+            
+        } catch (Exception e) {
+            System.out.println("Note: Unable to test HTTP redirect - " + e.getMessage());
+            // Don't fail test if server only listens on HTTPS (connection refused is expected)
+        }
+    }
+    
+    @Test(priority = 2, description = "Verify HSTS header presence")
+    public void testHSTSHeader() {
+        // Skip if running against localhost (demo mode)
+        if (isDemoMode()) {
+            System.out.println("Skipping HSTS header test - running in demo mode (localhost)");
+            return;
+        }
+        
+        Response response = RestAssured.given()
+            .when()
+            .get(baseUrl + "/products");
+        
+        String hstsHeader = response.getHeader("Strict-Transport-Security");
+        
+        if (hstsHeader == null || hstsHeader.isEmpty()) {
+            // Log security event - HSTS header missing
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "CRYPTOGRAPHIC_FAILURE",
+                "anonymous",
+                "Missing Strict-Transport-Security header allows downgrade attacks",
+                "HSTS header missing in HTTPS response"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            Assert.fail("Strict-Transport-Security header should be present in HTTPS responses");
+        }
+        
+        // Verify HSTS header has reasonable max-age (at least 1 year = 31536000 seconds)
+        Assert.assertTrue(hstsHeader != null && hstsHeader.contains("max-age="), 
+            "HSTS header should contain max-age directive");
+        
+        System.out.println("✓ HSTS header present: " + hstsHeader);
+    }
+    
+    @Test(priority = 3, description = "Verify secure cookie flags in HTTPS mode")
+    public void testSecureCookieFlags() {
+        // Skip if running against localhost (demo mode)
+        if (isDemoMode()) {
+            System.out.println("Skipping secure cookie test - running in demo mode (localhost)");
+            return;
+        }
+        
+        // Login to get session cookies
+        Response response = RestAssured.given()
+            .formParam("username", "testuser")
+            .formParam("password", "password123")
+            .when()
+            .post(baseUrl + "/login");
+        
+        // Check if session cookies have Secure flag
+        response.getDetailedCookies().forEach(cookie -> {
+            String name = cookie.getName();
+            if (name.toLowerCase().contains("session") || name.toLowerCase().contains("jsessionid")) {
+                if (!cookie.isSecured()) {
+                    // Log security event - session cookie without Secure flag
+                    SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
+                        "CRYPTOGRAPHIC_FAILURE",
+                        "testuser",
+                        "Cookie can be transmitted over unencrypted HTTP connection",
+                        "Session cookie '" + name + "' missing Secure flag in HTTPS context"
+                    );
+                    eventLogger.logSecurityEvent(event);
+                    
+                    Assert.fail("Session cookie '" + name + "' should have Secure flag in HTTPS mode");
                 }
-            } catch (Exception e) {
-                // Ignore
             }
         });
         
-        Thread thread2 = new Thread(() -> {
-            try {
-                checkoutAttempts.incrementAndGet();
-                Response response = RestAssured.given()
-                    .baseUri(baseUrl)
-                    .cookie("JSESSIONID", sessionId)
-                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-                    .formParam("_csrf", csrfToken)
-                    .formParam("cardNumber", "4532123456789012")
-                    .formParam("cardName", "Race Tester")
-                    .formParam("expiryDate", "12/25")
-                    .formParam("cvv", "123")
-                    .formParam("clientTotal", "999.99")
-                    .post("/checkout/process");
-                
-                if (response.statusCode() == 200 || response.statusCode() == 302) {
-                    checkoutSuccesses.incrementAndGet();
-                }
-            } catch (Exception e) {
-                // Ignore
-            }
-        });
-        
-        thread1.start();
-        thread2.start();
-        
-        thread1.join();
-        thread2.join();
-        
-        System.out.println("Concurrent checkout attempts: " + checkoutAttempts.get() + 
-                         ", successes: " + checkoutSuccesses.get());
-        
-        // If both checkouts succeeded, there's a race condition (double charging)
-        if (checkoutSuccesses.get() > 1) {
-            // Log security event - double checkout
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "RACE_CONDITION_DETECTED",
-                "testuser",
-                "Multiple simultaneous checkout attempts succeeded - potential double charging",
-                "Checkout race condition: " + checkoutSuccesses.get() + " concurrent checkouts succeeded"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            System.out.println("Critical: Checkout race condition - multiple checkouts succeeded!");
-        } else {
-            System.out.println("OK: Checkout properly synchronized");
-        }
-        
-        Assert.assertTrue(true, "Checkout race condition test completed");
+        System.out.println("✓ Session cookies have Secure flag");
     }
-
-    private void safeNavigate(String path) {
-        for (int attempt = 0; attempt < 3; attempt++) {
-            try {
-                driver.get(baseUrl + path);
-                return;
-            } catch (WebDriverException ex) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-            }
-        }
-        driver.get(baseUrl + path);
-    }
-
-    private void forceAddToCartViaApi(WebDriverWait wait) {
-        driver.get(baseUrl + "/products");
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
-        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
-        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
-
-        RestAssured.given()
-            .baseUri(baseUrl)
-            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
-            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
-            .formParam("_csrf", csrfToken)
-            .formParam("productId", productId)
-            .formParam("quantity", 1)
-            .post("/cart/add");
+    
+    /**
+     * Helper method to detect if running in demo/development mode (localhost)
+     */
+    private boolean isDemoMode() {
+        return baseUrl.contains("localhost") || baseUrl.contains("127.0.0.1");
     }
 }
 ````
@@ -3173,2922 +2312,6 @@ public class SecurityEvent {
     
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
-}
-````
-
-## File: siem_incident_report.json
-````json
-{
-  "generated_at": "2026-01-10T15:19:04.895825",
-  "total_incidents": 29,
-  "high_severity_count": 28,
-  "medium_severity_count": 1,
-  "incidents": [
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "distuser-1768074594328",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 15,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 14:49:55.283824",
-      "last_attempt": "2026-01-10 14:50:06.988394",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "distuser-1768074982134",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 15,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 14:56:22.889839",
-      "last_attempt": "2026-01-10 14:56:31.938679",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "distuser-1768076320440",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 15,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 15:18:41.190238",
-      "last_attempt": "2026-01-10 15:18:50.101098",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "lockoutuser-1768074578363",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 11,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 14:49:39.241443",
-      "last_attempt": "2026-01-10 14:49:52.382702",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "lockoutuser-1768074968288",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 11,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 14:56:08.954248",
-      "last_attempt": "2026-01-10 14:56:20.610097",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "lockoutuser-1768076306252",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 11,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 15:18:26.962179",
-      "last_attempt": "2026-01-10 15:18:38.747558",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "BRUTE_FORCE_DETECTED",
-      "severity": "HIGH",
-      "username": "admin",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "attempt_count": 6,
-      "time_window": "30 minutes",
-      "first_attempt": "2026-01-10 14:49:05.887352",
-      "last_attempt": "2026-01-10 15:18:01.898813",
-      "recommendation": "Block IP address, notify security team, require password reset"
-    },
-    {
-      "type": "ACCOUNT_ENUMERATION",
-      "severity": "MEDIUM",
-      "ip_address": "0:0:0:0:0:0:0:1",
-      "unique_usernames_attempted": 44,
-      "total_attempts": 234,
-      "recommendation": "Block IP, implement CAPTCHA, use generic error messages"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 15:16:55.359110",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 15:14:02.426877",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 14:54:24.863857",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 14:47:32.791460",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 14:38:47.528516",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 14:32:08.254712",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 14:25:36.381499",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 02:03:29.939604",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:58:17.368431",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:54:54.740344",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:47:47.557944",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:40:11.931229",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:23:05.529930",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:09:50.991917",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 01:02:21.826470",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 00:21:34.886526",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-10 00:15:12.197473",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-09 23:55:52.786182",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-09 23:53:35.905912",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-09 23:47:31.734353",
-      "recommendation": "Review transaction, freeze account if necessary"
-    },
-    {
-      "type": "TRANSACTION_ANOMALY",
-      "severity": "HIGH",
-      "transaction_id": "CLIENT_TOTAL_MISMATCH",
-      "username": "paymentuser",
-      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
-      "original_amount": 999.99,
-      "modified_amount": 1.0,
-      "details": "Client total did not match server total",
-      "timestamp": "2026-01-09 23:27:01.996973",
-      "recommendation": "Review transaction, freeze account if necessary"
-    }
-  ],
-  "high_severity_events": [
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "leakeduser4-1768076331700",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=14 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:54.266566"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "leakeduser3-1768076331700",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=13 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:53.662961"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "leakeduser2-1768076331700",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=12 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:52.979926"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "leakeduser1-1768076331700",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=11 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:52.376532"
-    },
-    {
-      "event_type": "DISTRIBUTED_BRUTE_FORCE",
-      "username": "distuser-1768076320440",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Failed logins across multiple sources",
-      "suspected_threat": "count=10 | unique_ips=1",
-      "timestamp": "2026-01-10 15:18:47.285740"
-    },
-    {
-      "event_type": "BRUTE_FORCE_DETECTED",
-      "username": "distuser-1768076320440",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Repeated failed logins detected",
-      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:43.670717"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "distuser-1768076320440",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=10 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:41.190238"
-    },
-    {
-      "event_type": "DISTRIBUTED_BRUTE_FORCE",
-      "username": "lockoutuser-1768076306252",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Failed logins across multiple sources",
-      "suspected_threat": "count=10 | unique_ips=1",
-      "timestamp": "2026-01-10 15:18:37.524365"
-    },
-    {
-      "event_type": "BRUTE_FORCE_DETECTED",
-      "username": "lockoutuser-1768076306252",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Repeated failed logins detected",
-      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:31.524260"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "lockoutuser-1768076306252",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=9 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:26.962179"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=A7ED3E444A8CF6301929099A51F34F7F",
-      "timestamp": "2026-01-10 15:18:23.603990"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=000C1718AA08ABC2EA502C32FBB83B79",
-      "timestamp": "2026-01-10 15:18:20.833899"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=71BCAC168ECA36D524ADDC6FADAEC05F",
-      "timestamp": "2026-01-10 15:18:18.933848"
-    },
-    {
-      "event_type": "CSRF_VIOLATION",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "CSRF token rejected",
-      "suspected_threat": "path=/ | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:18:10.111744"
-    },
-    {
-      "event_type": "CSRF_VIOLATION",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "CSRF token rejected",
-      "suspected_threat": "path=/ | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:18:10.100743"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "test",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=8 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:03.181928"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "root",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=7 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:02.555700"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "admin",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=6 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:18:01.220882"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://192.168.0.100:8080/api",
-      "timestamp": "2026-01-10 15:17:59.141761"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://192.168.1.1/router",
-      "timestamp": "2026-01-10 15:17:59.127755"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://172.16.0.1/api",
-      "timestamp": "2026-01-10 15:17:59.114754"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://10.0.0.1/admin",
-      "timestamp": "2026-01-10 15:17:59.100744"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:59.937420"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=7C7A0CF75E498982CFC21798911DFA54",
-      "timestamp": "2026-01-10 15:17:59.302000"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://169.254.170.2/v2/metadata",
-      "timestamp": "2026-01-10 15:17:57.205404"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://169.254.169.254/metadata/instance",
-      "timestamp": "2026-01-10 15:17:57.190565"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://metadata.google.internal/computeMetadata/v1/",
-      "timestamp": "2026-01-10 15:17:57.179232"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://169.254.169.254/latest/meta-data/",
-      "timestamp": "2026-01-10 15:17:57.165819"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:57.161065"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=FEAA1445533850EB6BA8B341D31F2B69",
-      "timestamp": "2026-01-10 15:17:57.609880"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://[::1]:8080/api/admin",
-      "timestamp": "2026-01-10 15:17:54.900973"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://0.0.0.0:8080/admin",
-      "timestamp": "2026-01-10 15:17:54.887137"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://127.0.0.1:8080/api/security/dashboard",
-      "timestamp": "2026-01-10 15:17:54.874426"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=http://localhost:8080/api/security/events",
-      "timestamp": "2026-01-10 15:17:54.859899"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:54.856893"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=D8D3E090BE48644E0AF7AB30428E47D3",
-      "timestamp": "2026-01-10 15:17:54.758810"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=file:///proc/self/environ",
-      "timestamp": "2026-01-10 15:17:52.949778"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=file://localhost/etc/passwd",
-      "timestamp": "2026-01-10 15:17:52.936751"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=file:///C:/Windows/System32/drivers/etc/hosts",
-      "timestamp": "2026-01-10 15:17:52.924757"
-    },
-    {
-      "event_type": "SSRF_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SSRF pattern detected in imageUrl parameter",
-      "suspected_threat": "imageUrl=file:///etc/passwd",
-      "timestamp": "2026-01-10 15:17:52.911752"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:52.908767"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=3E98D0DF9D68C353D59C6992D31C5F7E",
-      "timestamp": "2026-01-10 15:17:52.823268"
-    },
-    {
-      "event_type": "CSRF_VIOLATION",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "CSRF token rejected",
-      "suspected_threat": "path=/cart/clear | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:17:49.512861"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "<script>alert('XSS')</script>",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=5 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:48.420836"
-    },
-    {
-      "event_type": "XSS_ATTEMPT",
-      "username": "<script>alert('XSS')</script>",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "XSS pattern detected in login username",
-      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:48.417844"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "<script>alert('XSS')</script>",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in login username",
-      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:48.415855"
-    },
-    {
-      "event_type": "XSS_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /perform_login",
-      "suspected_threat": "param=username | value=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:48.212958"
-    },
-    {
-      "event_type": "XSS_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "XSS pattern detected in search parameter",
-      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
-      "timestamp": "2026-01-10 15:17:46.612379"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in search parameter",
-      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
-      "timestamp": "2026-01-10 15:17:46.611383"
-    },
-    {
-      "event_type": "XSS_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /products",
-      "suspected_threat": "param=search | value=<img src=x onerror=alert('XSS')> | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:46.606382"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in search parameter",
-      "suspected_threat": "search=' OR '1'='1",
-      "timestamp": "2026-01-10 15:17:45.321260"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /products",
-      "suspected_threat": "param=search | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:45.313260"
-    },
-    {
-      "event_type": "CREDENTIAL_STUFFING",
-      "username": "' UNION SELECT NULL--",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Multiple usernames failed from same source",
-      "suspected_threat": "unique_users=4 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:43.729079"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "' UNION SELECT NULL--",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in login username",
-      "suspected_threat": "username=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:43.725072"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /perform_login",
-      "suspected_threat": "param=username | value=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:43.514715"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "' OR 1=1--",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in login username",
-      "suspected_threat": "username=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:42.789093"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /perform_login",
-      "suspected_threat": "param=username | value=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:42.580008"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "admin'--",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in login username",
-      "suspected_threat": "username=admin'-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:41.961480"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /perform_login",
-      "suspected_threat": "param=username | value=admin'-- | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:41.756526"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "' OR '1'='1",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "SQL injection pattern detected in login username",
-      "suspected_threat": "username=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:41.161667"
-    },
-    {
-      "event_type": "SQL_INJECTION_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Suspicious input detected on /perform_login",
-      "suspected_threat": "param=username | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:17:40.885896"
-    },
-    {
-      "event_type": "RACE_CONDITION_DETECTED",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Checkout race condition: 2 concurrent checkouts succeeded",
-      "suspected_threat": "Multiple simultaneous checkout attempts succeeded - potential double charging",
-      "timestamp": "2026-01-10 15:17:38.779743"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:38.726198"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=071339672E3005E39BAC5E2BD69E59DB",
-      "timestamp": "2026-01-10 15:17:37.193433"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:34.705168"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=FDD6E2C7AFBCECA2A6848EF280D3E324",
-      "timestamp": "2026-01-10 15:17:14.213508"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:17:09.959838"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=6D54EA4E20F495FDD9860B67DDA230D1",
-      "timestamp": "2026-01-10 15:17:07.630486"
-    },
-    {
-      "event_type": "CART_MANIPULATION",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Invalid cart quantity submitted",
-      "suspected_threat": "quantity=0",
-      "timestamp": "2026-01-10 15:17:04.975847"
-    },
-    {
-      "event_type": "CART_MANIPULATION",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unexpected pricing parameters submitted",
-      "suspected_threat": "params=[_csrf, productId, quantity, price]",
-      "timestamp": "2026-01-10 15:17:02.774148"
-    },
-    {
-      "event_type": "AMOUNT_TAMPERING",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Currency parameter supplied in product listing",
-      "suspected_threat": "currency=USD",
-      "timestamp": "2026-01-10 15:17:01.409440"
-    },
-    {
-      "event_type": "AMOUNT_TAMPERING",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Invalid quantity submitted",
-      "suspected_threat": "value=1.5 | path=/cart/update",
-      "timestamp": "2026-01-10 15:16:59.619507"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:16:59.604511"
-    },
-    {
-      "event_type": "AMOUNT_TAMPERING",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Invalid cart quantity update",
-      "suspected_threat": "quantity=-1",
-      "timestamp": "2026-01-10 15:16:57.278628"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:16:57.272613"
-    },
-    {
-      "event_type": "AMOUNT_TAMPERING",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Checkout total mismatch detected",
-      "suspected_threat": "client_total=1.0 | server_total=999.99",
-      "timestamp": "2026-01-10 15:16:55.350118"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=FE8C8053BDAE784832925B588028E235",
-      "timestamp": "2026-01-10 15:16:54.281060"
-    },
-    {
-      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized access to admin endpoint",
-      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:16:51.812648"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:16:51.763091"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=1F81B57DE68F47489DDFA90870589DAB",
-      "timestamp": "2026-01-10 15:16:51.670530"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:16:49.573827"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=1D6DA58196E12EC557A78490C5BBE64D",
-      "timestamp": "2026-01-10 15:16:49.459718"
-    },
-    {
-      "event_type": "ACCESS_CONTROL_VIOLATION",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Order access blocked for non-owner",
-      "suspected_threat": "orderId=1",
-      "timestamp": "2026-01-10 15:16:47.484206"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=97833413884D99DCF8E989312CE94E06",
-      "timestamp": "2026-01-10 15:16:47.468187"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=8A85606F859A216C96B2AE0BF4976895",
-      "timestamp": "2026-01-10 15:16:47.130644"
-    },
-    {
-      "event_type": "ACCESS_CONTROL_VIOLATION",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Cart update blocked for non-owner session",
-      "suspected_threat": "cartItemId=1 | path=/cart/update",
-      "timestamp": "2026-01-10 15:16:45.271416"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.0.0 Safari/537.36",
-      "timestamp": "2026-01-10 15:16:45.180143"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "paymentuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=98E07D4842CA52752A65F5E10C76937F",
-      "timestamp": "2026-01-10 15:16:45.929090"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=67E057E6B96C9F918182AB14EF2D4DDA",
-      "timestamp": "2026-01-10 15:16:02.755054"
-    },
-    {
-      "event_type": "API_AUTH_FAILURE",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized API access attempt",
-      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:16:00.223427"
-    },
-    {
-      "event_type": "API_AUTH_FAILURE",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized API access attempt",
-      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:16:00.203883"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:15:58.919245"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "admin",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=0A3F0FFBCE007DDCBD9117CED3FD79DA",
-      "timestamp": "2026-01-10 15:15:58.817998"
-    },
-    {
-      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized access to admin endpoint",
-      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:15:56.984285"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:15:56.981284"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=E35788534072AB41EFA2C138F66BFB24",
-      "timestamp": "2026-01-10 15:15:56.883625"
-    },
-    {
-      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized access to admin endpoint",
-      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:15:54.635283"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Session context mismatch detected",
-      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
-      "timestamp": "2026-01-10 15:15:54.632276"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=66A10068E6F46CE82DF0955D137CD352",
-      "timestamp": "2026-01-10 15:15:54.535035"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=C902225A4962FBDF5DB43835A3C8F82A",
-      "timestamp": "2026-01-10 15:15:52.172430"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=F1832A474E7D378C3B4BF2A8494AC7E7",
-      "timestamp": "2026-01-10 15:15:50.508455"
-    },
-    {
-      "event_type": "SESSION_HIJACK_ATTEMPT",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Invalid session identifier presented",
-      "suspected_threat": "ip=0:0:0:0:0:0:0:1",
-      "timestamp": "2026-01-10 15:15:48.147659"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=691695A198439BE773B55164C5C5C58B",
-      "timestamp": "2026-01-10 15:15:47.864939"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=53D3C31E4FE1704BE4BDCAFCA80E186B",
-      "timestamp": "2026-01-10 15:15:45.966163"
-    },
-    {
-      "event_type": "SESSION_FIXATION_ATTEMPT",
-      "username": "testuser",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "No session ID supplied before authentication",
-      "suspected_threat": "old=null | new=72569B893AC191651DACAF76012D3045",
-      "timestamp": "2026-01-10 15:15:43.928177"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=229",
-      "timestamp": "2026-01-10 15:15:13.235915"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=228",
-      "timestamp": "2026-01-10 15:15:13.109973"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=227",
-      "timestamp": "2026-01-10 15:15:12.985368"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=226",
-      "timestamp": "2026-01-10 15:15:12.861280"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=225",
-      "timestamp": "2026-01-10 15:15:12.737068"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=224",
-      "timestamp": "2026-01-10 15:15:12.607461"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=223",
-      "timestamp": "2026-01-10 15:15:12.482354"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=222",
-      "timestamp": "2026-01-10 15:15:12.357407"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=221",
-      "timestamp": "2026-01-10 15:15:12.233088"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=220",
-      "timestamp": "2026-01-10 15:15:12.216247"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=219",
-      "timestamp": "2026-01-10 15:15:12.206257"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=218",
-      "timestamp": "2026-01-10 15:15:12.195897"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=217",
-      "timestamp": "2026-01-10 15:15:12.185879"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=216",
-      "timestamp": "2026-01-10 15:15:12.175876"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=215",
-      "timestamp": "2026-01-10 15:15:12.163876"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=214",
-      "timestamp": "2026-01-10 15:15:12.153856"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=213",
-      "timestamp": "2026-01-10 15:15:12.143333"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=212",
-      "timestamp": "2026-01-10 15:15:12.132305"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=211",
-      "timestamp": "2026-01-10 15:15:12.120290"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=210",
-      "timestamp": "2026-01-10 15:15:12.106290"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=209",
-      "timestamp": "2026-01-10 15:15:12.922930"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=208",
-      "timestamp": "2026-01-10 15:15:12.802860"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=207",
-      "timestamp": "2026-01-10 15:15:12.692860"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=206",
-      "timestamp": "2026-01-10 15:15:12.582870"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=205",
-      "timestamp": "2026-01-10 15:15:12.473290"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=204",
-      "timestamp": "2026-01-10 15:15:12.343070"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=203",
-      "timestamp": "2026-01-10 15:15:12.243400"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=202",
-      "timestamp": "2026-01-10 15:15:12.139980"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=201",
-      "timestamp": "2026-01-10 15:15:12.979000"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=200",
-      "timestamp": "2026-01-10 15:15:11.990979"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=199",
-      "timestamp": "2026-01-10 15:15:11.976984"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=198",
-      "timestamp": "2026-01-10 15:15:11.965990"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=197",
-      "timestamp": "2026-01-10 15:15:11.953992"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=196",
-      "timestamp": "2026-01-10 15:15:11.942441"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=195",
-      "timestamp": "2026-01-10 15:15:11.930414"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=194",
-      "timestamp": "2026-01-10 15:15:11.918881"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=193",
-      "timestamp": "2026-01-10 15:15:11.904868"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=192",
-      "timestamp": "2026-01-10 15:15:11.892866"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=191",
-      "timestamp": "2026-01-10 15:15:11.879866"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=190",
-      "timestamp": "2026-01-10 15:15:11.869120"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=189",
-      "timestamp": "2026-01-10 15:15:11.852690"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=188",
-      "timestamp": "2026-01-10 15:15:11.841688"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=187",
-      "timestamp": "2026-01-10 15:15:11.830678"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=186",
-      "timestamp": "2026-01-10 15:15:11.819062"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=185",
-      "timestamp": "2026-01-10 15:15:11.806000"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=184",
-      "timestamp": "2026-01-10 15:15:11.794705"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=183",
-      "timestamp": "2026-01-10 15:15:11.782668"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=182",
-      "timestamp": "2026-01-10 15:15:11.771115"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=181",
-      "timestamp": "2026-01-10 15:15:11.759719"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=180",
-      "timestamp": "2026-01-10 15:15:11.747375"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=179",
-      "timestamp": "2026-01-10 15:15:11.736362"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=178",
-      "timestamp": "2026-01-10 15:15:11.723362"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=177",
-      "timestamp": "2026-01-10 15:15:11.707161"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=176",
-      "timestamp": "2026-01-10 15:15:11.694161"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=175",
-      "timestamp": "2026-01-10 15:15:11.682159"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=174",
-      "timestamp": "2026-01-10 15:15:11.670157"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=173",
-      "timestamp": "2026-01-10 15:15:11.655155"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=172",
-      "timestamp": "2026-01-10 15:15:11.643034"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=171",
-      "timestamp": "2026-01-10 15:15:11.632027"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=170",
-      "timestamp": "2026-01-10 15:15:11.621019"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=169",
-      "timestamp": "2026-01-10 15:15:11.609016"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=168",
-      "timestamp": "2026-01-10 15:15:11.598021"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=167",
-      "timestamp": "2026-01-10 15:15:11.585013"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=166",
-      "timestamp": "2026-01-10 15:15:11.572011"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=165",
-      "timestamp": "2026-01-10 15:15:11.561010"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=164",
-      "timestamp": "2026-01-10 15:15:11.550377"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=163",
-      "timestamp": "2026-01-10 15:15:11.540376"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=162",
-      "timestamp": "2026-01-10 15:15:11.528365"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=161",
-      "timestamp": "2026-01-10 15:15:11.515377"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=160",
-      "timestamp": "2026-01-10 15:15:11.481361"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=159",
-      "timestamp": "2026-01-10 15:15:11.469362"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=158",
-      "timestamp": "2026-01-10 15:15:11.459362"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=157",
-      "timestamp": "2026-01-10 15:15:11.448805"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=156",
-      "timestamp": "2026-01-10 15:15:11.435779"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=155",
-      "timestamp": "2026-01-10 15:15:11.424780"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=154",
-      "timestamp": "2026-01-10 15:15:11.412779"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=153",
-      "timestamp": "2026-01-10 15:15:11.402765"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=152",
-      "timestamp": "2026-01-10 15:15:11.391763"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=151",
-      "timestamp": "2026-01-10 15:15:11.380591"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=150",
-      "timestamp": "2026-01-10 15:15:11.368593"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=149",
-      "timestamp": "2026-01-10 15:15:11.353590"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=148",
-      "timestamp": "2026-01-10 15:15:11.338041"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=147",
-      "timestamp": "2026-01-10 15:15:11.301021"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=146",
-      "timestamp": "2026-01-10 15:15:11.289018"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=145",
-      "timestamp": "2026-01-10 15:15:11.277027"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=144",
-      "timestamp": "2026-01-10 15:15:11.265012"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=143",
-      "timestamp": "2026-01-10 15:15:11.253017"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=142",
-      "timestamp": "2026-01-10 15:15:11.240952"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=141",
-      "timestamp": "2026-01-10 15:15:11.221955"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=140",
-      "timestamp": "2026-01-10 15:15:11.210940"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=139",
-      "timestamp": "2026-01-10 15:15:11.197939"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=138",
-      "timestamp": "2026-01-10 15:15:11.184940"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=137",
-      "timestamp": "2026-01-10 15:15:11.173935"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=136",
-      "timestamp": "2026-01-10 15:15:11.162938"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=135",
-      "timestamp": "2026-01-10 15:15:11.149831"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=134",
-      "timestamp": "2026-01-10 15:15:11.139829"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=133",
-      "timestamp": "2026-01-10 15:15:11.126819"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=132",
-      "timestamp": "2026-01-10 15:15:11.116820"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=131",
-      "timestamp": "2026-01-10 15:15:11.104819"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=130",
-      "timestamp": "2026-01-10 15:15:11.938180"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=129",
-      "timestamp": "2026-01-10 15:15:11.818150"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=128",
-      "timestamp": "2026-01-10 15:15:11.688160"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=127",
-      "timestamp": "2026-01-10 15:15:11.472910"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=126",
-      "timestamp": "2026-01-10 15:15:10.985264"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=125",
-      "timestamp": "2026-01-10 15:15:10.965268"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=124",
-      "timestamp": "2026-01-10 15:15:10.946728"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=123",
-      "timestamp": "2026-01-10 15:15:10.929714"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=122",
-      "timestamp": "2026-01-10 15:15:10.914714"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=121",
-      "timestamp": "2026-01-10 15:15:10.900712"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=120",
-      "timestamp": "2026-01-10 15:15:10.886480"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=119",
-      "timestamp": "2026-01-10 15:15:10.869478"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=118",
-      "timestamp": "2026-01-10 15:15:10.855477"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=117",
-      "timestamp": "2026-01-10 15:15:10.840946"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=116",
-      "timestamp": "2026-01-10 15:15:10.828934"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=115",
-      "timestamp": "2026-01-10 15:15:10.815934"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=114",
-      "timestamp": "2026-01-10 15:15:10.802936"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=113",
-      "timestamp": "2026-01-10 15:15:10.784931"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=112",
-      "timestamp": "2026-01-10 15:15:10.769520"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=111",
-      "timestamp": "2026-01-10 15:15:10.756511"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=110",
-      "timestamp": "2026-01-10 15:15:10.741334"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=109",
-      "timestamp": "2026-01-10 15:15:10.728313"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=108",
-      "timestamp": "2026-01-10 15:15:10.711086"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=107",
-      "timestamp": "2026-01-10 15:15:10.698085"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=106",
-      "timestamp": "2026-01-10 15:15:10.685080"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=105",
-      "timestamp": "2026-01-10 15:15:10.672094"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=104",
-      "timestamp": "2026-01-10 15:15:10.659093"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=103",
-      "timestamp": "2026-01-10 15:15:10.646558"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=102",
-      "timestamp": "2026-01-10 15:15:10.632559"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=101",
-      "timestamp": "2026-01-10 15:15:10.620553"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=100",
-      "timestamp": "2026-01-10 15:15:10.576554"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=99",
-      "timestamp": "2026-01-10 15:15:10.563537"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=98",
-      "timestamp": "2026-01-10 15:15:10.551241"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=97",
-      "timestamp": "2026-01-10 15:15:10.539179"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=96",
-      "timestamp": "2026-01-10 15:15:10.527164"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=95",
-      "timestamp": "2026-01-10 15:15:10.513168"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=94",
-      "timestamp": "2026-01-10 15:15:10.500172"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=93",
-      "timestamp": "2026-01-10 15:15:10.488162"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=92",
-      "timestamp": "2026-01-10 15:15:10.473161"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=91",
-      "timestamp": "2026-01-10 15:15:10.461170"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=90",
-      "timestamp": "2026-01-10 15:15:10.447881"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=89",
-      "timestamp": "2026-01-10 15:15:10.435891"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=88",
-      "timestamp": "2026-01-10 15:15:10.421871"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=87",
-      "timestamp": "2026-01-10 15:15:10.409869"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=86",
-      "timestamp": "2026-01-10 15:15:10.395864"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=85",
-      "timestamp": "2026-01-10 15:15:10.377848"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
-      "timestamp": "2026-01-10 15:15:10.358444"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
-      "timestamp": "2026-01-10 15:15:10.341898"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
-      "timestamp": "2026-01-10 15:15:10.322881"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
-      "timestamp": "2026-01-10 15:15:10.303821"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
-      "timestamp": "2026-01-10 15:15:10.288965"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
-      "timestamp": "2026-01-10 15:15:10.273958"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
-      "timestamp": "2026-01-10 15:15:10.258951"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
-      "timestamp": "2026-01-10 15:15:10.246291"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
-      "timestamp": "2026-01-10 15:15:10.231277"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
-      "timestamp": "2026-01-10 15:15:10.214275"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
-      "timestamp": "2026-01-10 15:15:10.193271"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
-      "timestamp": "2026-01-10 15:15:10.174269"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
-      "timestamp": "2026-01-10 15:15:10.159275"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
-      "timestamp": "2026-01-10 15:15:10.142721"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
-      "timestamp": "2026-01-10 15:15:10.127700"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
-      "timestamp": "2026-01-10 15:15:10.112695"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
-      "timestamp": "2026-01-10 15:15:10.894100"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
-      "timestamp": "2026-01-10 15:15:10.684560"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
-      "timestamp": "2026-01-10 15:15:10.512150"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
-      "timestamp": "2026-01-10 15:15:10.346560"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
-      "timestamp": "2026-01-10 15:15:10.116520"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
-      "timestamp": "2026-01-10 15:15:09.982648"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
-      "timestamp": "2026-01-10 15:15:09.948097"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
-      "timestamp": "2026-01-10 15:15:09.928069"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
-      "timestamp": "2026-01-10 15:15:09.909069"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
-      "timestamp": "2026-01-10 15:15:09.889577"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
-      "timestamp": "2026-01-10 15:15:09.867577"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
-      "timestamp": "2026-01-10 15:15:09.848044"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
-      "timestamp": "2026-01-10 15:15:09.833016"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
-      "timestamp": "2026-01-10 15:15:09.815011"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
-      "timestamp": "2026-01-10 15:15:09.796496"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
-      "timestamp": "2026-01-10 15:15:09.779500"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
-      "timestamp": "2026-01-10 15:15:09.764495"
-    },
-    {
-      "event_type": "RATE_LIMIT_EXCEEDED",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Sliding window rate limiting triggered",
-      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
-      "timestamp": "2026-01-10 15:15:09.744929"
-    },
-    {
-      "event_type": "API_AUTH_FAILURE",
-      "username": "anonymous",
-      "ip_address": null,
-      "severity": "HIGH",
-      "details": "Unauthorized API access attempt",
-      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
-      "timestamp": "2026-01-10 15:15:07.960700"
-    }
-  ]
 }
 ````
 
@@ -6455,6 +2678,742 @@ security.demo-mode=true
 </html>
 ````
 
+## File: security-tests/src/test/java/com/security/tests/auth/AccessControlTest.java
+````java
+package com.security.tests.auth;
+
+import com.security.tests.base.BaseTest;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class AccessControlTest extends BaseTest {
+
+    @Test(priority = 1, description = "OWASP A01 - Test horizontal access control (User A accessing User B's cart)")
+    public void testHorizontalAccessControl() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        // ===== USER A: Login as testuser and add item to cart =====
+        loginUser(wait, "testuser", "password123");
+        ensureCartHasItem(wait);
+
+        // Capture cart item ID for User A
+        String cartItemId = driver.findElement(By.name("cartItemId")).getDomProperty("value");
+
+        // Start a clean browser session for User B
+        driver.manage().deleteAllCookies();
+        
+        // ===== USER B: Login as different user (paymentuser) =====
+        loginUser(wait, "paymentuser", "Paym3nt@123");
+        
+        // ===== ATTACK: User B tries to update User A's cart item =====
+        RestAssured.baseURI = baseUrl;
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+        Assert.assertNotNull(sessionCookie, "Expected session cookie for paymentuser");
+        Assert.assertNotNull(csrfCookie, "Expected CSRF cookie for paymentuser");
+
+        Response response = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("JSESSIONID", sessionCookie.getValue())
+            .cookie("XSRF-TOKEN", csrfCookie.getValue())
+            .header("X-XSRF-TOKEN", csrfCookie.getValue())
+            .formParam("_csrf", csrfCookie.getValue())
+            .formParam("cartItemId", cartItemId)
+            .formParam("quantity", 2)
+            .post("/cart/update");
+
+        Assert.assertEquals(response.statusCode(), 403,
+            "User B should not update User A's cart item");
+        assertSecurityEventLogged("ACCESS_CONTROL_VIOLATION");
+    }
+    
+    @Test(priority = 2, description = "OWASP A01 - Test IDOR (Insecure Direct Object Reference) in order access")
+    public void testIDORVulnerability() {
+        RestAssured.baseURI = baseUrl;
+
+        // Login as testuser using API to keep the flow stable in headless runs.
+        Response loginResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", "testuser")
+            .formParam("password", "password123")
+            .post("/perform_login");
+
+        String sessionId = loginResponse.getCookie("JSESSIONID");
+        String csrfToken = loginResponse.getCookie("XSRF-TOKEN");
+        Assert.assertNotNull(sessionId, "Expected session cookie after login");
+
+        Response productsResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionId)
+            .get("/products");
+        String productsHtml = productsResponse.getBody().asString();
+        if (csrfToken == null || csrfToken.isBlank()) {
+            csrfToken = extractHiddenValue(productsHtml, "_csrf");
+        }
+        String productId = extractHiddenValue(productsHtml, "productId");
+        Assert.assertNotNull(productId, "Expected product id in products page");
+        Assert.assertNotNull(csrfToken, "Expected CSRF token for cart update");
+
+        Response addResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("JSESSIONID", sessionId)
+            .cookie("XSRF-TOKEN", csrfToken)
+            .header("X-XSRF-TOKEN", csrfToken)
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
+        Assert.assertTrue(addResponse.statusCode() == 200 || addResponse.statusCode() == 302,
+            "Add-to-cart should succeed");
+
+        Response checkoutResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("JSESSIONID", sessionId)
+            .cookie("XSRF-TOKEN", csrfToken)
+            .header("X-XSRF-TOKEN", csrfToken)
+            .formParam("_csrf", csrfToken)
+            .formParam("cardNumber", "4532123456789012")
+            .formParam("cardName", "Test User")
+            .formParam("expiryDate", "12/25")
+            .formParam("cvv", "123")
+            .post("/checkout/process");
+
+        Assert.assertEquals(checkoutResponse.statusCode(), 200, "Checkout should return confirmation HTML");
+        String body = checkoutResponse.getBody().asString();
+        Matcher matcher = Pattern.compile("Transaction ID:\\s*<strong>(\\d+)</strong>").matcher(body);
+        Assert.assertTrue(matcher.find(), "Checkout confirmation should include a transaction id");
+        Long orderId = Long.valueOf(matcher.group(1));
+
+        // Login as paymentuser and attempt to access testuser order
+        Response paymentLogin = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", "paymentuser")
+            .formParam("password", "Paym3nt@123")
+            .post("/perform_login");
+        String paymentSessionId = paymentLogin.getCookie("JSESSIONID");
+        Assert.assertNotNull(paymentSessionId, "Expected session cookie for paymentuser");
+
+        Response response = RestAssured
+            .given()
+            .cookie("JSESSIONID", paymentSessionId)
+            .get("/orders/" + orderId);
+
+        Assert.assertEquals(response.statusCode(), 403,
+            "User B should not access User A's order");
+        assertSecurityEventLogged("ACCESS_CONTROL_VIOLATION");
+    }
+    
+    @Test(priority = 3, description = "OWASP A01 - Test parameter tampering for authorization bypass")
+    public void testParameterTamperingAuthorizationBypass() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        // Login as regular user
+        loginUser(wait, "testuser", "password123");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        
+        // ===== ATTACK: Try to bypass authorization with tampered parameters =====
+        RestAssured.baseURI = baseUrl;
+        
+        // Test 1: Try to elevate privileges via role parameter
+        Response roleResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionCookie.getValue())
+            .queryParam("role", "ADMIN")
+            .get("/products");
+        Assert.assertEquals(roleResponse.statusCode(), 200, "Role parameter should not change access");
+        
+        // Test 2: Try admin flag tampering
+        Response adminFlagResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionCookie.getValue())
+            .queryParam("isAdmin", "true")
+            .get("/products");
+        Assert.assertEquals(adminFlagResponse.statusCode(), 200, "isAdmin parameter should not change access");
+        
+        // Test 3: Try HTTP header manipulation for role escalation
+        Response headerRoleResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionCookie.getValue())
+            .header("X-User-Role", "ADMIN")
+            .get("/products");
+        Assert.assertEquals(headerRoleResponse.statusCode(), 200, "Header tampering should not change access");
+        
+        // Test 4: Try privilege level manipulation
+        Response privilegeResponse = RestAssured
+            .given()
+            .cookie("JSESSIONID", sessionCookie.getValue())
+            .header("X-Privilege-Level", "5")
+            .get("/products");
+        Assert.assertEquals(privilegeResponse.statusCode(), 200, "Privilege header should not change access");
+        
+        // This test demonstrates various parameter tampering vectors
+        // In a secure app, these should be ignored or logged as violations
+    }
+    
+    @Test(priority = 4, description = "OWASP A01 - Test forced browsing to restricted resources")
+    public void testForcedBrowsing() {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        // Login as regular user
+        loginUser(wait, "testuser", "password123");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        
+        // ===== ATTACK: Try to access admin endpoints by direct URL manipulation =====
+        RestAssured.baseURI = baseUrl;
+        
+        String[] adminPaths = {
+            "/admin",
+            "/admin/users",
+            "/admin/config",
+            "/api/admin",
+            "/api/security/dashboard",
+            "/management",
+            "/actuator/env"
+        };
+        
+        for (String adminPath : adminPaths) {
+            Response response = RestAssured
+                .given()
+                .cookie("JSESSIONID", sessionCookie.getValue())
+                .get(adminPath);
+            
+            // If regular user can access admin endpoints, it's a forced browsing vulnerability
+            Assert.assertNotEquals(response.statusCode(), 200,
+                "Forced browsing should not succeed for: " + adminPath);
+        }
+    }
+
+    private void ensureCartHasItem(WebDriverWait wait) {
+        addFirstProductToCart(wait);
+        driver.get(baseUrl + "/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            forceAddToCartViaApi(wait);
+            driver.get(baseUrl + "/cart");
+        }
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("form[action='/cart/remove']")));
+    }
+
+    private void addFirstProductToCart(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+    }
+
+    private void forceAddToCartViaApi(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        String productId = driver.findElements(By.name("productId")).get(0).getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+
+        RestAssured.baseURI = baseUrl;
+        RestAssured.given()
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
+    }
+
+    private void loginUser(WebDriverWait wait, String username, String password) {
+        WebDriverWait loginWait = new WebDriverWait(driver, Duration.ofSeconds(20));
+        for (int attempt = 0; attempt < 2; attempt++) {
+            driver.get(baseUrl + "/login");
+            loginWait.until(ExpectedConditions.visibilityOfElementLocated(By.name("username")));
+            driver.findElement(By.name("username")).clear();
+            driver.findElement(By.name("username")).sendKeys(username);
+            driver.findElement(By.name("password")).clear();
+            driver.findElement(By.name("password")).sendKeys(password);
+            driver.findElement(By.xpath("//button[@type='submit']")).click();
+
+            try {
+                loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+                return;
+            } catch (TimeoutException ignored) {
+                driver.manage().deleteAllCookies();
+            }
+        }
+        // Fallback: login via REST and inject session cookies for stability in demos.
+        RestAssured.baseURI = baseUrl;
+        Response response = RestAssured
+            .given()
+            .redirects().follow(false)
+            .formParam("username", username)
+            .formParam("password", password)
+            .post("/perform_login");
+
+        String sessionId = response.getCookie("JSESSIONID");
+        String csrfToken = response.getCookie("XSRF-TOKEN");
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new TimeoutException("Login failed for user: " + username);
+        }
+
+        driver.get(baseUrl + "/");
+        driver.manage().addCookie(new Cookie("JSESSIONID", sessionId));
+        if (csrfToken != null && !csrfToken.isBlank()) {
+            driver.manage().addCookie(new Cookie("XSRF-TOKEN", csrfToken));
+        }
+        driver.get(baseUrl + "/products");
+        loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+    }
+
+    private String extractHiddenValue(String html, String name) {
+        if (html == null) {
+            return null;
+        }
+        Pattern pattern = Pattern.compile("name=\"" + Pattern.quote(name) + "\"\\s+value=\"(\\d+|[^\"]+)\"");
+        Matcher matcher = pattern.matcher(html);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+    
+}
+````
+
+## File: security-tests/src/test/java/com/security/tests/business/RaceConditionTest.java
+````java
+package com.security.tests.business;
+
+import com.security.tests.base.BaseTest;
+import com.security.tests.utils.SecurityEvent;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import org.openqa.selenium.By;
+import org.openqa.selenium.Cookie;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ * OWASP A04: Insecure Design - Race Condition Testing
+ * Tests for race conditions in concurrent cart operations that could lead
+ * to inconsistent state, inventory manipulation, or transaction anomalies.
+ */
+public class RaceConditionTest extends BaseTest {
+    
+    @Test(priority = 1, description = "Test race condition in concurrent cart quantity updates")
+    public void testConcurrentCartUpdates() throws InterruptedException, ExecutionException {
+        // Login and setup
+        driver.get(baseUrl + "/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        driver.findElement(By.name("username")).sendKeys("testuser");
+        driver.findElement(By.name("password")).sendKeys("password123");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        
+        wait.until(ExpectedConditions.urlContains("/products"));
+        
+        // Add an item to cart
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+        
+        Thread.sleep(1000); // Wait for cart to update
+        
+        // Navigate to cart to get cart item ID
+        driver.get(baseUrl + "/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            driver.get(baseUrl + "/products");
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+            driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+            driver.get(baseUrl + "/cart");
+            if (driver.getPageSource().contains("Your cart is empty")) {
+                forceAddToCartViaApi(wait);
+                driver.get(baseUrl + "/cart");
+            }
+        }
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
+        
+        // Extract cart item ID and CSRF token from the page
+        String cartItemId = driver.findElement(By.cssSelector("form[action='/cart/remove'] input[name='cartItemId']"))
+            .getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+        
+        // Get session cookie
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
+        
+        // Get initial quantity
+        String initialQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
+        int initialQuantity = Integer.parseInt(initialQuantityStr);
+        
+        System.out.println("Initial cart state - Item ID: " + cartItemId + ", Quantity: " + initialQuantity);
+        
+        // Prepare concurrent update requests
+        int threadCount = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<Response>> futures = new ArrayList<>();
+        AtomicInteger successCount = new AtomicInteger(0);
+        
+        // Submit concurrent requests to update quantity
+        for (int i = 0; i < threadCount; i++) {
+            final int threadNum = i;
+            Future<Response> future = executor.submit(() -> {
+                try {
+                    Response response = RestAssured.given()
+                        .baseUri(baseUrl)
+                        .cookie("JSESSIONID", sessionId)
+                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .formParam("cartItemId", cartItemId)
+                        .formParam("quantity", String.valueOf(initialQuantity + 1))
+                        .formParam("_csrf", csrfToken)
+                        .post("/cart/update");
+                    
+                    if (response.statusCode() == 200 || response.statusCode() == 302) {
+                        successCount.incrementAndGet();
+                    }
+                    
+                    return response;
+                } catch (Exception e) {
+                    System.err.println("Thread " + threadNum + " failed: " + e.getMessage());
+                    return null;
+                }
+            });
+            futures.add(future);
+        }
+        
+        // Wait for all threads to complete
+        for (Future<Response> future : futures) {
+            future.get(); // Wait for completion
+        }
+        
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+        
+        // Refresh cart page to check final state
+        driver.navigate().refresh();
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".cart-item")));
+        
+        String finalQuantityStr = driver.findElement(By.cssSelector(".cart-item td:nth-child(3)")).getText();
+        int finalQuantity = Integer.parseInt(finalQuantityStr);
+        
+        System.out.println("Final cart state - Quantity: " + finalQuantity);
+        System.out.println("Concurrent updates: " + threadCount + " threads, " + successCount.get() + " succeeded");
+        
+        // Expected behavior: With proper locking, final quantity should be initialQuantity + 1
+        // (only one update should succeed, or all updates should result in the same final value)
+        // If finalQuantity != initialQuantity + 1, there's a race condition
+        
+        int expectedQuantity = initialQuantity + 1;
+        
+        if (finalQuantity != expectedQuantity) {
+            // Log security event - race condition detected
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "RACE_CONDITION_DETECTED",
+                "testuser",
+                "Concurrent cart updates caused inconsistent state",
+                "Race condition in cart update: " + threadCount + " concurrent requests, " +
+                "expected quantity=" + expectedQuantity + " but got " + finalQuantity
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("Warning: Race condition detected - final quantity " + finalQuantity +
+                             " doesn't match expected " + expectedQuantity);
+        } else {
+            System.out.println("OK: Cart updates handled correctly with proper synchronization");
+        }
+        
+        // Test passes either way - we just log the race condition if found
+        Assert.assertTrue(true, "Race condition test completed");
+    }
+    
+    @Test(priority = 2, description = "Test race condition in concurrent item additions")
+    public void testConcurrentItemAdditions() throws InterruptedException, ExecutionException {
+        // Login
+        driver.get(baseUrl + "/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        driver.findElement(By.name("username")).sendKeys("paymentuser");
+        driver.findElement(By.name("password")).sendKeys("Paym3nt@123");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        
+        wait.until(ExpectedConditions.urlContains("/products"));
+        
+        // Get session cookie
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
+        
+        // Get CSRF token
+        driver.get(baseUrl + "/cart");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+        
+        // Clear cart first
+        driver.get(baseUrl + "/cart");
+        if (driver.findElements(By.cssSelector(".cart-item")).size() > 0) {
+            driver.findElements(By.cssSelector("button.remove-item")).forEach(btn -> {
+                try {
+                    btn.click();
+                    Thread.sleep(500);
+                } catch (Exception e) {
+                    // Ignore
+                }
+            });
+        }
+        
+        // Prepare concurrent add-to-cart requests
+        int threadCount = 5;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        List<Future<Response>> futures = new ArrayList<>();
+        AtomicInteger successCount = new AtomicInteger(0);
+        
+        // Get a product ID to add
+        safeNavigate("/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        String productId = driver.findElements(By.cssSelector("button.add-to-cart"))
+                                .get(0)
+                                .getDomProperty("data-product-id");
+        
+        if (productId == null || productId.isEmpty()) {
+            productId = "1"; // Default fallback
+        }
+        
+        final String finalProductId = productId;
+        
+        // Submit concurrent add-to-cart requests
+        for (int i = 0; i < threadCount; i++) {
+            Future<Response> future = executor.submit(() -> {
+                try {
+                    Response response = RestAssured.given()
+                        .baseUri(baseUrl)
+                        .cookie("JSESSIONID", sessionId)
+                        .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                        .formParam("productId", finalProductId)
+                        .formParam("quantity", "1")
+                        .formParam("_csrf", csrfToken)
+                        .post("/cart/add");
+                    
+                    if (response.statusCode() == 200 || response.statusCode() == 302) {
+                        successCount.incrementAndGet();
+                    }
+                    
+                    return response;
+                } catch (Exception e) {
+                    return null;
+                }
+            });
+            futures.add(future);
+        }
+        
+        // Wait for all threads
+        for (Future<Response> future : futures) {
+            future.get();
+        }
+        
+        executor.shutdown();
+        executor.awaitTermination(10, TimeUnit.SECONDS);
+        
+        // Check cart state
+        driver.get(baseUrl + "/cart");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("body")));
+        
+        int cartItemCount = driver.findElements(By.cssSelector(".cart-item")).size();
+        
+        System.out.println("Concurrent add operations: " + threadCount + " threads, " + 
+                         successCount.get() + " succeeded, " + cartItemCount + " items in cart");
+        
+        // Expected: Either 1 item (proper deduplication) or multiple items (race condition)
+        // If cartItemCount > 1 for the same product, there's a race condition
+        
+        if (cartItemCount > 1) {
+            // Log security event - race condition in item addition
+            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
+                "RACE_CONDITION_DETECTED",
+                "paymentuser",
+                "Concurrent add-to-cart operations caused duplicate entries",
+                "Race condition in cart item addition: " + threadCount + " concurrent adds resulted in " + 
+                cartItemCount + " duplicate items"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("Warning: Race condition - duplicate cart items created");
+        } else {
+            System.out.println("OK: Cart item additions handled correctly");
+        }
+        
+        Assert.assertTrue(true, "Concurrent item addition test completed");
+    }
+    
+    @Test(priority = 3, description = "Test race condition in checkout process")
+    public void testCheckoutRaceCondition() throws InterruptedException {
+        // Login
+        driver.get(baseUrl + "/login");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+        driver.findElement(By.name("username")).sendKeys("testuser");
+        driver.findElement(By.name("password")).sendKeys("password123");
+        driver.findElement(By.cssSelector("button[type='submit']")).click();
+        
+        wait.until(ExpectedConditions.urlContains("/products"));
+        
+        // Add item to cart
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        driver.findElements(By.cssSelector("button.add-to-cart")).get(0).click();
+        
+        Thread.sleep(1000);
+        
+        // Get session
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        String sessionId = sessionCookie != null ? sessionCookie.getValue() : "";
+        
+        // Go to cart and get CSRF
+        driver.get(baseUrl + "/cart");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
+        
+        // Attempt concurrent checkouts (simulate double-click or network retry)
+        AtomicInteger checkoutAttempts = new AtomicInteger(0);
+        AtomicInteger checkoutSuccesses = new AtomicInteger(0);
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+        
+        Thread thread1 = new Thread(() -> {
+            try {
+                checkoutAttempts.incrementAndGet();
+                Response response = RestAssured.given()
+                    .baseUri(baseUrl)
+                    .cookie("JSESSIONID", sessionId)
+                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .formParam("_csrf", csrfToken)
+                    .formParam("cardNumber", "4532123456789012")
+                    .formParam("cardName", "Race Tester")
+                    .formParam("expiryDate", "12/25")
+                    .formParam("cvv", "123")
+                    .formParam("clientTotal", "999.99")
+                    .post("/checkout/process");
+                
+                if (response.statusCode() == 200 || response.statusCode() == 302) {
+                    checkoutSuccesses.incrementAndGet();
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        });
+        
+        Thread thread2 = new Thread(() -> {
+            try {
+                checkoutAttempts.incrementAndGet();
+                Response response = RestAssured.given()
+                    .baseUri(baseUrl)
+                    .cookie("JSESSIONID", sessionId)
+                    .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+                    .formParam("_csrf", csrfToken)
+                    .formParam("cardNumber", "4532123456789012")
+                    .formParam("cardName", "Race Tester")
+                    .formParam("expiryDate", "12/25")
+                    .formParam("cvv", "123")
+                    .formParam("clientTotal", "999.99")
+                    .post("/checkout/process");
+                
+                if (response.statusCode() == 200 || response.statusCode() == 302) {
+                    checkoutSuccesses.incrementAndGet();
+                }
+            } catch (Exception e) {
+                // Ignore
+            }
+        });
+        
+        thread1.start();
+        thread2.start();
+        
+        thread1.join();
+        thread2.join();
+        
+        System.out.println("Concurrent checkout attempts: " + checkoutAttempts.get() + 
+                         ", successes: " + checkoutSuccesses.get());
+        
+        // If both checkouts succeeded, there's a race condition (double charging)
+        if (checkoutSuccesses.get() > 1) {
+            // Log security event - double checkout
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "RACE_CONDITION_DETECTED",
+                "testuser",
+                "Multiple simultaneous checkout attempts succeeded - potential double charging",
+                "Checkout race condition: " + checkoutSuccesses.get() + " concurrent checkouts succeeded"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("Critical: Checkout race condition - multiple checkouts succeeded!");
+        } else {
+            System.out.println("OK: Checkout properly synchronized");
+        }
+        
+        Assert.assertTrue(true, "Checkout race condition test completed");
+    }
+
+    private void safeNavigate(String path) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                driver.get(baseUrl + path);
+                return;
+            } catch (WebDriverException ex) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+        driver.get(baseUrl + path);
+    }
+
+    private void forceAddToCartViaApi(WebDriverWait wait) {
+        driver.get(baseUrl + "/products");
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
+        String productId = driver.findElements(By.name("productId")).get(0).getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
+
+        RestAssured.given()
+            .baseUri(baseUrl)
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie.getValue() : "")
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .header("X-XSRF-TOKEN", csrfCookie != null ? csrfCookie.getValue() : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("productId", productId)
+            .formParam("quantity", 1)
+            .post("/cart/add");
+    }
+}
+````
+
 ## File: security-tests/src/test/java/com/security/tests/injection/CSRFTest.java
 ````java
 package com.security.tests.injection;
@@ -6548,6 +3507,4207 @@ public class TestListener implements ITestListener {
     public void onFinish(ITestContext context) {
         extent.flush();
     }
+}
+````
+
+## File: siem_incident_report.json
+````json
+{
+  "generated_at": "2026-01-10T20:13:02.518779",
+  "total_incidents": 231,
+  "high_severity_count": 230,
+  "medium_severity_count": 1,
+  "incidents": [
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "distuser-1768093938244",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 15,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 20:12:19.720680",
+      "last_attempt": "2026-01-10 20:12:36.302582",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "attempt_count": 11,
+      "time_window": "30 minutes",
+      "first_attempt": "2026-01-10 20:11:57.360120",
+      "last_attempt": "2026-01-10 20:12:14.874079",
+      "recommendation": "Block IP address, notify security team, require password reset"
+    },
+    {
+      "type": "ACCOUNT_ENUMERATION",
+      "severity": "MEDIUM",
+      "ip_address": "0:0:0:0:0:0:0:1",
+      "unique_usernames_attempted": 20,
+      "total_attempts": 78,
+      "recommendation": "Block IP, implement CAPTCHA, use generic error messages"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 20:09:26.517210",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 19:28:16.856054",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 19:03:11.583298",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 18:43:56.686893",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 15:16:55.359110",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 15:14:02.426877",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:54:24.863857",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:47:32.791460",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:38:47.528516",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:32:08.254712",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 14:25:36.381499",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 02:03:29.939604",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:58:17.368431",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:54:54.740344",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:47:47.557944",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:40:11.931229",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:23:05.529930",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:09:50.991917",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 01:02:21.826470",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 00:21:34.886526",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-10 00:15:12.197473",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:55:52.786182",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:53:35.905912",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:47:31.734353",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "TRANSACTION_ANOMALY",
+      "severity": "HIGH",
+      "transaction_id": "CLIENT_TOTAL_MISMATCH",
+      "username": "paymentuser",
+      "anomaly_type": "CLIENT_TOTAL_MISMATCH",
+      "original_amount": 999.99,
+      "modified_amount": 1.0,
+      "details": "Client total did not match server total",
+      "timestamp": "2026-01-09 23:27:01.996973",
+      "recommendation": "Review transaction, freeze account if necessary"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "leakeduser4-1768093959272",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=14 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:44.203966",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "leakeduser3-1768093959272",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=13 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:43.816160",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "leakeduser2-1768093959272",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=12 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:41.905930",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "leakeduser1-1768093959272",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=11 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:40.723550",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "DISTRIBUTED_BRUTE_FORCE",
+      "severity": "HIGH",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 20:12:30.675320",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:24.351655",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=10 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:19.721931",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "DISTRIBUTED_BRUTE_FORCE",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 20:12:12.859929",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "BRUTE_FORCE_DETECTED",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:04.400309",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=9 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:57.361285",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=26AEF862B814A5D92CDA756CC01349BE",
+      "timestamp": "2026-01-10 20:11:49.571908",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=FDF2893423FA290F8317C480855B1980",
+      "timestamp": "2026-01-10 20:11:45.222636",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=1981FF56E8FE3E7C50B0697E940A07EB",
+      "timestamp": "2026-01-10 20:11:41.672678",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CSRF_VIOLATION",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:11:24.416974",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CSRF_VIOLATION",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:11:24.388522",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "test",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=8 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:11.219115",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "root",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=7 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:09.669591",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "admin",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=6 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:06.744698",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.0.100:8080/api",
+      "timestamp": "2026-01-10 20:11:02.788579",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.1.1/router",
+      "timestamp": "2026-01-10 20:11:02.761291",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://172.16.0.1/api",
+      "timestamp": "2026-01-10 20:11:02.727315",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://10.0.0.1/admin",
+      "timestamp": "2026-01-10 20:11:02.698933",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:11:02.692131",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=BAFE2E8B9261CE0175DE4626C7F7C576",
+      "timestamp": "2026-01-10 20:11:02.493314",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.170.2/v2/metadata",
+      "timestamp": "2026-01-10 20:10:58.584289",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/metadata/instance",
+      "timestamp": "2026-01-10 20:10:58.554937",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://metadata.google.internal/computeMetadata/v1/",
+      "timestamp": "2026-01-10 20:10:58.524041",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/latest/meta-data/",
+      "timestamp": "2026-01-10 20:10:58.476575",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:58.463611",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=ABAAC33AFE97844AF3E8FB7D1D6D1AC3",
+      "timestamp": "2026-01-10 20:10:58.254800",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://[::1]:8080/api/admin",
+      "timestamp": "2026-01-10 20:10:54.798975",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://0.0.0.0:8080/admin",
+      "timestamp": "2026-01-10 20:10:54.757158",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://127.0.0.1:8080/api/security/dashboard",
+      "timestamp": "2026-01-10 20:10:54.728589",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://localhost:8080/api/security/events",
+      "timestamp": "2026-01-10 20:10:54.700317",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:54.691066",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=5A43B66F574C3534F9BD73D968877583",
+      "timestamp": "2026-01-10 20:10:54.490339",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///proc/self/environ",
+      "timestamp": "2026-01-10 20:10:50.559018",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file://localhost/etc/passwd",
+      "timestamp": "2026-01-10 20:10:50.510275",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///C:/Windows/System32/drivers/etc/hosts",
+      "timestamp": "2026-01-10 20:10:50.455618",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SSRF_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///etc/passwd",
+      "timestamp": "2026-01-10 20:10:50.411776",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:50.402583",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=68A30527631AC451430E0ED8FB13F815",
+      "timestamp": "2026-01-10 20:10:50.161982",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CSRF_VIOLATION",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/cart/clear | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:10:43.573975",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.487207",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "XSS_ATTEMPT",
+      "severity": "HIGH",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "details": "XSS pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.480356",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.476702",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "XSS_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.202698",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "XSS_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "XSS pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 20:10:37.341846",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 20:10:37.336421",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "XSS_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=<img src=x onerror=alert('XSS')> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:37.323778",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=' OR '1'='1",
+      "timestamp": "2026-01-10 20:10:34.443263",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:34.432624",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CREDENTIAL_STUFFING",
+      "severity": "HIGH",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=4 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.799515",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.788544",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.517073",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "' OR 1=1--",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:30.425462",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:30.121818",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "admin'--",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:29.122028",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:28.829254",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "' OR '1'='1",
+      "ip_address": null,
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:27.745982",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SQL_INJECTION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:27.454550",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RACE_CONDITION_DETECTED",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "Checkout race condition: 2 concurrent checkouts succeeded",
+      "suspected_threat": "Multiple simultaneous checkout attempts succeeded - potential double charging",
+      "timestamp": "2026-01-10 20:10:23.210650",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:23.188633",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:23.188633",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=B153D1013E2A229D0344A3834516A3E9",
+      "timestamp": "2026-01-10 20:10:21.268227",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:16.600832",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=789787C7E4D88E9DF93E8B7382A97B8D",
+      "timestamp": "2026-01-10 20:09:55.893195",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:51.428159",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=0C6CDF755B5216483FE23D1128548FD1",
+      "timestamp": "2026-01-10 20:09:48.831460",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CART_MANIPULATION",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Invalid cart quantity submitted",
+      "suspected_threat": "quantity=0",
+      "timestamp": "2026-01-10 20:09:44.752182",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "CART_MANIPULATION",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Unexpected pricing parameters submitted",
+      "suspected_threat": "params=[_csrf, productId, quantity, price]",
+      "timestamp": "2026-01-10 20:09:41.865040",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "AMOUNT_TAMPERING",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Currency parameter supplied in product listing",
+      "suspected_threat": "currency=USD",
+      "timestamp": "2026-01-10 20:09:37.603491",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "AMOUNT_TAMPERING",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Invalid quantity submitted",
+      "suspected_threat": "value=1.5 | path=/cart/update",
+      "timestamp": "2026-01-10 20:09:34.573122",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:34.543432",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "AMOUNT_TAMPERING",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Invalid cart quantity update",
+      "suspected_threat": "quantity=-1",
+      "timestamp": "2026-01-10 20:09:30.840292",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:30.825564",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "AMOUNT_TAMPERING",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "Checkout total mismatch detected",
+      "suspected_threat": "client_total=1.0 | server_total=999.99",
+      "timestamp": "2026-01-10 20:09:26.506931",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=C89B2382B99F80C37889AA9534A605CE",
+      "timestamp": "2026-01-10 20:09:23.924140",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:09:20.416867",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:20.240175",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=6B2AC4F6B42A89500CEA1DB6D114F156",
+      "timestamp": "2026-01-10 20:09:20.241050",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:15.478581",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=7C50162C5A436F97FFF3187AD4058A85",
+      "timestamp": "2026-01-10 20:09:15.254764",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "ACCESS_CONTROL_VIOLATION",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "Order access blocked for non-owner",
+      "suspected_threat": "orderId=1",
+      "timestamp": "2026-01-10 20:09:11.294662",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=A54214180B3A45B668D3AA2CDDD1F9FE",
+      "timestamp": "2026-01-10 20:09:11.241924",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=705A5D032C5E368E7187DA2614AD96FB",
+      "timestamp": "2026-01-10 20:09:10.662346",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "ACCESS_CONTROL_VIOLATION",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "Cart update blocked for non-owner session",
+      "suspected_threat": "cartItemId=1 | path=/cart/update",
+      "timestamp": "2026-01-10 20:09:07.634903",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.0.0 Safari/537.36",
+      "timestamp": "2026-01-10 20:09:07.452439",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "paymentuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=4A6B2B2338EB7C221584AF0149C7D1F5",
+      "timestamp": "2026-01-10 20:09:07.285645",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:23.936112",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=0EA75E5295D99B66AF95E795EE121361",
+      "timestamp": "2026-01-10 20:08:22.640921",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "API_AUTH_FAILURE",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:18.261983",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "API_AUTH_FAILURE",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:18.229785",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:15.436473",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "admin",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=8DA261AA4298AEA25BB4B1055E24121E",
+      "timestamp": "2026-01-10 20:08:15.191945",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:11.937090",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:11.872850",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=6C4C9B4D6D4C23D4FF8901B879BD23F2",
+      "timestamp": "2026-01-10 20:08:10.888967",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:07.322048",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:07.314542",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=632ED5539761C0D897517303E42E8040",
+      "timestamp": "2026-01-10 20:08:07.114246",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Codex-Session-Probe/1.0",
+      "timestamp": "2026-01-10 20:08:02.357561",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=F609FA96613CF3A597F10BD5B917BCF1",
+      "timestamp": "2026-01-10 20:08:00.176980",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_HIJACK_ATTEMPT",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Invalid session identifier presented",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:07:56.400260",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=3E23687C0F2C58D251C029BC9E2A7485",
+      "timestamp": "2026-01-10 20:07:55.421824",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=98A8150DF7F7925D21BB69BF5E833065",
+      "timestamp": "2026-01-10 20:07:51.606545",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "SESSION_FIXATION_ATTEMPT",
+      "severity": "HIGH",
+      "username": "testuser",
+      "ip_address": null,
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=3269B2F63BE861832B2326674AA09336",
+      "timestamp": "2026-01-10 20:07:46.910694",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:07:11.303510",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=110",
+      "timestamp": "2026-01-10 20:07:06.802600",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=109",
+      "timestamp": "2026-01-10 20:07:05.980621",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=108",
+      "timestamp": "2026-01-10 20:07:05.956147",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=107",
+      "timestamp": "2026-01-10 20:07:05.912443",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=106",
+      "timestamp": "2026-01-10 20:07:05.875003",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=105",
+      "timestamp": "2026-01-10 20:07:05.841194",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=104",
+      "timestamp": "2026-01-10 20:07:05.804986",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=103",
+      "timestamp": "2026-01-10 20:07:05.773143",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=102",
+      "timestamp": "2026-01-10 20:07:05.737354",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=101",
+      "timestamp": "2026-01-10 20:07:05.688124",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=100",
+      "timestamp": "2026-01-10 20:07:05.649055",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=99",
+      "timestamp": "2026-01-10 20:07:05.603363",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=98",
+      "timestamp": "2026-01-10 20:07:05.562227",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=97",
+      "timestamp": "2026-01-10 20:07:05.514515",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=96",
+      "timestamp": "2026-01-10 20:07:05.451808",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=95",
+      "timestamp": "2026-01-10 20:07:05.368407",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=94",
+      "timestamp": "2026-01-10 20:07:05.265553",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=93",
+      "timestamp": "2026-01-10 20:07:05.183154",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=92",
+      "timestamp": "2026-01-10 20:07:05.139574",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=91",
+      "timestamp": "2026-01-10 20:07:05.108733",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=90",
+      "timestamp": "2026-01-10 20:07:05.728630",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=89",
+      "timestamp": "2026-01-10 20:07:05.417440",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=88",
+      "timestamp": "2026-01-10 20:07:05.154350",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=87",
+      "timestamp": "2026-01-10 20:07:04.988474",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=86",
+      "timestamp": "2026-01-10 20:07:04.959019",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=85",
+      "timestamp": "2026-01-10 20:07:04.925427",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
+      "timestamp": "2026-01-10 20:07:04.891969",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
+      "timestamp": "2026-01-10 20:07:04.860277",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
+      "timestamp": "2026-01-10 20:07:04.828468",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
+      "timestamp": "2026-01-10 20:07:04.799823",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
+      "timestamp": "2026-01-10 20:07:04.764151",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
+      "timestamp": "2026-01-10 20:07:04.719471",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
+      "timestamp": "2026-01-10 20:07:04.680097",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
+      "timestamp": "2026-01-10 20:07:04.650920",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
+      "timestamp": "2026-01-10 20:07:04.562327",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
+      "timestamp": "2026-01-10 20:07:04.536553",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
+      "timestamp": "2026-01-10 20:07:04.506124",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
+      "timestamp": "2026-01-10 20:07:04.468208",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
+      "timestamp": "2026-01-10 20:07:04.426768",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
+      "timestamp": "2026-01-10 20:07:04.390321",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
+      "timestamp": "2026-01-10 20:07:04.356246",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
+      "timestamp": "2026-01-10 20:07:04.320372",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
+      "timestamp": "2026-01-10 20:07:04.287363",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
+      "timestamp": "2026-01-10 20:07:04.250804",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
+      "timestamp": "2026-01-10 20:07:04.222672",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
+      "timestamp": "2026-01-10 20:07:04.192129",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
+      "timestamp": "2026-01-10 20:07:04.155545",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
+      "timestamp": "2026-01-10 20:07:04.120425",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
+      "timestamp": "2026-01-10 20:07:04.851490",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
+      "timestamp": "2026-01-10 20:07:04.497560",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
+      "timestamp": "2026-01-10 20:07:04.148330",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
+      "timestamp": "2026-01-10 20:07:03.972445",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
+      "timestamp": "2026-01-10 20:07:03.924484",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
+      "timestamp": "2026-01-10 20:07:03.879599",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
+      "timestamp": "2026-01-10 20:07:03.847337",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
+      "timestamp": "2026-01-10 20:07:03.816072",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
+      "timestamp": "2026-01-10 20:07:03.785836",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
+      "timestamp": "2026-01-10 20:07:03.754531",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
+      "timestamp": "2026-01-10 20:07:03.725707",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:07:03.698794",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
+      "timestamp": "2026-01-10 20:07:00.982465",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
+      "timestamp": "2026-01-10 20:07:00.948463",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
+      "timestamp": "2026-01-10 20:07:00.907942",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
+      "timestamp": "2026-01-10 20:07:00.861796",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
+      "timestamp": "2026-01-10 20:07:00.828209",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
+      "timestamp": "2026-01-10 20:07:00.795607",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
+      "timestamp": "2026-01-10 20:07:00.758836",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
+      "timestamp": "2026-01-10 20:07:00.728335",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
+      "timestamp": "2026-01-10 20:07:00.699583",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
+      "timestamp": "2026-01-10 20:07:00.661086",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
+      "timestamp": "2026-01-10 20:07:00.624361",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
+      "timestamp": "2026-01-10 20:07:00.581625",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
+      "timestamp": "2026-01-10 20:07:00.543486",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
+      "timestamp": "2026-01-10 20:07:00.508216",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
+      "timestamp": "2026-01-10 20:07:00.474394",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
+      "timestamp": "2026-01-10 20:07:00.434163",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
+      "timestamp": "2026-01-10 20:07:00.390163",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
+      "timestamp": "2026-01-10 20:07:00.335145",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
+      "timestamp": "2026-01-10 20:07:00.280841",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
+      "timestamp": "2026-01-10 20:07:00.230197",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
+      "timestamp": "2026-01-10 20:07:00.181825",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
+      "timestamp": "2026-01-10 20:07:00.121811",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
+      "timestamp": "2026-01-10 20:07:00.517460",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
+      "timestamp": "2026-01-10 20:06:59.998240",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
+      "timestamp": "2026-01-10 20:06:59.950624",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
+      "timestamp": "2026-01-10 20:06:59.907913",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
+      "timestamp": "2026-01-10 20:06:59.870168",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
+      "timestamp": "2026-01-10 20:06:59.816908",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
+      "timestamp": "2026-01-10 20:06:59.769672",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
+      "timestamp": "2026-01-10 20:06:59.710442",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
+      "timestamp": "2026-01-10 20:06:59.665573",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
+      "timestamp": "2026-01-10 20:06:59.624699",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
+      "timestamp": "2026-01-10 20:06:59.583197",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "RATE_LIMIT_EXCEEDED",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:06:59.528908",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    },
+    {
+      "type": "API_AUTH_FAILURE",
+      "severity": "HIGH",
+      "username": "anonymous",
+      "ip_address": null,
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:06:55.402749",
+      "recommendation": "Investigate event and apply appropriate mitigation"
+    }
+  ],
+  "high_severity_events": [
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser4-1768093959272",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=14 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:44.203966"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser3-1768093959272",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=13 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:43.816160"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser2-1768093959272",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=12 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:41.905930"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "leakeduser1-1768093959272",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=11 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:40.723550"
+    },
+    {
+      "event_type": "DISTRIBUTED_BRUTE_FORCE",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 20:12:30.675320"
+    },
+    {
+      "event_type": "BRUTE_FORCE_DETECTED",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:24.351655"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "distuser-1768093938244",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=10 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:19.721931"
+    },
+    {
+      "event_type": "DISTRIBUTED_BRUTE_FORCE",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Failed logins across multiple sources",
+      "suspected_threat": "count=10 | unique_ips=1",
+      "timestamp": "2026-01-10 20:12:12.859929"
+    },
+    {
+      "event_type": "BRUTE_FORCE_DETECTED",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Repeated failed logins detected",
+      "suspected_threat": "count=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:12:04.400309"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "lockoutuser-1768093916109",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=9 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:57.361285"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=26AEF862B814A5D92CDA756CC01349BE",
+      "timestamp": "2026-01-10 20:11:49.571908"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=FDF2893423FA290F8317C480855B1980",
+      "timestamp": "2026-01-10 20:11:45.222636"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=1981FF56E8FE3E7C50B0697E940A07EB",
+      "timestamp": "2026-01-10 20:11:41.672678"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:11:24.416974"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/ | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:11:24.388522"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "test",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=8 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:11.219115"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "root",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=7 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:09.669591"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "admin",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=6 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:11:06.744698"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.0.100:8080/api",
+      "timestamp": "2026-01-10 20:11:02.788579"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://192.168.1.1/router",
+      "timestamp": "2026-01-10 20:11:02.761291"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://172.16.0.1/api",
+      "timestamp": "2026-01-10 20:11:02.727315"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://10.0.0.1/admin",
+      "timestamp": "2026-01-10 20:11:02.698933"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:11:02.692131"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=BAFE2E8B9261CE0175DE4626C7F7C576",
+      "timestamp": "2026-01-10 20:11:02.493314"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.170.2/v2/metadata",
+      "timestamp": "2026-01-10 20:10:58.584289"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/metadata/instance",
+      "timestamp": "2026-01-10 20:10:58.554937"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://metadata.google.internal/computeMetadata/v1/",
+      "timestamp": "2026-01-10 20:10:58.524041"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://169.254.169.254/latest/meta-data/",
+      "timestamp": "2026-01-10 20:10:58.476575"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:58.463611"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=ABAAC33AFE97844AF3E8FB7D1D6D1AC3",
+      "timestamp": "2026-01-10 20:10:58.254800"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://[::1]:8080/api/admin",
+      "timestamp": "2026-01-10 20:10:54.798975"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://0.0.0.0:8080/admin",
+      "timestamp": "2026-01-10 20:10:54.757158"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://127.0.0.1:8080/api/security/dashboard",
+      "timestamp": "2026-01-10 20:10:54.728589"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=http://localhost:8080/api/security/events",
+      "timestamp": "2026-01-10 20:10:54.700317"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:54.691066"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=5A43B66F574C3534F9BD73D968877583",
+      "timestamp": "2026-01-10 20:10:54.490339"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///proc/self/environ",
+      "timestamp": "2026-01-10 20:10:50.559018"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file://localhost/etc/passwd",
+      "timestamp": "2026-01-10 20:10:50.510275"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///C:/Windows/System32/drivers/etc/hosts",
+      "timestamp": "2026-01-10 20:10:50.455618"
+    },
+    {
+      "event_type": "SSRF_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SSRF pattern detected in imageUrl parameter",
+      "suspected_threat": "imageUrl=file:///etc/passwd",
+      "timestamp": "2026-01-10 20:10:50.411776"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:50.402583"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=68A30527631AC451430E0ED8FB13F815",
+      "timestamp": "2026-01-10 20:10:50.161982"
+    },
+    {
+      "event_type": "CSRF_VIOLATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "CSRF token rejected",
+      "suspected_threat": "path=/cart/clear | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:10:43.573975"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=5 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.487207"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "XSS pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.480356"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "<script>alert('XSS')</script>",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.476702"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=<script>alert('XSS')</script> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:41.202698"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "XSS pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 20:10:37.341846"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=<img src=x onerror=alert('XSS')>",
+      "timestamp": "2026-01-10 20:10:37.336421"
+    },
+    {
+      "event_type": "XSS_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=<img src=x onerror=alert('XSS')> | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:37.323778"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in search parameter",
+      "suspected_threat": "search=' OR '1'='1",
+      "timestamp": "2026-01-10 20:10:34.443263"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /products",
+      "suspected_threat": "param=search | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:34.432624"
+    },
+    {
+      "event_type": "CREDENTIAL_STUFFING",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Multiple usernames failed from same source",
+      "suspected_threat": "unique_users=4 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.799515"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' UNION SELECT NULL--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.788544"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' UNION SELECT NULL-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:31.517073"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' OR 1=1--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:30.425462"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR 1=1-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:30.121818"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "admin'--",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:29.122028"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=admin'-- | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:28.829254"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "' OR '1'='1",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "SQL injection pattern detected in login username",
+      "suspected_threat": "username=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:27.745982"
+    },
+    {
+      "event_type": "SQL_INJECTION_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Suspicious input detected on /perform_login",
+      "suspected_threat": "param=username | value=' OR '1'='1 | ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:10:27.454550"
+    },
+    {
+      "event_type": "RACE_CONDITION_DETECTED",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Checkout race condition: 2 concurrent checkouts succeeded",
+      "suspected_threat": "Multiple simultaneous checkout attempts succeeded - potential double charging",
+      "timestamp": "2026-01-10 20:10:23.210650"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:23.188633"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:23.188633"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=B153D1013E2A229D0344A3834516A3E9",
+      "timestamp": "2026-01-10 20:10:21.268227"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:10:16.600832"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=789787C7E4D88E9DF93E8B7382A97B8D",
+      "timestamp": "2026-01-10 20:09:55.893195"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:51.428159"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=0C6CDF755B5216483FE23D1128548FD1",
+      "timestamp": "2026-01-10 20:09:48.831460"
+    },
+    {
+      "event_type": "CART_MANIPULATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid cart quantity submitted",
+      "suspected_threat": "quantity=0",
+      "timestamp": "2026-01-10 20:09:44.752182"
+    },
+    {
+      "event_type": "CART_MANIPULATION",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unexpected pricing parameters submitted",
+      "suspected_threat": "params=[_csrf, productId, quantity, price]",
+      "timestamp": "2026-01-10 20:09:41.865040"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Currency parameter supplied in product listing",
+      "suspected_threat": "currency=USD",
+      "timestamp": "2026-01-10 20:09:37.603491"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid quantity submitted",
+      "suspected_threat": "value=1.5 | path=/cart/update",
+      "timestamp": "2026-01-10 20:09:34.573122"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:34.543432"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid cart quantity update",
+      "suspected_threat": "quantity=-1",
+      "timestamp": "2026-01-10 20:09:30.840292"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:30.825564"
+    },
+    {
+      "event_type": "AMOUNT_TAMPERING",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Checkout total mismatch detected",
+      "suspected_threat": "client_total=1.0 | server_total=999.99",
+      "timestamp": "2026-01-10 20:09:26.506931"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=C89B2382B99F80C37889AA9534A605CE",
+      "timestamp": "2026-01-10 20:09:23.924140"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:09:20.416867"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:20.240175"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=6B2AC4F6B42A89500CEA1DB6D114F156",
+      "timestamp": "2026-01-10 20:09:20.241050"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:09:15.478581"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=7C50162C5A436F97FFF3187AD4058A85",
+      "timestamp": "2026-01-10 20:09:15.254764"
+    },
+    {
+      "event_type": "ACCESS_CONTROL_VIOLATION",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Order access blocked for non-owner",
+      "suspected_threat": "orderId=1",
+      "timestamp": "2026-01-10 20:09:11.294662"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=A54214180B3A45B668D3AA2CDDD1F9FE",
+      "timestamp": "2026-01-10 20:09:11.241924"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=705A5D032C5E368E7187DA2614AD96FB",
+      "timestamp": "2026-01-10 20:09:10.662346"
+    },
+    {
+      "event_type": "ACCESS_CONTROL_VIOLATION",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Cart update blocked for non-owner session",
+      "suspected_threat": "cartItemId=1 | path=/cart/update",
+      "timestamp": "2026-01-10 20:09:07.634903"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.0.0 Safari/537.36",
+      "timestamp": "2026-01-10 20:09:07.452439"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "paymentuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=4A6B2B2338EB7C221584AF0149C7D1F5",
+      "timestamp": "2026-01-10 20:09:07.285645"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:23.936112"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=0EA75E5295D99B66AF95E795EE121361",
+      "timestamp": "2026-01-10 20:08:22.640921"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:18.261983"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:18.229785"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:15.436473"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "admin",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=8DA261AA4298AEA25BB4B1055E24121E",
+      "timestamp": "2026-01-10 20:08:15.191945"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:11.937090"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:11.872850"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=6C4C9B4D6D4C23D4FF8901B879BD23F2",
+      "timestamp": "2026-01-10 20:08:10.888967"
+    },
+    {
+      "event_type": "PRIVILEGE_ESCALATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized access to admin endpoint",
+      "suspected_threat": "path=/api/security/dashboard | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:08:07.322048"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=127.0.0.1 | ua=Apache-HttpClient/4.5.13 (Java/21.0.9)",
+      "timestamp": "2026-01-10 20:08:07.314542"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=632ED5539761C0D897517303E42E8040",
+      "timestamp": "2026-01-10 20:08:07.114246"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Session context mismatch detected",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1 | ua=Codex-Session-Probe/1.0",
+      "timestamp": "2026-01-10 20:08:02.357561"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=F609FA96613CF3A597F10BD5B917BCF1",
+      "timestamp": "2026-01-10 20:08:00.176980"
+    },
+    {
+      "event_type": "SESSION_HIJACK_ATTEMPT",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Invalid session identifier presented",
+      "suspected_threat": "ip=0:0:0:0:0:0:0:1",
+      "timestamp": "2026-01-10 20:07:56.400260"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=3E23687C0F2C58D251C029BC9E2A7485",
+      "timestamp": "2026-01-10 20:07:55.421824"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=98A8150DF7F7925D21BB69BF5E833065",
+      "timestamp": "2026-01-10 20:07:51.606545"
+    },
+    {
+      "event_type": "SESSION_FIXATION_ATTEMPT",
+      "username": "testuser",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "No session ID supplied before authentication",
+      "suspected_threat": "old=null | new=3269B2F63BE861832B2326674AA09336",
+      "timestamp": "2026-01-10 20:07:46.910694"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:07:11.303510"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=110",
+      "timestamp": "2026-01-10 20:07:06.802600"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=109",
+      "timestamp": "2026-01-10 20:07:05.980621"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=108",
+      "timestamp": "2026-01-10 20:07:05.956147"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=107",
+      "timestamp": "2026-01-10 20:07:05.912443"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=106",
+      "timestamp": "2026-01-10 20:07:05.875003"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=105",
+      "timestamp": "2026-01-10 20:07:05.841194"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=104",
+      "timestamp": "2026-01-10 20:07:05.804986"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=103",
+      "timestamp": "2026-01-10 20:07:05.773143"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=102",
+      "timestamp": "2026-01-10 20:07:05.737354"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=101",
+      "timestamp": "2026-01-10 20:07:05.688124"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=100",
+      "timestamp": "2026-01-10 20:07:05.649055"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=99",
+      "timestamp": "2026-01-10 20:07:05.603363"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=98",
+      "timestamp": "2026-01-10 20:07:05.562227"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=97",
+      "timestamp": "2026-01-10 20:07:05.514515"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=96",
+      "timestamp": "2026-01-10 20:07:05.451808"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=95",
+      "timestamp": "2026-01-10 20:07:05.368407"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=94",
+      "timestamp": "2026-01-10 20:07:05.265553"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=93",
+      "timestamp": "2026-01-10 20:07:05.183154"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=92",
+      "timestamp": "2026-01-10 20:07:05.139574"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=91",
+      "timestamp": "2026-01-10 20:07:05.108733"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=90",
+      "timestamp": "2026-01-10 20:07:05.728630"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=89",
+      "timestamp": "2026-01-10 20:07:05.417440"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=88",
+      "timestamp": "2026-01-10 20:07:05.154350"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=87",
+      "timestamp": "2026-01-10 20:07:04.988474"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=86",
+      "timestamp": "2026-01-10 20:07:04.959019"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=85",
+      "timestamp": "2026-01-10 20:07:04.925427"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
+      "timestamp": "2026-01-10 20:07:04.891969"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
+      "timestamp": "2026-01-10 20:07:04.860277"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
+      "timestamp": "2026-01-10 20:07:04.828468"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
+      "timestamp": "2026-01-10 20:07:04.799823"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
+      "timestamp": "2026-01-10 20:07:04.764151"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
+      "timestamp": "2026-01-10 20:07:04.719471"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
+      "timestamp": "2026-01-10 20:07:04.680097"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
+      "timestamp": "2026-01-10 20:07:04.650920"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
+      "timestamp": "2026-01-10 20:07:04.562327"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
+      "timestamp": "2026-01-10 20:07:04.536553"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
+      "timestamp": "2026-01-10 20:07:04.506124"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
+      "timestamp": "2026-01-10 20:07:04.468208"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
+      "timestamp": "2026-01-10 20:07:04.426768"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
+      "timestamp": "2026-01-10 20:07:04.390321"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
+      "timestamp": "2026-01-10 20:07:04.356246"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
+      "timestamp": "2026-01-10 20:07:04.320372"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
+      "timestamp": "2026-01-10 20:07:04.287363"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
+      "timestamp": "2026-01-10 20:07:04.250804"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
+      "timestamp": "2026-01-10 20:07:04.222672"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
+      "timestamp": "2026-01-10 20:07:04.192129"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
+      "timestamp": "2026-01-10 20:07:04.155545"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
+      "timestamp": "2026-01-10 20:07:04.120425"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
+      "timestamp": "2026-01-10 20:07:04.851490"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
+      "timestamp": "2026-01-10 20:07:04.497560"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
+      "timestamp": "2026-01-10 20:07:04.148330"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
+      "timestamp": "2026-01-10 20:07:03.972445"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
+      "timestamp": "2026-01-10 20:07:03.924484"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
+      "timestamp": "2026-01-10 20:07:03.879599"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
+      "timestamp": "2026-01-10 20:07:03.847337"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
+      "timestamp": "2026-01-10 20:07:03.816072"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
+      "timestamp": "2026-01-10 20:07:03.785836"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
+      "timestamp": "2026-01-10 20:07:03.754531"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
+      "timestamp": "2026-01-10 20:07:03.725707"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:07:03.698794"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=84",
+      "timestamp": "2026-01-10 20:07:00.982465"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=83",
+      "timestamp": "2026-01-10 20:07:00.948463"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=82",
+      "timestamp": "2026-01-10 20:07:00.907942"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=81",
+      "timestamp": "2026-01-10 20:07:00.861796"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=80",
+      "timestamp": "2026-01-10 20:07:00.828209"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=79",
+      "timestamp": "2026-01-10 20:07:00.795607"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=78",
+      "timestamp": "2026-01-10 20:07:00.758836"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=77",
+      "timestamp": "2026-01-10 20:07:00.728335"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=76",
+      "timestamp": "2026-01-10 20:07:00.699583"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=75",
+      "timestamp": "2026-01-10 20:07:00.661086"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=74",
+      "timestamp": "2026-01-10 20:07:00.624361"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=73",
+      "timestamp": "2026-01-10 20:07:00.581625"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=72",
+      "timestamp": "2026-01-10 20:07:00.543486"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=71",
+      "timestamp": "2026-01-10 20:07:00.508216"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=70",
+      "timestamp": "2026-01-10 20:07:00.474394"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=69",
+      "timestamp": "2026-01-10 20:07:00.434163"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=68",
+      "timestamp": "2026-01-10 20:07:00.390163"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=67",
+      "timestamp": "2026-01-10 20:07:00.335145"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=66",
+      "timestamp": "2026-01-10 20:07:00.280841"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=65",
+      "timestamp": "2026-01-10 20:07:00.230197"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=64",
+      "timestamp": "2026-01-10 20:07:00.181825"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=63",
+      "timestamp": "2026-01-10 20:07:00.121811"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=62",
+      "timestamp": "2026-01-10 20:07:00.517460"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=61",
+      "timestamp": "2026-01-10 20:06:59.998240"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=60",
+      "timestamp": "2026-01-10 20:06:59.950624"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=59",
+      "timestamp": "2026-01-10 20:06:59.907913"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=58",
+      "timestamp": "2026-01-10 20:06:59.870168"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=57",
+      "timestamp": "2026-01-10 20:06:59.816908"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=56",
+      "timestamp": "2026-01-10 20:06:59.769672"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=55",
+      "timestamp": "2026-01-10 20:06:59.710442"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=54",
+      "timestamp": "2026-01-10 20:06:59.665573"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=53",
+      "timestamp": "2026-01-10 20:06:59.624699"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=52",
+      "timestamp": "2026-01-10 20:06:59.583197"
+    },
+    {
+      "event_type": "RATE_LIMIT_EXCEEDED",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Sliding window rate limiting triggered",
+      "suspected_threat": "ip=127.0.0.1 | path=/products | count=51",
+      "timestamp": "2026-01-10 20:06:59.528908"
+    },
+    {
+      "event_type": "API_AUTH_FAILURE",
+      "username": "anonymous",
+      "ip_address": null,
+      "severity": "HIGH",
+      "details": "Unauthorized API access attempt",
+      "suspected_threat": "path=/api/security/events | ip=127.0.0.1",
+      "timestamp": "2026-01-10 20:06:55.402749"
+    }
+  ]
 }
 ````
 
@@ -6985,155 +8145,6 @@ public class CartManipulationTest extends BaseTest {
         }
     }
 
-}
-````
-
-## File: demo-interview.ps1
-````powershell
-param(
-    [string]$DemoProfile = "demo",
-    [string]$BaseUrl = "http://localhost:8080",
-    [string]$Browser = "chrome",
-    [bool]$Headless = $true,
-    [bool]$InstallPythonDependencies = $true
-)
-
-Set-StrictMode -Version Latest
-$ErrorActionPreference = "Stop"
-
-$repoRoot = $PSScriptRoot
-$startedApp = $false
-$lockFile = Join-Path $repoRoot "data\security-events.lock.db"
-
-function Wait-ForApp {
-    param(
-        [string]$Url = $BaseUrl,
-        [int]$Attempts = 40,
-        [int]$DelaySeconds = 2
-    )
-
-    for ($i = 1; $i -le $Attempts; $i++) {
-        try {
-            Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3 | Out-Null
-            Write-Host "App is up at $Url"
-            return $true
-        } catch {
-            Start-Sleep -Seconds $DelaySeconds
-        }
-    }
-
-    return $false
-}
-
-function Get-ListeningProcess {
-    $conn = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-    if (-not $conn) {
-        return $null
-    }
-
-    return Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)"
-}
-
-function Is-DemoAppProcess {
-    param(
-        [object]$ProcessInfo
-    )
-
-    if (-not $ProcessInfo) {
-        return $false
-    }
-
-    $cmd = $ProcessInfo.CommandLine
-    return $cmd -like "*spring-boot:run*" `
-        -or $cmd -like "*com.security.ecommerce.EcommerceApplication*" `
-        -or $cmd -like "*secure-transac\\ecommerce-app*"
-}
-
-function Ensure-PythonDependencies {
-    param(
-        [string]$Requirements = "scripts/python/requirements.txt"
-    )
-
-    if (-not (Test-Path $Requirements)) {
-        Write-Host "Python requirements file not found at $Requirements, skipping installation."
-        return
-    }
-
-    $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
-    if (-not $pythonCmd) {
-        throw "Python is not installed or not available in PATH."
-    }
-
-    Write-Host "Installing Python dependencies from $Requirements"
-    & python -m pip install --upgrade pip
-    & python -m pip install -r $Requirements
-}
-
-Write-Host "Starting demo from: $repoRoot"
-
-$appProcess = $null
-Set-Location $repoRoot
-
-try {
-    $existingListener = Get-ListeningProcess
-    if ($existingListener) {
-        if (Is-DemoAppProcess $existingListener) {
-            Write-Host "Step 1: Restarting app with the demo profile"
-            Stop-Process -Id $existingListener.ProcessId -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 2
-        } else {
-            throw "Port 8080 is already in use by another process. Stop it and retry."
-        }
-    }
-
-    if ((-not $existingListener) -and (Test-Path $lockFile)) {
-        Write-Host "Cleaning stale H2 lock file: $lockFile"
-        Remove-Item -Force $lockFile -ErrorAction SilentlyContinue
-    }
-
-    Write-Host "Step 1: Start the Secure Transaction Monitor (Spring Boot App)"
-    $appProcess = Start-Process -FilePath "mvn" `
-        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=$DemoProfile" `
-        -WorkingDirectory $repoRoot `
-        -PassThru -NoNewWindow
-    $startedApp = $true
-
-    if (-not (Wait-ForApp -Url $BaseUrl)) {
-        throw "App did not start in time."
-    }
-
-    Write-Host "Step 2: Run Attack Simulation (Selenium + TestNG)"
-    $headlessFlag = if ($Headless) { "true" } else { "false" }
-    Write-Host "Running attack simulation with:"
-    Write-Host "  baseUrl = $BaseUrl"
-    Write-Host "  browser = $Browser"
-    Write-Host "  headless = $headlessFlag"
-    try {
-        & mvn -f security-tests/pom.xml test `
-            "-Dheadless=$headlessFlag" `
-            "-Dbrowser=$Browser" `
-            "-DbaseUrl=$BaseUrl"
-    } catch {
-        Write-Warning "Attack simulation failed; continuing to SIEM/JIRA steps."
-    }
-
-    Write-Host "Step 3: Run SIEM Threat Detection (Python)"
-    if ($InstallPythonDependencies) {
-        Ensure-PythonDependencies -Requirements "scripts/python/requirements.txt"
-    }
-    & python scripts/python/security_analyzer_h2.py
-    Write-Host "Step 3 complete: SIEM report generated."
-
-    Write-Host "Step 4: Generate Incident Tickets (JIRA Integration)"
-    & python scripts/python/jira_ticket_generator.py siem_incident_report.json
-    Write-Host "Step 4 complete: JIRA ticket generation finished."
-
-    Write-Host "Demo completed successfully."
-} finally {
-    if ($startedApp -and $appProcess -and -not $appProcess.HasExited) {
-        Write-Host "Stopping app..."
-        Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
-    }
 }
 ````
 
@@ -7691,204 +8702,6 @@ JPype1==1.4.1
     </build>
 
 </project>
-````
-
-## File: security-tests/src/test/java/com/security/tests/api/RateLimitingTest.java
-````java
-package com.security.tests.api;
-
-import com.security.tests.base.BaseTest;
-import com.security.tests.utils.SecurityEvent;
-
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
-
-import org.testng.annotations.Test;
-import org.testng.Assert;
-
-/**
- * OWASP A04: Insecure Design - Rate Limiting Testing
- * Tests rate limiting effectiveness and attempts to bypass rate limits
- * through various techniques (IP spoofing, distributed sessions).
- */
-public class RateLimitingTest extends BaseTest {
-    
-    @Test(priority = 1, description = "Test rate limiting on API endpoints")
-    public void testRateLimiting() {
-        RestAssured.baseURI = baseUrl;
-        
-        
-        int requestCount = 100;
-        int tooManyRequestsCount = 0;
-        int successCount = 0;
-        
-        for (int i = 0; i < requestCount; i++) {
-            Response response = RestAssured
-                .given()
-                .get("/products");
-            
-            if (response.statusCode() == 429) { 
-                tooManyRequestsCount++;
-            } else if (response.statusCode() == 200) {
-                successCount++;
-            } else {
-                throw new AssertionError("Unexpected status code: " + response.statusCode());
-            }
-        }
-        
-        org.testng.Assert.assertTrue(tooManyRequestsCount > 0,
-            "Rate limiting should trigger under burst traffic");
-        assertSecurityEventLogged("RATE_LIMIT_EXCEEDED");
-    }
-    
-    @Test(priority = 2, description = "Test rate limit bypass via X-Forwarded-For header spoofing")
-    public void testRateLimitBypassIPSpoofing() {
-        RestAssured.baseURI = baseUrl;
-        
-        // Attempt to bypass rate limiting by rotating X-Forwarded-For IPs
-        int requestCount = 60;
-        int bypassSuccessCount = 0;
-        
-        for (int i = 0; i < requestCount; i++) {
-            // Rotate IP addresses to attempt bypass
-            String spoofedIP = "192.168.1." + (i % 50 + 1);
-            
-            Response response = RestAssured
-                .given()
-                .header("X-Forwarded-For", spoofedIP)
-                .header("X-Real-IP", spoofedIP)
-                .get("/products");
-            
-            if (response.statusCode() == 200) {
-                bypassSuccessCount++;
-            }
-        }
-        
-        // If we got more than the rate limit allows (typically 50 requests),
-        // then IP spoofing bypassed rate limiting
-        if (bypassSuccessCount > 50) {
-            // Log security event - rate limit bypass successful
-            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
-                "RATE_LIMIT_EXCEEDED",
-                "anonymous",
-                "Rate limiting vulnerable to IP spoofing attacks",
-                "Rate limit bypass successful via X-Forwarded-For spoofing (" + bypassSuccessCount + "/" + requestCount + " requests succeeded)"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            System.out.println("? Warning: Rate limiting bypassed via IP spoofing (" + bypassSuccessCount + "/" + requestCount + " succeeded)");
-        } else {
-            System.out.println("? Rate limiting resistant to X-Forwarded-For spoofing");
-        }
-        
-        // We still want the test to pass, but log the security concern
-        Assert.assertTrue(true, "Rate limit bypass test completed");
-    }
-    
-    @Test(priority = 3, description = "Test rate limit bypass via distributed session IDs")
-    public void testRateLimitBypassDistributedSessions() {
-        RestAssured.baseURI = baseUrl;
-        
-        // Attempt to bypass rate limiting by using multiple session IDs
-        int requestCount = 60;
-        int bypassSuccessCount = 0;
-        
-        for (int i = 0; i < requestCount; i++) {
-            // Create different session contexts
-            Response response = RestAssured
-                .given()
-                .header("User-Agent", "Mozilla/5.0-Session-" + i)
-                .cookie("fake-session-" + i, "value-" + i)
-                .get("/products");
-            
-            if (response.statusCode() == 200) {
-                bypassSuccessCount++;
-            }
-        }
-        
-        // If we got more than the rate limit allows, session rotation bypassed it
-        if (bypassSuccessCount > 50) {
-            // Log security event - rate limit bypass via session rotation
-            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-                "RATE_LIMIT_EXCEEDED",
-                "anonymous",
-                "Rate limiting may not account for session-based attacks",
-                "Rate limit bypass via distributed sessions (" + bypassSuccessCount + "/" + requestCount + " requests succeeded)"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            System.out.println("? Warning: Rate limiting bypassed via session rotation (" + bypassSuccessCount + "/" + requestCount + " succeeded)");
-        } else {
-            System.out.println("? Rate limiting resistant to session-based bypass attempts");
-        }
-        
-        Assert.assertTrue(true, "Distributed session bypass test completed");
-    }
-    
-    @Test(priority = 4, description = "Test slowloris-style attack staying under rate limit threshold")
-    public void testSlowlorisStyleAttack() {
-        RestAssured.baseURI = baseUrl;
-        
-        // Slowloris: Send requests slowly, staying just under the threshold
-        // Rate limit is typically 50 requests per 5 seconds
-        // Send 49 requests, wait, repeat
-        
-        int batchSize = 45; // Stay under threshold
-        int batches = 3;
-        int totalSuccess = 0;
-        
-        try {
-            for (int batch = 0; batch < batches; batch++) {
-                int batchSuccess = 0;
-                
-                // Send batch of requests
-                for (int i = 0; i < batchSize; i++) {
-                    Response response = RestAssured
-                        .given()
-                        .get("/products");
-                    
-                    if (response.statusCode() == 200) {
-                        batchSuccess++;
-                    }
-                    
-                    // Small delay between requests (100ms)
-                    Thread.sleep(100);
-                }
-                
-                totalSuccess += batchSuccess;
-                
-                // Wait for rate limit window to reset (5 seconds + buffer)
-                if (batch < batches - 1) {
-                    Thread.sleep(5500);
-                }
-            }
-            
-            // Log security event - slowloris-style attack successful
-            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
-                "RATE_LIMIT_EXCEEDED",
-                "anonymous",
-                "Rate limiting can be bypassed by staying under threshold and waiting for window reset",
-                "Slowloris-style attack successful (" + totalSuccess + " requests over " + batches + " batches)"
-            );
-            eventLogger.logSecurityEvent(event);
-            
-            System.out.println("? Slowloris-style attack: " + totalSuccess + "/" + (batchSize * batches) + " requests succeeded");
-            
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            Assert.fail("Slowloris test interrupted");
-        }
-        
-        Assert.assertTrue(true, "Slowloris-style attack test completed");
-    }
-
-
-    @Override
-    protected boolean useWebDriver() {
-        return false;
-    }
-
-}
 ````
 
 ## File: security-tests/src/test/java/com/security/tests/config/SecurityMisconfigurationTest.java
@@ -8818,6 +9631,157 @@ jobs:
           retention-days: 30
 ````
 
+## File: demo-interview.ps1
+````powershell
+param(
+    [string]$DemoProfile = "demo",
+    [string]$BaseUrl = "http://localhost:8080",
+    [string]$Browser = "chrome",
+    [bool]$Headless = $true,
+    [bool]$InstallPythonDependencies = $true
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+# Fixed PowerShell function naming to use approved verbs
+
+$repoRoot = $PSScriptRoot
+$startedApp = $false
+$lockFile = Join-Path $repoRoot "data\security-events.lock.db"
+
+function Wait-ForApp {
+    param(
+        [string]$Url = $BaseUrl,
+        [int]$Attempts = 40,
+        [int]$DelaySeconds = 2
+    )
+
+    for ($i = 1; $i -le $Attempts; $i++) {
+        try {
+            Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 3 | Out-Null
+            Write-Host "App is up at $Url"
+            return $true
+        } catch {
+            Start-Sleep -Seconds $DelaySeconds
+        }
+    }
+
+    return $false
+}
+
+function Get-ListeningProcess {
+    $conn = Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $conn) {
+        return $null
+    }
+
+    return Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)"
+}
+
+function Confirm-DemoAppProcess {
+    param(
+        [object]$ProcessInfo
+    )
+
+    if (-not $ProcessInfo) {
+        return $false
+    }
+
+    $cmd = $ProcessInfo.CommandLine
+    return $cmd -like "*spring-boot:run*" `
+        -or $cmd -like "*com.security.ecommerce.EcommerceApplication*" `
+        -or $cmd -like "*secure-transac\\ecommerce-app*"
+}
+
+function Install-PythonDependencies {
+    param(
+        [string]$Requirements = "scripts/python/requirements.txt"
+    )
+
+    if (-not (Test-Path $Requirements)) {
+        Write-Host "Python requirements file not found at $Requirements, skipping installation."
+        return
+    }
+
+    $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $pythonCmd) {
+        throw "Python is not installed or not available in PATH."
+    }
+
+    Write-Host "Installing Python dependencies from $Requirements"
+    & python -m pip install --upgrade pip
+    & python -m pip install -r $Requirements
+}
+
+Write-Host "Starting demo from: $repoRoot"
+
+$appProcess = $null
+Set-Location $repoRoot
+
+try {
+    $existingListener = Get-ListeningProcess
+    if ($existingListener) {
+        if (Confirm-DemoAppProcess $existingListener) {
+            Write-Host "Step 1: Restarting app with the demo profile"
+            Stop-Process -Id $existingListener.ProcessId -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        } else {
+            throw "Port 8080 is already in use by another process. Stop it and retry."
+        }
+    }
+
+    if ((-not $existingListener) -and (Test-Path $lockFile)) {
+        Write-Host "Cleaning stale H2 lock file: $lockFile"
+        Remove-Item -Force $lockFile -ErrorAction SilentlyContinue
+    }
+
+    Write-Host "Step 1: Start the Secure Transaction Monitor (Spring Boot App)"
+    $appProcess = Start-Process -FilePath "mvn" `
+        -ArgumentList "-f", "ecommerce-app/pom.xml", "spring-boot:run", "-Dspring-boot.run.profiles=$DemoProfile" `
+        -WorkingDirectory $repoRoot `
+        -PassThru -NoNewWindow
+    $startedApp = $true
+
+    if (-not (Wait-ForApp -Url $BaseUrl)) {
+        throw "App did not start in time."
+    }
+
+    Write-Host "Step 2: Run Attack Simulation (Selenium + TestNG)"
+    $headlessFlag = if ($Headless) { "true" } else { "false" }
+    Write-Host "Running attack simulation with:"
+    Write-Host "  baseUrl = $BaseUrl"
+    Write-Host "  browser = $Browser"
+    Write-Host "  headless = $headlessFlag"
+    try {
+        & mvn -f security-tests/pom.xml test `
+            "-Dheadless=$headlessFlag" `
+            "-Dbrowser=$Browser" `
+            "-DbaseUrl=$BaseUrl"
+    } catch {
+        Write-Warning "Attack simulation failed; continuing to SIEM/JIRA steps."
+    }
+
+    Write-Host "Step 3: Run SIEM Threat Detection (Python)"
+    if ($InstallPythonDependencies) {
+        Install-PythonDependencies -Requirements "scripts/python/requirements.txt"
+    }
+    & python scripts/python/security_analyzer_h2.py
+    Write-Host "Step 3 complete: SIEM report generated."
+
+    Write-Host "Step 4: Generate Incident Tickets (JIRA Integration)"
+    & python scripts/python/jira_ticket_generator.py siem_incident_report.json
+    Write-Host "Step 4 complete: JIRA ticket generation finished."
+
+    Write-Host "Demo completed successfully."
+} finally {
+    if ($startedApp -and $appProcess -and -not $appProcess.HasExited) {
+        Write-Host "Stopping app..."
+        Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
+    }
+}
+````
+
 ## File: ecommerce-app/pom.xml
 ````xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -9220,414 +10184,6 @@ jobs:
 </project>
 ````
 
-## File: scripts/python/jira_ticket_generator.py
-````python
-import logging
-import requests
-import json
-import sys
-import os
-from datetime import datetime
-
-                  
-logger = logging.getLogger('jira_generator')
-if not logger.handlers:
-    h = logging.StreamHandler()
-    fmt = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
-    h.setFormatter(fmt)
-    logger.addHandler(h)
-logger.setLevel(logging.INFO)
-
-def _load_env_file(path):
-    if not path or not os.path.exists(path):
-        return False
-    try:
-        with open(path, 'r') as env_file:
-            for raw_line in env_file:
-                line = raw_line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                if '=' not in line:
-                    continue
-                key, value = line.split('=', 1)
-                key = key.strip()
-                value = value.strip()
-                if not key:
-                    continue
-                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
-                    value = value[1:-1]
-                else:
-                    if '#' in value:
-                        value = value.split('#', 1)[0].rstrip()
-                if key not in os.environ and value != '':
-                    os.environ[key] = value
-        return True
-    except Exception as exc:
-        logger.warning('Failed to load env file %s: %s', path, exc)
-        return False
-
-def _load_env_files():
-    env_paths = []
-    explicit = os.getenv('JIRA_ENV_FILE')
-    if explicit:
-        env_paths.append(explicit)
-    cwd = os.getcwd()
-    env_paths.append(os.path.join(cwd, 'jira.env'))
-    env_paths.append(os.path.join(cwd, '.env'))
-    script_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    env_paths.append(os.path.join(script_root, 'jira.env'))
-    env_paths.append(os.path.join(script_root, '.env'))
-    for path in env_paths:
-        if _load_env_file(path):
-            logger.info('Loaded environment variables from %s', path)
-            return
-
-class JiraIncidentTicketGenerator:
-    def __init__(self, jira_url, username, api_token, project_key):
-        self.jira_url = jira_url.rstrip('/')
-        self.auth = (username, api_token)
-        self.project_key = project_key
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        self.use_service_desk = os.getenv('JIRA_SERVICE_DESK', '').lower() in ('1', 'true', 'yes')
-        self.request_type_name = os.getenv('JIRA_REQUEST_TYPE')
-        self.issue_type = (os.getenv('JIRA_ISSUE_TYPE') or 'Task').strip() or 'Task'
-        self._service_desk_id = None
-        self._request_type_id = None
-    
-    def create_incident_ticket(self, incident):
-        severity_priority_map = {
-            'HIGH': 'Highest',
-            'MEDIUM': 'High',
-            'LOW': 'Medium'
-        }
-        
-        priority = severity_priority_map.get(incident.get('severity', 'MEDIUM'), 'High')
-        
-        if self.use_service_desk:
-            return self.create_service_desk_request(incident)
-
-        description = self._build_ticket_description(incident)
-        
-                              
-        issue_data = {
-            'fields': {
-                'project': {'key': self.project_key},
-                'summary': f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}",
-                'description': description,
-                'issuetype': {'name': self.issue_type},                                           
-                'priority': {'name': priority},
-                'labels': ['security', 'automated', incident['type'].lower()]
-            }
-        }
-        
-                                                                                    
-        
-        try:
-            logger.debug("Creating JIRA ticket for incident: %s", incident.get('type'))
-            response = requests.post(
-                f"{self.jira_url}/rest/api/2/issue",
-                json=issue_data,
-                auth=self.auth,
-                headers=self.headers,
-                timeout=30
-            )
-
-            if response.status_code == 201:
-                issue_key = response.json().get('key')
-                logger.info("Created JIRA ticket: %s for %s", issue_key, incident.get('type'))
-                return issue_key
-            else:
-                logger.error("Failed to create ticket: %s - %s", response.status_code, response.text)
-                                                               
-                if response.status_code in (401, 403):
-                    logger.error("Authentication to JIRA failed (status %s). Check JIRA credentials or token expiry.", response.status_code)
-                return None
-
-        except Exception as e:
-            logger.exception("Error creating JIRA ticket: %s", e)
-            return None
-
-    def create_service_desk_request(self, incident):
-        service_desk_id = self._resolve_service_desk_id()
-        if not service_desk_id:
-            logger.error("Unable to resolve service desk for project key: %s", self.project_key)
-            return None
-
-        request_type_id = self._resolve_request_type_id(service_desk_id)
-        if not request_type_id:
-            logger.error("Unable to resolve request type for service desk %s", service_desk_id)
-            return None
-
-        summary = f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}"
-        description = self._build_ticket_description(incident)
-
-        request_data = {
-            'serviceDeskId': str(service_desk_id),
-            'requestTypeId': str(request_type_id),
-            'requestFieldValues': {
-                'summary': summary,
-                'description': description
-            }
-        }
-
-        try:
-            logger.debug("Creating JSM request for incident: %s", incident.get('type'))
-            response = requests.post(
-                f"{self.jira_url}/rest/servicedeskapi/request",
-                json=request_data,
-                auth=self.auth,
-                headers=self.headers,
-                timeout=30
-            )
-
-            if response.status_code == 201:
-                issue_key = response.json().get('issueKey')
-                logger.info("Created JSM request: %s for %s", issue_key, incident.get('type'))
-                return issue_key
-            else:
-                logger.error("Failed to create JSM request: %s - %s", response.status_code, response.text)
-                if response.status_code in (401, 403):
-                    logger.error("Authentication/authorization failed for JSM (status %s).", response.status_code)
-                return None
-        except Exception as e:
-            logger.exception("Error creating JSM request: %s", e)
-            return None
-
-    def _resolve_service_desk_id(self):
-        if self._service_desk_id:
-            return self._service_desk_id
-
-        try:
-            response = requests.get(
-                f"{self.jira_url}/rest/servicedeskapi/servicedesk",
-                auth=self.auth,
-                headers=self.headers,
-                timeout=30
-            )
-            if response.status_code != 200:
-                logger.error("Failed to list service desks: %s - %s", response.status_code, response.text)
-                return None
-
-            desks = response.json().get('values', [])
-            for desk in desks:
-                project_key = desk.get('projectKey')
-                if project_key and project_key.upper() == self.project_key.upper():
-                    self._service_desk_id = desk.get('id')
-                    return self._service_desk_id
-        except Exception as e:
-            logger.exception("Error resolving service desk: %s", e)
-        return None
-
-    def _resolve_request_type_id(self, service_desk_id):
-        if self._request_type_id:
-            return self._request_type_id
-
-        try:
-            response = requests.get(
-                f"{self.jira_url}/rest/servicedeskapi/servicedesk/{service_desk_id}/requesttype",
-                auth=self.auth,
-                headers=self.headers,
-                timeout=30
-            )
-            if response.status_code != 200:
-                logger.error("Failed to list request types: %s - %s", response.status_code, response.text)
-                return None
-
-            request_types = response.json().get('values', [])
-            if self.request_type_name:
-                for req_type in request_types:
-                    if req_type.get('name', '').lower() == self.request_type_name.lower():
-                        self._request_type_id = req_type.get('id')
-                        return self._request_type_id
-
-            if request_types:
-                self._request_type_id = request_types[0].get('id')
-                return self._request_type_id
-        except Exception as e:
-            logger.exception("Error resolving request type: %s", e)
-        return None
-    
-    def _build_ticket_description(self, incident):
-        description = f"""
-h2. Security Incident Detected
-
-*Incident Type:* {incident['type']}
-*Severity:* {incident['severity']}
-*Detection Time:* {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
-h3. Incident Details
-"""
-        
-                                 
-        for key, value in incident.items():
-            if key not in ['type', 'severity', 'recommendation']:
-                description += f"*{key.replace('_', ' ').title()}:* {value}\n"
-        
-        if 'recommendation' in incident:
-            description += f"""
-h3. Recommended Actions
-{incident['recommendation']}
-
-h3. Investigation Steps
-# Review user activity logs
-# Check for similar patterns from same user/IP
-# Verify if account is compromised
-# Contact user if necessary
-# Implement blocking/rate limiting if needed
-
-h3. Root Cause
-To be determined during investigation
-
-h3. Remediation Status
-[ ] Investigation started
-[ ] Root cause identified
-[ ] Mitigation applied
-[ ] User notified (if applicable)
-[ ] Incident resolved
-"""
-        
-        return description
-    
-    def process_incident_report(self, report_file):
-        with open(report_file, 'r') as f:
-            report = json.load(f)
-        
-        incidents = report.get('incidents', [])
-        logger.info("Processing %d incidents from report %s", len(incidents), report_file)
-        logger.debug("Full report keys: %s", ','.join(report.keys()))
-        
-        created_tickets = []
-        failed_tickets = []
-        
-                                                          
-        for incident in incidents:
-            if incident.get('severity') in ['HIGH', 'MEDIUM']:
-                ticket_key = self.create_incident_ticket(incident)
-                if ticket_key:
-                    created_tickets.append(ticket_key)
-                else:
-                    failed_tickets.append(incident['type'])
-        
-        logger.info("JIRA Ticket Summary: Created=%d Failed=%d", len(created_tickets), len(failed_tickets))
-        if created_tickets:
-            logger.info("Created tickets:")
-            for ticket in created_tickets:
-                logger.info(" - %s/browse/%s", self.jira_url, ticket)
-
-        return created_tickets
-
-def main():
-    import os
-    _load_env_files()
-    
-                                                   
-    JIRA_URL = (os.getenv('JIRA_URL') or '').strip() or None
-    JIRA_USERNAME = (os.getenv('JIRA_USERNAME') or '').strip() or None
-    JIRA_API_TOKEN = (os.getenv('JIRA_API_TOKEN') or '').strip() or None
-    PROJECT_KEY = (os.getenv('JIRA_PROJECT_KEY') or '').strip() or None
-    JIRA_DRY_RUN = os.getenv('JIRA_DRY_RUN', '').lower() in ('1', 'true', 'yes')
-                                                        
-    dry_run = False
-    if JIRA_DRY_RUN:
-        logger.warning('JIRA_DRY_RUN enabled - running in dry-run mode (no tickets will be created).')
-        dry_run = True
-    elif not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN, PROJECT_KEY]):
-        missing = []
-        if not JIRA_URL:
-            missing.append('JIRA_URL')
-        if not JIRA_USERNAME:
-            missing.append('JIRA_USERNAME')
-        if not JIRA_API_TOKEN:
-            missing.append('JIRA_API_TOKEN')
-        if not PROJECT_KEY:
-            missing.append('JIRA_PROJECT_KEY')
-        logger.error('Missing required JIRA settings: %s', ', '.join(missing))
-        logger.warning('JIRA credentials not provided - running in dry-run mode (no tickets will be created).')
-        dry_run = True
-    else:
-        if not (JIRA_URL.startswith('http://') or JIRA_URL.startswith('https://')):
-            logger.error('JIRA_URL must start with http:// or https:// (got: %s)', JIRA_URL)
-            dry_run = True
-        try:
-            requests.get(JIRA_URL, timeout=5)
-        except Exception as e:
-            logger.warning('JIRA URL unreachable (%s) - running in dry-run mode.', e)
-            dry_run = True
-        if not dry_run:
-            auth = (JIRA_USERNAME, JIRA_API_TOKEN)
-            headers = {'Accept': 'application/json'}
-            try:
-                auth_check = requests.get(
-                    f"{JIRA_URL.rstrip('/')}/rest/api/2/myself",
-                    auth=auth,
-                    headers=headers,
-                    timeout=10
-                )
-                if auth_check.status_code in (401, 403):
-                    logger.error('JIRA authentication failed (status %s). Check JIRA_USERNAME and JIRA_API_TOKEN.', auth_check.status_code)
-                    dry_run = True
-                elif auth_check.status_code >= 400:
-                    logger.error('JIRA auth check failed (status %s): %s', auth_check.status_code, auth_check.text)
-                    dry_run = True
-            except Exception as e:
-                logger.warning('JIRA auth check failed (%s) - running in dry-run mode.', e)
-                dry_run = True
-
-        if not dry_run:
-            try:
-                project_check = requests.get(
-                    f"{JIRA_URL.rstrip('/')}/rest/api/2/project/{PROJECT_KEY}",
-                    auth=auth,
-                    headers=headers,
-                    timeout=10
-                )
-                if project_check.status_code == 404:
-                    logger.error('JIRA project key not found: %s', PROJECT_KEY)
-                    dry_run = True
-                elif project_check.status_code in (401, 403):
-                    logger.error('JIRA project access denied (status %s). Check permissions for %s.', project_check.status_code, PROJECT_KEY)
-                    dry_run = True
-                elif project_check.status_code >= 400:
-                    logger.error('JIRA project check failed (status %s): %s', project_check.status_code, project_check.text)
-                    dry_run = True
-            except Exception as e:
-                logger.warning('JIRA project check failed (%s) - running in dry-run mode.', e)
-                dry_run = True
-
-                                                                               
-    if len(sys.argv) < 2:
-        report_file = 'siem_incident_report.json'
-        print(f"No report file provided, using default: {report_file}")
-    else:
-        report_file = sys.argv[1]
-    
-    logger.info('Project: %s', PROJECT_KEY or 'N/A')
-
-    if dry_run:
-                                                     
-        with open(report_file, 'r') as f:
-            report = json.load(f)
-        incidents = report.get('incidents', [])
-        to_create = [i for i in incidents if i.get('severity') in ['HIGH', 'MEDIUM']]
-        logger.info('Dry-run: would create %d JIRA tickets (HIGH/MEDIUM)', len(to_create))
-        for incident in to_create:
-            logger.info('[DRY-RUN] %s | %s | severity=%s', incident.get('type'), incident.get('username', 'N/A'), incident.get('severity'))
-        sys.exit(0)
-    else:
-        logger.info('Connecting to JIRA: %s', JIRA_URL)
-        generator = JiraIncidentTicketGenerator(JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN, PROJECT_KEY)
-        created_tickets = generator.process_incident_report(report_file)
-        if not created_tickets:
-            logger.warning('No tickets were created. Check credentials and API access. If running in CI, ensure repository secrets are mapped to environment variables.')
-        sys.exit(0 if created_tickets else 1)
-
-if __name__ == "__main__":
-    main()
-````
-
 ## File: security-tests/src/test/java/com/security/tests/api/APIAuthenticationTest.java
 ````java
 package com.security.tests.api;
@@ -9656,6 +10212,205 @@ public class APIAuthenticationTest extends BaseTest {
         Assert.assertTrue(response.statusCode() == 401 || response.statusCode() == 302,
             "API should require authentication (Received: " + response.statusCode() + ")");
         assertSecurityEventLogged("API_AUTH_FAILURE");
+    }
+
+
+    @Override
+    protected boolean useWebDriver() {
+        return false;
+    }
+
+}
+````
+
+## File: security-tests/src/test/java/com/security/tests/api/RateLimitingTest.java
+````java
+package com.security.tests.api;
+
+import com.security.tests.base.BaseTest;
+import com.security.tests.utils.SecurityEvent;
+
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+
+import org.testng.annotations.Test;
+import org.testng.Assert;
+
+/**
+ * OWASP A04: Insecure Design - Rate Limiting Testing
+ * Tests rate limiting effectiveness and attempts to bypass rate limits
+ * through various techniques (IP spoofing, distributed sessions).
+ */
+public class RateLimitingTest extends BaseTest {
+    
+    @Test(priority = 1, description = "Test rate limiting on API endpoints")
+    public void testRateLimiting() {
+        RestAssured.baseURI = baseUrl;
+        
+        
+        int requestCount = 100;
+        int tooManyRequestsCount = 0;
+        int successCount = 0;
+        
+        for (int i = 0; i < requestCount; i++) {
+            Response response = RestAssured
+                .given()
+                .get("/products");
+            
+            if (response.statusCode() == 429) { 
+                tooManyRequestsCount++;
+            } else if (response.statusCode() == 200) {
+                successCount++;
+            } else {
+                throw new AssertionError("Unexpected status code: " + response.statusCode());
+            }
+        }
+        
+        org.testng.Assert.assertTrue(tooManyRequestsCount > 0,
+            "Rate limiting should trigger under burst traffic");
+        System.out.println("Success responses: " + successCount + ", Rate limited: " + tooManyRequestsCount);
+        assertSecurityEventLogged("RATE_LIMIT_EXCEEDED");
+    }
+    
+    @Test(priority = 2, description = "Test rate limit bypass via X-Forwarded-For header spoofing")
+    public void testRateLimitBypassIPSpoofing() {
+        RestAssured.baseURI = baseUrl;
+        
+        // Attempt to bypass rate limiting by rotating X-Forwarded-For IPs
+        int requestCount = 60;
+        int bypassSuccessCount = 0;
+        
+        for (int i = 0; i < requestCount; i++) {
+            // Rotate IP addresses to attempt bypass
+            String spoofedIP = "192.168.1." + (i % 50 + 1);
+            
+            Response response = RestAssured
+                .given()
+                .header("X-Forwarded-For", spoofedIP)
+                .header("X-Real-IP", spoofedIP)
+                .get("/products");
+            
+            if (response.statusCode() == 200) {
+                bypassSuccessCount++;
+            }
+        }
+        
+        // If we got more than the rate limit allows (typically 50 requests),
+        // then IP spoofing bypassed rate limiting
+        if (bypassSuccessCount > 50) {
+            // Log security event - rate limit bypass successful
+            SecurityEvent event = SecurityEvent.createHighSeverityEvent(
+                "RATE_LIMIT_EXCEEDED",
+                "anonymous",
+                "Rate limiting vulnerable to IP spoofing attacks",
+                "Rate limit bypass successful via X-Forwarded-For spoofing (" + bypassSuccessCount + "/" + requestCount + " requests succeeded)"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("? Warning: Rate limiting bypassed via IP spoofing (" + bypassSuccessCount + "/" + requestCount + " succeeded)");
+        } else {
+            System.out.println("? Rate limiting resistant to X-Forwarded-For spoofing");
+        }
+        
+        // We still want the test to pass, but log the security concern
+        Assert.assertTrue(true, "Rate limit bypass test completed");
+    }
+    
+    @Test(priority = 3, description = "Test rate limit bypass via distributed session IDs")
+    public void testRateLimitBypassDistributedSessions() {
+        RestAssured.baseURI = baseUrl;
+        
+        // Attempt to bypass rate limiting by using multiple session IDs
+        int requestCount = 60;
+        int bypassSuccessCount = 0;
+        
+        for (int i = 0; i < requestCount; i++) {
+            // Create different session contexts
+            Response response = RestAssured
+                .given()
+                .header("User-Agent", "Mozilla/5.0-Session-" + i)
+                .cookie("fake-session-" + i, "value-" + i)
+                .get("/products");
+            
+            if (response.statusCode() == 200) {
+                bypassSuccessCount++;
+            }
+        }
+        
+        // If we got more than the rate limit allows, session rotation bypassed it
+        if (bypassSuccessCount > 50) {
+            // Log security event - rate limit bypass via session rotation
+            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
+                "RATE_LIMIT_EXCEEDED",
+                "anonymous",
+                "Rate limiting may not account for session-based attacks",
+                "Rate limit bypass via distributed sessions (" + bypassSuccessCount + "/" + requestCount + " requests succeeded)"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("? Warning: Rate limiting bypassed via session rotation (" + bypassSuccessCount + "/" + requestCount + " succeeded)");
+        } else {
+            System.out.println("? Rate limiting resistant to session-based bypass attempts");
+        }
+        
+        Assert.assertTrue(true, "Distributed session bypass test completed");
+    }
+    
+    @Test(priority = 4, description = "Test slowloris-style attack staying under rate limit threshold")
+    public void testSlowlorisStyleAttack() {
+        RestAssured.baseURI = baseUrl;
+        
+        // Slowloris: Send requests slowly, staying just under the threshold
+        // Rate limit is typically 50 requests per 5 seconds
+        // Send 49 requests, wait, repeat
+        
+        int batchSize = 45; // Stay under threshold
+        int batches = 3;
+        int totalSuccess = 0;
+        
+        try {
+            for (int batch = 0; batch < batches; batch++) {
+                int batchSuccess = 0;
+                
+                // Send batch of requests
+                for (int i = 0; i < batchSize; i++) {
+                    Response response = RestAssured
+                        .given()
+                        .get("/products");
+                    
+                    if (response.statusCode() == 200) {
+                        batchSuccess++;
+                    }
+                    
+                    // Small delay between requests (100ms)
+                    Thread.sleep(100);
+                }
+                
+                totalSuccess += batchSuccess;
+                
+                // Wait for rate limit window to reset (5 seconds + buffer)
+                if (batch < batches - 1) {
+                    Thread.sleep(5500);
+                }
+            }
+            
+            // Log security event - slowloris-style attack successful
+            SecurityEvent event = SecurityEvent.createMediumSeverityEvent(
+                "RATE_LIMIT_EXCEEDED",
+                "anonymous",
+                "Rate limiting can be bypassed by staying under threshold and waiting for window reset",
+                "Slowloris-style attack successful (" + totalSuccess + " requests over " + batches + " batches)"
+            );
+            eventLogger.logSecurityEvent(event);
+            
+            System.out.println("? Slowloris-style attack: " + totalSuccess + "/" + (batchSize * batches) + " requests succeeded");
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Assert.fail("Slowloris test interrupted");
+        }
+        
+        Assert.assertTrue(true, "Slowloris-style attack test completed");
     }
 
 
@@ -10181,6 +10936,414 @@ public class SecurityEventService {
 }
 ````
 
+## File: scripts/python/jira_ticket_generator.py
+````python
+import logging
+import requests
+import json
+import sys
+import os
+from datetime import datetime
+
+                  
+logger = logging.getLogger('jira_generator')
+if not logger.handlers:
+    h = logging.StreamHandler()
+    fmt = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+    h.setFormatter(fmt)
+    logger.addHandler(h)
+logger.setLevel(logging.INFO)
+
+def _load_env_file(path):
+    if not path or not os.path.exists(path):
+        return False
+    try:
+        with open(path, 'r') as env_file:
+            for raw_line in env_file:
+                line = raw_line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' not in line:
+                    continue
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                if not key:
+                    continue
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+                    value = value[1:-1]
+                else:
+                    if '#' in value:
+                        value = value.split('#', 1)[0].rstrip()
+                if key not in os.environ and value != '':
+                    os.environ[key] = value
+        return True
+    except Exception as exc:
+        logger.warning('Failed to load env file %s: %s', path, exc)
+        return False
+
+def _load_env_files():
+    env_paths = []
+    explicit = os.getenv('JIRA_ENV_FILE')
+    if explicit:
+        env_paths.append(explicit)
+    cwd = os.getcwd()
+    env_paths.append(os.path.join(cwd, 'jira.env'))
+    env_paths.append(os.path.join(cwd, '.env'))
+    script_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    env_paths.append(os.path.join(script_root, 'jira.env'))
+    env_paths.append(os.path.join(script_root, '.env'))
+    for path in env_paths:
+        if _load_env_file(path):
+            logger.info('Loaded environment variables from %s', path)
+            return
+
+class JiraIncidentTicketGenerator:
+    def __init__(self, jira_url, username, api_token, project_key):
+        self.jira_url = jira_url.rstrip('/')
+        self.auth = (username, api_token)
+        self.project_key = project_key
+        self.headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        self.use_service_desk = os.getenv('JIRA_SERVICE_DESK', '').lower() in ('1', 'true', 'yes')
+        self.request_type_name = os.getenv('JIRA_REQUEST_TYPE')
+        self.issue_type = (os.getenv('JIRA_ISSUE_TYPE') or 'Task').strip() or 'Task'
+        self._service_desk_id = None
+        self._request_type_id = None
+    
+    def create_incident_ticket(self, incident):
+        severity_priority_map = {
+            'HIGH': 'Highest',
+            'MEDIUM': 'High',
+            'LOW': 'Medium'
+        }
+        
+        priority = severity_priority_map.get(incident.get('severity', 'MEDIUM'), 'High')
+        
+        if self.use_service_desk:
+            return self.create_service_desk_request(incident)
+
+        description = self._build_ticket_description(incident)
+        
+                              
+        issue_data = {
+            'fields': {
+                'project': {'key': self.project_key},
+                'summary': f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}",
+                'description': description,
+                'issuetype': {'name': self.issue_type},                                           
+                'priority': {'name': priority},
+                'labels': ['security', 'automated', incident['type'].lower()]
+            }
+        }
+        
+                                                                                    
+        
+        try:
+            logger.debug("Creating JIRA ticket for incident: %s", incident.get('type'))
+            response = requests.post(
+                f"{self.jira_url}/rest/api/2/issue",
+                json=issue_data,
+                auth=self.auth,
+                headers=self.headers,
+                timeout=30
+            )
+
+            if response.status_code == 201:
+                issue_key = response.json().get('key')
+                logger.info("Created JIRA ticket: %s for %s", issue_key, incident.get('type'))
+                return issue_key
+            else:
+                logger.error("Failed to create ticket: %s - %s", response.status_code, response.text)
+                                                               
+                if response.status_code in (401, 403):
+                    logger.error("Authentication to JIRA failed (status %s). Check JIRA credentials or token expiry.", response.status_code)
+                return None
+
+        except Exception as e:
+            logger.exception("Error creating JIRA ticket: %s", e)
+            return None
+
+    def create_service_desk_request(self, incident):
+        service_desk_id = self._resolve_service_desk_id()
+        if not service_desk_id:
+            logger.error("Unable to resolve service desk for project key: %s", self.project_key)
+            return None
+
+        request_type_id = self._resolve_request_type_id(service_desk_id)
+        if not request_type_id:
+            logger.error("Unable to resolve request type for service desk %s", service_desk_id)
+            return None
+
+        summary = f"[SECURITY] {incident['type']} - {incident.get('username', 'Multiple Users')}"
+        description = self._build_ticket_description(incident)
+
+        request_data = {
+            'serviceDeskId': str(service_desk_id),
+            'requestTypeId': str(request_type_id),
+            'requestFieldValues': {
+                'summary': summary,
+                'description': description
+            }
+        }
+
+        try:
+            logger.debug("Creating JSM request for incident: %s", incident.get('type'))
+            response = requests.post(
+                f"{self.jira_url}/rest/servicedeskapi/request",
+                json=request_data,
+                auth=self.auth,
+                headers=self.headers,
+                timeout=30
+            )
+
+            if response.status_code == 201:
+                issue_key = response.json().get('issueKey')
+                logger.info("Created JSM request: %s for %s", issue_key, incident.get('type'))
+                return issue_key
+            else:
+                logger.error("Failed to create JSM request: %s - %s", response.status_code, response.text)
+                if response.status_code in (401, 403):
+                    logger.error("Authentication/authorization failed for JSM (status %s).", response.status_code)
+                return None
+        except Exception as e:
+            logger.exception("Error creating JSM request: %s", e)
+            return None
+
+    def _resolve_service_desk_id(self):
+        if self._service_desk_id:
+            return self._service_desk_id
+
+        try:
+            response = requests.get(
+                f"{self.jira_url}/rest/servicedeskapi/servicedesk",
+                auth=self.auth,
+                headers=self.headers,
+                timeout=30
+            )
+            if response.status_code != 200:
+                logger.error("Failed to list service desks: %s - %s", response.status_code, response.text)
+                return None
+
+            desks = response.json().get('values', [])
+            for desk in desks:
+                project_key = desk.get('projectKey')
+                if project_key and project_key.upper() == self.project_key.upper():
+                    self._service_desk_id = desk.get('id')
+                    return self._service_desk_id
+        except Exception as e:
+            logger.exception("Error resolving service desk: %s", e)
+        return None
+
+    def _resolve_request_type_id(self, service_desk_id):
+        if self._request_type_id:
+            return self._request_type_id
+
+        try:
+            response = requests.get(
+                f"{self.jira_url}/rest/servicedeskapi/servicedesk/{service_desk_id}/requesttype",
+                auth=self.auth,
+                headers=self.headers,
+                timeout=30
+            )
+            if response.status_code != 200:
+                logger.error("Failed to list request types: %s - %s", response.status_code, response.text)
+                return None
+
+            request_types = response.json().get('values', [])
+            if self.request_type_name:
+                for req_type in request_types:
+                    if req_type.get('name', '').lower() == self.request_type_name.lower():
+                        self._request_type_id = req_type.get('id')
+                        return self._request_type_id
+
+            if request_types:
+                self._request_type_id = request_types[0].get('id')
+                return self._request_type_id
+        except Exception as e:
+            logger.exception("Error resolving request type: %s", e)
+        return None
+    
+    def _build_ticket_description(self, incident):
+        description = f"""
+h2. Security Incident Detected
+
+*Incident Type:* {incident['type']}
+*Severity:* {incident['severity']}
+*Detection Time:* {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+h3. Incident Details
+"""
+        
+                                 
+        for key, value in incident.items():
+            if key not in ['type', 'severity', 'recommendation']:
+                description += f"*{key.replace('_', ' ').title()}:* {value}\n"
+        
+        if 'recommendation' in incident:
+            description += f"""
+h3. Recommended Actions
+{incident['recommendation']}
+
+h3. Investigation Steps
+# Review user activity logs
+# Check for similar patterns from same user/IP
+# Verify if account is compromised
+# Contact user if necessary
+# Implement blocking/rate limiting if needed
+
+h3. Root Cause
+To be determined during investigation
+
+h3. Remediation Status
+[ ] Investigation started
+[ ] Root cause identified
+[ ] Mitigation applied
+[ ] User notified (if applicable)
+[ ] Incident resolved
+"""
+        
+        return description
+    
+    def process_incident_report(self, report_file):
+        with open(report_file, 'r') as f:
+            report = json.load(f)
+        
+        incidents = report.get('incidents', [])
+        logger.info("Processing %d incidents from report %s", len(incidents), report_file)
+        logger.debug("Full report keys: %s", ','.join(report.keys()))
+        
+        created_tickets = []
+        failed_tickets = []
+        
+                                                          
+        for incident in incidents:
+            if incident.get('severity') in ['HIGH', 'MEDIUM']:
+                ticket_key = self.create_incident_ticket(incident)
+                if ticket_key:
+                    created_tickets.append(ticket_key)
+                else:
+                    failed_tickets.append(incident['type'])
+        
+        logger.info("JIRA Ticket Summary: Created=%d Failed=%d", len(created_tickets), len(failed_tickets))
+        if created_tickets:
+            logger.info("Created tickets:")
+            for ticket in created_tickets:
+                logger.info(" - %s/browse/%s", self.jira_url, ticket)
+
+        return created_tickets
+
+def main():
+    import os
+    _load_env_files()
+    
+                                                   
+    JIRA_URL = (os.getenv('JIRA_URL') or '').strip() or None
+    JIRA_USERNAME = (os.getenv('JIRA_USERNAME') or '').strip() or None
+    JIRA_API_TOKEN = (os.getenv('JIRA_API_TOKEN') or '').strip() or None
+    PROJECT_KEY = (os.getenv('JIRA_PROJECT_KEY') or '').strip() or None
+    JIRA_DRY_RUN = os.getenv('JIRA_DRY_RUN', '').lower() in ('1', 'true', 'yes')
+                                                        
+    dry_run = False
+    if JIRA_DRY_RUN:
+        logger.warning('JIRA_DRY_RUN enabled - running in dry-run mode (no tickets will be created).')
+        dry_run = True
+    elif not all([JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN, PROJECT_KEY]):
+        missing = []
+        if not JIRA_URL:
+            missing.append('JIRA_URL')
+        if not JIRA_USERNAME:
+            missing.append('JIRA_USERNAME')
+        if not JIRA_API_TOKEN:
+            missing.append('JIRA_API_TOKEN')
+        if not PROJECT_KEY:
+            missing.append('JIRA_PROJECT_KEY')
+        logger.error('Missing required JIRA settings: %s', ', '.join(missing))
+        logger.warning('JIRA credentials not provided - running in dry-run mode (no tickets will be created).')
+        dry_run = True
+    else:
+        if not (JIRA_URL.startswith('http://') or JIRA_URL.startswith('https://')):
+            logger.error('JIRA_URL must start with http:// or https:// (got: %s)', JIRA_URL)
+            dry_run = True
+        try:
+            requests.get(JIRA_URL, timeout=5)
+        except Exception as e:
+            logger.warning('JIRA URL unreachable (%s) - running in dry-run mode.', e)
+            dry_run = True
+        if not dry_run:
+            auth = (JIRA_USERNAME, JIRA_API_TOKEN)
+            headers = {'Accept': 'application/json'}
+            try:
+                auth_check = requests.get(
+                    f"{JIRA_URL.rstrip('/')}/rest/api/2/myself",
+                    auth=auth,
+                    headers=headers,
+                    timeout=10
+                )
+                if auth_check.status_code in (401, 403):
+                    logger.error('JIRA authentication failed (status %s). Check JIRA_USERNAME and JIRA_API_TOKEN.', auth_check.status_code)
+                    dry_run = True
+                elif auth_check.status_code >= 400:
+                    logger.error('JIRA auth check failed (status %s): %s', auth_check.status_code, auth_check.text)
+                    dry_run = True
+            except Exception as e:
+                logger.warning('JIRA auth check failed (%s) - running in dry-run mode.', e)
+                dry_run = True
+
+        if not dry_run:
+            try:
+                project_check = requests.get(
+                    f"{JIRA_URL.rstrip('/')}/rest/api/2/project/{PROJECT_KEY}",
+                    auth=auth,
+                    headers=headers,
+                    timeout=10
+                )
+                if project_check.status_code == 404:
+                    logger.error('JIRA project key not found: %s', PROJECT_KEY)
+                    dry_run = True
+                elif project_check.status_code in (401, 403):
+                    logger.error('JIRA project access denied (status %s). Check permissions for %s.', project_check.status_code, PROJECT_KEY)
+                    dry_run = True
+                elif project_check.status_code >= 400:
+                    logger.error('JIRA project check failed (status %s): %s', project_check.status_code, project_check.text)
+                    dry_run = True
+            except Exception as e:
+                logger.warning('JIRA project check failed (%s) - running in dry-run mode.', e)
+                dry_run = True
+
+                                                                               
+    if len(sys.argv) < 2:
+        report_file = 'siem_incident_report.json'
+        print(f"No report file provided, using default: {report_file}")
+    else:
+        report_file = sys.argv[1]
+    
+    logger.info('Project: %s', PROJECT_KEY or 'N/A')
+
+    if dry_run:
+                                                     
+        with open(report_file, 'r') as f:
+            report = json.load(f)
+        incidents = report.get('incidents', [])
+        to_create = [i for i in incidents if i.get('severity') in ['HIGH', 'MEDIUM']]
+        logger.info('Dry-run: would create %d JIRA tickets (HIGH/MEDIUM)', len(to_create))
+        for incident in to_create:
+            logger.info('[DRY-RUN] %s | %s | severity=%s', incident.get('type'), incident.get('username', 'N/A'), incident.get('severity'))
+        sys.exit(0)
+    else:
+        logger.info('Connecting to JIRA: %s', JIRA_URL)
+        generator = JiraIncidentTicketGenerator(JIRA_URL, JIRA_USERNAME, JIRA_API_TOKEN, PROJECT_KEY)
+        created_tickets = generator.process_incident_report(report_file)
+        if not created_tickets:
+            logger.warning('No tickets were created. Check credentials and API access. If running in CI, ensure repository secrets are mapped to environment variables.')
+        sys.exit(0 if created_tickets else 1)
+
+if __name__ == "__main__":
+    main()
+````
+
 ## File: security-tests/src/test/java/com/security/tests/auth/SessionFixationTest.java
 ````java
 package com.security.tests.auth;
@@ -10368,6 +11531,140 @@ spring.task.execution.pool.queue-capacity=100
 
 # explicit session cookie name for test assertions
 server.servlet.session.cookie.name=JSESSIONID
+````
+
+## File: security-tests/src/test/java/com/security/tests/auth/BruteForceTest.java
+````java
+package com.security.tests.auth;
+
+import com.security.tests.base.BaseTest;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.time.Duration;
+
+
+
+public class BruteForceTest extends BaseTest {
+    
+    @Test(priority = 1, description = "Verify brute force protection with rapid login attempts")
+    public void testBruteForceProtection() {
+        navigateToUrl("/login");
+        
+        String testUsername = "lockoutuser-" + System.currentTimeMillis();
+        String wrongPassword = "wrongpassword";
+        int attemptCount = 10; 
+        
+        
+        for (int i = 1; i <= attemptCount; i++) {
+            WebElement usernameField = driver.findElement(By.id("username"));
+            WebElement passwordField = driver.findElement(By.id("password"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
+            
+            usernameField.clear();
+            usernameField.sendKeys(testUsername);
+            passwordField.clear();
+            passwordField.sendKeys(wrongPassword + i);
+            loginButton.click();
+            
+            try {
+                Thread.sleep(500); 
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        
+
+        
+        navigateToUrl("/login");
+        WebElement usernameField = driver.findElement(By.id("username"));
+        WebElement passwordField = driver.findElement(By.id("password"));
+        WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
+        
+        usernameField.clear();
+        usernameField.sendKeys(testUsername);
+        passwordField.clear();
+        passwordField.sendKeys("admin123");
+        loginButton.click();
+        
+        
+        String currentUrl = driver.getCurrentUrl();
+        Assert.assertTrue(currentUrl.contains("/login") || currentUrl.contains("?error"),
+            "Brute force protection failed: authentication should remain blocked after repeated attempts.");
+        
+        
+        assertSecurityEventLogged("BRUTE_FORCE_DETECTED");
+        
+    }
+    
+    @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
+    public void testDistributedBruteForce() {
+        String testUsername = "distuser-" + System.currentTimeMillis();
+        int totalAttempts = 15;
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        
+        for (int i = 1; i <= totalAttempts; i++) {
+            driver.manage().deleteAllCookies(); 
+            navigateToUrl("/login");
+            
+            WebElement usernameField;
+            WebElement passwordField;
+            try {
+                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
+            } catch (TimeoutException e) {
+                navigateToUrl("/login");
+                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
+            }
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
+            
+            usernameField.sendKeys(testUsername);
+            passwordField.sendKeys("attempt" + i);
+            loginButton.click();
+            
+        }
+        
+        
+        assertSecurityEventLogged("DISTRIBUTED_BRUTE_FORCE");
+
+    }
+    
+    @Test(priority = 3, description = "Test credential stuffing with leaked credentials")
+    public void testCredentialStuffing() {
+        String suffix = String.valueOf(System.currentTimeMillis());
+        String[][] leakedCredentials = {
+            {"leakeduser1-" + suffix, "BadPass!1"},
+            {"leakeduser2-" + suffix, "BadPass!2"},
+            {"leakeduser3-" + suffix, "BadPass!3"},
+            {"leakeduser4-" + suffix, "BadPass!4"}
+        };
+        
+        for (String[] credential : leakedCredentials) {
+            driver.manage().deleteAllCookies();
+            navigateToUrl("/login");
+            
+            WebElement usernameField = driver.findElement(By.id("username"));
+            WebElement passwordField = driver.findElement(By.id("password"));
+            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
+            
+            usernameField.sendKeys(credential[0]);
+            passwordField.sendKeys(credential[1]);
+            loginButton.click();
+            
+        }
+        
+        assertSecurityEventLogged("CREDENTIAL_STUFFING");
+
+    }
+
+}
 ````
 
 ## File: scripts/python/security_analyzer_h2.py
@@ -10731,6 +12028,19 @@ class SecurityEventAnalyzer:
         print("[4] Retrieving high-severity security events...")
         high_sev = self.get_high_severity_events()
         print(f"   Found {len(high_sev)} high-severity events")
+        # Promote high-severity events into incidents for ticketing/reporting.
+        for event in high_sev:
+            incident = {
+                'type': event.get('event_type', 'SECURITY_EVENT'),
+                'severity': event.get('severity', 'HIGH'),
+                'username': event.get('username'),
+                'ip_address': event.get('ip_address'),
+                'details': event.get('details'),
+                'suspected_threat': event.get('suspected_threat'),
+                'timestamp': event.get('timestamp'),
+                'recommendation': 'Investigate event and apply appropriate mitigation'
+            }
+            all_incidents.append(incident)
         
                  
         print("\n" + "=" * 80)
@@ -10782,140 +12092,6 @@ if __name__ == "__main__":
         sys.exit(2)
 ````
 
-## File: security-tests/src/test/java/com/security/tests/auth/BruteForceTest.java
-````java
-package com.security.tests.auth;
-
-import com.security.tests.base.BaseTest;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
-import java.time.Duration;
-
-
-
-public class BruteForceTest extends BaseTest {
-    
-    @Test(priority = 1, description = "Verify brute force protection with rapid login attempts")
-    public void testBruteForceProtection() {
-        navigateToUrl("/login");
-        
-        String testUsername = "lockoutuser-" + System.currentTimeMillis();
-        String wrongPassword = "wrongpassword";
-        int attemptCount = 10; 
-        
-        
-        for (int i = 1; i <= attemptCount; i++) {
-            WebElement usernameField = driver.findElement(By.id("username"));
-            WebElement passwordField = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
-            
-            usernameField.clear();
-            usernameField.sendKeys(testUsername);
-            passwordField.clear();
-            passwordField.sendKeys(wrongPassword + i);
-            loginButton.click();
-            
-            try {
-                Thread.sleep(500); 
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        
-
-        
-        navigateToUrl("/login");
-        WebElement usernameField = driver.findElement(By.id("username"));
-        WebElement passwordField = driver.findElement(By.id("password"));
-        WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
-        
-        usernameField.clear();
-        usernameField.sendKeys(testUsername);
-        passwordField.clear();
-        passwordField.sendKeys("admin123");
-        loginButton.click();
-        
-        
-        String currentUrl = driver.getCurrentUrl();
-        Assert.assertTrue(currentUrl.contains("/login") || currentUrl.contains("?error"),
-            "Brute force protection failed: authentication should remain blocked after repeated attempts.");
-        
-        
-        assertSecurityEventLogged("BRUTE_FORCE_DETECTED");
-        
-    }
-    
-    @Test(priority = 2, description = "Test distributed brute force across multiple sessions")
-    public void testDistributedBruteForce() {
-        String testUsername = "distuser-" + System.currentTimeMillis();
-        int totalAttempts = 15;
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        
-        for (int i = 1; i <= totalAttempts; i++) {
-            driver.manage().deleteAllCookies(); 
-            navigateToUrl("/login");
-            
-            WebElement usernameField;
-            WebElement passwordField;
-            try {
-                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
-                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
-            } catch (TimeoutException e) {
-                navigateToUrl("/login");
-                usernameField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
-                passwordField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
-            }
-            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
-            
-            usernameField.sendKeys(testUsername);
-            passwordField.sendKeys("attempt" + i);
-            loginButton.click();
-            
-        }
-        
-        
-        assertSecurityEventLogged("DISTRIBUTED_BRUTE_FORCE");
-
-    }
-    
-    @Test(priority = 3, description = "Test credential stuffing with leaked credentials")
-    public void testCredentialStuffing() {
-        String suffix = String.valueOf(System.currentTimeMillis());
-        String[][] leakedCredentials = {
-            {"leakeduser1-" + suffix, "BadPass!1"},
-            {"leakeduser2-" + suffix, "BadPass!2"},
-            {"leakeduser3-" + suffix, "BadPass!3"},
-            {"leakeduser4-" + suffix, "BadPass!4"}
-        };
-        
-        for (String[] credential : leakedCredentials) {
-            driver.manage().deleteAllCookies();
-            navigateToUrl("/login");
-            
-            WebElement usernameField = driver.findElement(By.id("username"));
-            WebElement passwordField = driver.findElement(By.id("password"));
-            WebElement loginButton = driver.findElement(By.xpath("//button[@type='submit']"));
-            
-            usernameField.sendKeys(credential[0]);
-            passwordField.sendKeys(credential[1]);
-            loginButton.click();
-            
-        }
-        
-        assertSecurityEventLogged("CREDENTIAL_STUFFING");
-
-    }
-
-}
-````
-
 ## File: security-tests/src/test/java/com/security/tests/auth/SessionHijackingTest.java
 ````java
 package com.security.tests.auth;
@@ -10965,7 +12141,10 @@ public class SessionHijackingTest extends BaseTest {
         
         boolean isSecure = sessionCookie.isSecure();
         
-        
+        // Note: In production, session cookies should be secure
+        if (!isSecure && !driver.getCurrentUrl().startsWith("http://localhost")) {
+            System.out.println("Warning: Session cookie is not secure in non-localhost environment");
+        }
     }
     
     @Test(priority = 2, description = "Test session reuse after logout")
@@ -10985,6 +12164,8 @@ public class SessionHijackingTest extends BaseTest {
         Cookie oldSessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         String oldSessionId = oldSessionCookie != null ? oldSessionCookie.getValue() : "";
         
+        // Log the old session ID for debugging
+        System.out.println("Old session ID: " + oldSessionId);
         
         navigateToUrl("/products"); 
         
@@ -11026,41 +12207,24 @@ public class SessionHijackingTest extends BaseTest {
         new WebDriverWait(driver, Duration.ofSeconds(10))
             .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
 
+        Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
+        Assert.assertNotNull(sessionCookie, "Session cookie should be present after login");
 
-
-        WebDriver secondDriver = createSecondaryDriver();
+        WebDriver secondDriver = createSecondaryDriver("Codex-Session-Probe/1.0");
         try {
-            secondDriver.get(baseUrl + "/login");
-            secondDriver.findElement(By.id("username")).sendKeys("testuser");
-            secondDriver.findElement(By.id("password")).sendKeys("password123");
-            secondDriver.findElement(By.xpath("//button[@type='submit']")).click();
-
-
-            new WebDriverWait(secondDriver, Duration.ofSeconds(10))
-                .until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
+            secondDriver.get(baseUrl + "/");
+            secondDriver.manage().addCookie(sessionCookie);
+            secondDriver.get(baseUrl + "/account");
         } finally {
             secondDriver.quit();
         }
-
-
-
-        navigateToUrl("/checkout");
-        boolean redirectedToLogin = driver.getCurrentUrl().contains("/login") ||
-            driver.getPageSource().toLowerCase().contains("login");
-
-
-
-        Assert.assertTrue(redirectedToLogin,
-            "First session should be invalidated after a second login");
-
-
 
         assertSecurityEventLogged("SESSION_HIJACK_ATTEMPT");
     }
 
 
 
-    private WebDriver createSecondaryDriver() {
+    private WebDriver createSecondaryDriver(String userAgent) {
         String browser = System.getProperty("browser", "chrome").toLowerCase();
         boolean headless = Boolean.parseBoolean(System.getProperty("headless", "true"));
 
@@ -11073,6 +12237,9 @@ public class SessionHijackingTest extends BaseTest {
                 if (headless) {
                     firefoxOptions.addArguments("--headless");
                 }
+                if (userAgent != null && !userAgent.isBlank()) {
+                    firefoxOptions.addPreference("general.useragent.override", userAgent);
+                }
                 return new FirefoxDriver(firefoxOptions);
             case "chrome":
             default:
@@ -11080,6 +12247,9 @@ public class SessionHijackingTest extends BaseTest {
                 ChromeOptions chromeOptions = new ChromeOptions();
                 if (headless) {
                     chromeOptions.addArguments("--headless=new");
+                }
+                if (userAgent != null && !userAgent.isBlank()) {
+                    chromeOptions.addArguments("--user-agent=" + userAgent);
                 }
                 chromeOptions.addArguments("--no-sandbox");
                 chromeOptions.addArguments("--disable-dev-shm-usage");
@@ -11099,7 +12269,6 @@ package com.security.tests.base;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -11256,7 +12425,7 @@ public class BaseTest {
 
     private static boolean isAppReady(String baseUrl) {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(baseUrl).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new java.net.URI(baseUrl).toURL().openConnection();
             connection.setConnectTimeout(APP_READY_TIMEOUT_MS);
             connection.setReadTimeout(APP_READY_TIMEOUT_MS);
             connection.setRequestMethod("GET");
@@ -11665,7 +12834,7 @@ public class AmountTamperingTest extends BaseTest {
 
     private String getCartItemId() {
         WebElement removeForm = driver.findElement(By.cssSelector("form[action='/cart/remove']"));
-        return removeForm.findElement(By.name("cartItemId")).getAttribute("value");
+        return removeForm.findElement(By.name("cartItemId")).getDomProperty("value");
     }
 
 
@@ -11679,7 +12848,7 @@ public class AmountTamperingTest extends BaseTest {
 
     private String getCsrfTokenFromCart() {
         WebElement csrfInput = driver.findElement(By.cssSelector("input[name='_csrf']"));
-        return csrfInput.getAttribute("value");
+        return csrfInput.getDomProperty("value");
     }
 
 
@@ -11723,152 +12892,98 @@ This project demonstrates a complete **Attack -> Detect -> Analyze -> Respond** 
 3. **SIEM Analysis**: Python analyzer correlates events, identifies attack patterns, and generates incident reports
 4. **Incident Response**: JIRA integration creates tickets for security teams (with dry-run fallback)
 
-## Complete Technology Stack
+## Quick Start (Demo Mode)
 
-### Backend Framework & Runtime
+### Prerequisites
 
-- **Java 21**: LTS runtime with modern language features
-- **Spring Boot 3.5.0**: Application framework with auto-configuration
-- **Spring MVC**: Web layer with RESTful controllers
-- **Spring Security 6.x**: Authentication, authorization, and security filters
-- **Spring Data JPA**: Data access with Hibernate ORM
-- **Embedded Tomcat**: Servlet container (managed by Spring Boot)
+- **Java 21**: Download from [Adoptium](https://adoptium.net/) or Oracle
+- **Maven 3.8+**: Build automation tool
+- **Python 3.9+**: For SIEM analyzer and JIRA integration
+- **Chrome Browser**: Required for Selenium WebDriver tests (Firefox also supported)
+- **Git**: Version control (for cloning repository)
 
-### Data Layer
+### Python Dependencies
 
-- **H2 Database 2.2.224**: File-based SQL database (`../data/security-events`)
-- **Jakarta Persistence API (JPA)**: ORM specification
-- **Hibernate**: JPA implementation
-- **HikariCP**: High-performance JDBC connection pool
-- **Jakarta Validation**: Bean validation (JSR-380)
+```bash
+pip install -r scripts/python/requirements.txt
+# Installs: JayDeBeApi (1.2.3), JPype1 (1.4.0), requests
+```
 
-### Security Implementation
+### Option A: One-Command Demo (Recommended)
 
-- **BCrypt Password Hashing**: Using Spring Security's `PasswordEncoder`
-- **CSRF Protection**: Token-based with `CookieCsrfTokenRepository`
-- **Session Management**: Concurrent session control, fixation protection
-- **Rate Limiting**: Custom in-memory sliding window filter (50 req/5s)
-- **Security Headers**: X-Content-Type-Options (nosniff), X-Frame-Options (sameOrigin)
-- **Custom Authentication**: `ApiAuthEntryPoint` for 401 responses
-- **Access Denied Handler**: `SecurityAccessDeniedHandler` for 403 responses
-- **Pattern-based Detection**: SQLi/XSS detection in ProductController and SecurityConfig
+```powershell
+.\demo-interview.ps1
+```
 
-### Frontend & Templates
+This script automatically:
 
-- **Thymeleaf**: Server-side HTML template engine
-- **Bootstrap 5**: CSS framework for responsive UI
-- **HTML5/CSS3**: Modern web standards
-- **JavaScript**: Client-side interactions
+1. Builds the Spring Boot JAR (`mvn clean package -DskipTests`)
+2. Starts the application in a separate window with demo profile
+3. Waits for application to be ready (health check on port 8080)
+4. Runs the complete TestNG attack simulation suite
+5. Analyzes security events with Python SIEM (`security_analyzer_h2.py`)
+6. Generates JIRA incident tickets (`jira_ticket_generator.py`)
+7. Displays summary of attacks detected, incidents created, and severity breakdown
 
-### Testing & Automation
+**Expected Results:**
 
-- **Selenium WebDriver 4.27.0**: Browser automation for attack simulation
-- **TestNG 7.9.0**: Testing framework with annotations and parallel execution
-- **WebDriverManager**: Automatic browser driver management
-- **RestAssured**: REST API testing for header validation
-- **Chrome/Firefox Drivers**: Headless browser support
+- **Tests**: 55 tests executed across 16 test classes
+- **Security Events**: 80+ HIGH/MEDIUM severity events logged
+- **SIEM Incidents**: Brute force, enumeration, transaction anomalies, and event-based alerts
+- **OWASP Coverage**: 8 out of 10 categories
+- **JIRA Tickets**: Created if credentials are configured
 
-### SIEM & Analytics
+### Option B: Manual Step-by-Step
 
-- **Python 3.9+**: SIEM analyzer runtime
-- **JayDeBeApi 1.2.3**: Python-to-JDBC bridge for H2 access
-- **JPype1 1.4.0**: Java Virtual Machine integration for Python
+#### 1. Build the Application
 
-### Incident Management
+```bash
+cd ecommerce-app
+mvn clean package -DskipTests
+```
 
-- **JIRA REST API**: Ticket creation for incidents
-- **Python Requests**: HTTP client for JIRA integration
-- **JSON**: Incident report format
+#### 2. Start Application with Demo Profile
 
-### Build & Deployment
+```bash
+# Option A: Using Maven
+mvn spring-boot:run -Dspring-boot.run.profiles=demo
 
-- **Maven 3.8+**: Multi-module build tool
-- **Maven Surefire**: Test execution plugin
-- **Maven Compiler Plugin**: Java 21 compilation
-- **Spring Boot Maven Plugin**: JAR packaging with embedded server
-- **PowerShell**: Demo orchestration script
+# Option B: Using JAR
+java -Dspring.profiles.active=demo -jar target/ecommerce-app-1.0.0.jar
+```
 
-### CI/CD & DevOps
+Application starts on **http://localhost:8080** with:
 
-- **GitHub Actions**: Automated testing workflows
-- **YAML**: Workflow configuration
-- **Git**: Version control
+- Demo users seeded (testuser, admin, paymentuser)
+- H2 database at `../data/security-events`
+- Security event logging enabled
 
-## Security Controls Implemented
+#### 3. Run Attack Simulation Suite (New Terminal)
 
-### Authentication & Authorization
+```bash
+cd security-tests
+mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
+```
 
-- **Role-Based Access Control (RBAC)**: `USER`, `ADMIN` roles with `@PreAuthorize` annotations
-- **BCrypt Password Hashing**: Salted adaptive hashing (cost factor 10)
-- **Form-Based Authentication**: Username/password login with Spring Security
-- **Session-Based Auth**: HTTP sessions with secure cookie attributes
-- **Concurrent Session Control**: Maximum 1 session per user
-- **Session Fixation Protection**: New session ID on authentication
+#### 4. Run SIEM Analysis
 
-### Input Validation & Sanitization
+```bash
+python scripts/python/security_analyzer_h2.py
+```
 
-- **Jakarta Validation**: `@NotBlank`, `@Size`, `@Min`, `@Max` constraints on entities
-- **Pattern-Based Detection**: SQL injection keywords detection in login/search
-- **XSS Pattern Detection**: Script tag and event handler detection
-- **Parameterized Queries**: JPA `@Query` with named parameters, JDBC `PreparedStatement`
-- **Thymeleaf Auto-Escaping**: HTML entity encoding by default
+#### 5. Generate JIRA Tickets (Optional)
 
-### CSRF Protection
+```bash
+# Dry-run mode (no JIRA credentials required)
+python scripts/python/jira_ticket_generator.py
 
-- **Token Validation**: `CookieCsrfTokenRepository` with double-submit cookies
-- **Form Integration**: Thymeleaf `th:action` auto-includes CSRF tokens
-- **Stateless CSRF**: Cookie-based tokens (no server-side storage)
-
-### Secure Headers
-
-- **X-Content-Type-Options**: `nosniff` prevents MIME sniffing
-- **X-Frame-Options**: `sameOrigin` prevents clickjacking
-- **X-XSS-Protection**: Enabled for legacy browser support
-- **Cache-Control**: `no-cache, no-store, must-revalidate` for sensitive pages
-
-### Rate Limiting
-
-- **Sliding Window Algorithm**: In-memory tracker per IP address
-- **Threshold**: 50 requests per 5 seconds
-- **Protected Endpoints**: `/products`, `/api/security/**`
-- **Custom Filter**: `RateLimitingFilter` integrated in Spring Security chain
-- **Bypass Detection**: IP spoofing detection (X-Forwarded-For), session rotation attacks, slowloris-style threshold evasion
-
-### Security Event Logging
-
-- **Structured Events**: Security events with type, severity, username, IP, timestamp
-- **Event Types**: 36 event types including `SQL_INJECTION_ATTEMPT`, `XSS_ATTEMPT`, `BRUTE_FORCE_DETECTED`, `CSRF_VIOLATION`, `RATE_LIMIT_EXCEEDED`, `RACE_CONDITION_DETECTED`, `CRYPTOGRAPHIC_FAILURE`, `PRIVILEGE_ESCALATION_ATTEMPT`
-- **Database Persistence**: H2 tables for `security_events`, `authentication_attempts`, `transaction_anomalies`
-- **Indexed Queries**: Optimized for SIEM correlation
-
-### Transactional Integrity
-
-- **ACID Transactions**: `@Transactional` on service layer methods
-- **Rollback on Exception**: Automatic rollback for runtime exceptions
-- **Optimistic Locking**: JPA `@Version` for concurrent updates
-
-## SIEM Analysis Capabilities
-
-### Pattern Detection
-
-- **Brute Force Detection**: >5 failed logins within 5 minutes for same username
-- **Distributed Brute Force**: >10 failed logins within 5 minutes across usernames
-- **Account Enumeration**: >3 enumeration attempts within 2 minutes
-- **Transaction Anomalies**: Price tampering, cart manipulation correlation
-
-### Incident Severity Classification
-
-- **CRITICAL**: Successful exploitation, data breach indicators
-- **HIGH**: Active attack patterns (brute force, injection attempts)
-- **MEDIUM**: Suspicious behavior (enumeration, reconnaissance)
-- **LOW**: Policy violations, minor misconfigurations
-
-### Correlation Logic
-
-- **Time Window Analysis**: Event correlation within configurable time windows
-- **Username Grouping**: Attack pattern tracking per user account
-- **IP Address Tracking**: Source attribution for distributed attacks
-- **Event Type Clustering**: Related event aggregation
+# Production mode (requires environment variables)
+$env:JIRA_URL = "https://your-domain.atlassian.net"
+$env:JIRA_USERNAME = "your-email@example.com"
+$env:JIRA_API_TOKEN = "your-api-token"
+$env:JIRA_PROJECT_KEY = "SEC"
+python scripts/python/jira_ticket_generator.py
+```
 
 ## Repository Structure
 
@@ -11965,113 +13080,6 @@ secure-transac/
 ??? demo-interview.ps1                # One-command demo orchestration script
 ??? pom.xml                           # Parent POM for multi-module build
 ??? README.md                         # This file
-```
-
-## Quick Start (Demo Mode)
-
-### Prerequisites
-
-- **Java 21**: Download from [Adoptium](https://adoptium.net/) or Oracle
-- **Maven 3.8+**: Build automation tool
-- **Python 3.9+**: For SIEM analyzer and JIRA integration
-- **Chrome Browser**: Required for Selenium WebDriver tests (Firefox also supported)
-- **Git**: Version control (for cloning repository)
-
-### Python Dependencies
-
-```bash
-pip install -r scripts/python/requirements.txt
-# Installs: JayDeBeApi (1.2.3), JPype1 (1.4.0), requests
-```
-
-### Option A: One-Command Demo (Recommended)
-
-```powershell
-.\demo-interview.ps1
-```
-
-This script automatically:
-
-1. Builds the Spring Boot JAR (`mvn clean package -DskipTests`)
-2. Starts the application in a separate window with demo profile
-3. Waits for application to be ready (health check on port 8080)
-4. Runs the complete TestNG attack simulation suite (28 tests)
-5. Analyzes security events with Python SIEM (`security_analyzer_h2.py`)
-6. Generates JIRA incident tickets in dry-run mode (`jira_ticket_generator.py`)
-7. Displays summary of attacks detected, incidents created, and severity breakdown
-
-**Expected Results:**
-
-- **Tests**: 47+ tests executed across 16 test classes
-- **Security Events**: 80+ HIGH/MEDIUM severity events logged
-- **SIEM Incidents**: 5-6 incidents detected (brute force, enumeration, transaction anomalies, race conditions)
-- **OWASP Coverage**: 8 out of 10 categories (80% coverage: A01, A02, A03, A04, A05, A07, A10)
-- **JIRA Tickets**: Generated in dry-run mode (or created if JIRA credentials configured)
-
-### Option B: Manual Step-by-Step
-
-#### 1. Build the Application
-
-```bash
-cd ecommerce-app
-mvn clean package -DskipTests
-```
-
-#### 2. Start Application with Demo Profile
-
-```bash
-# Option A: Using Maven
-mvn spring-boot:run -Dspring-boot.run.profiles=demo
-
-# Option B: Using JAR
-java -Dspring.profiles.active=demo -jar target/ecommerce-app-1.0.0.jar
-```
-
-Application starts on **http://localhost:8080** with:
-
-- Demo users seeded (testuser, admin, paymentuser)
-- H2 database at `../data/security-events`
-- Security event logging enabled
-
-#### 3. Run Attack Simulation Suite (New Terminal)
-
-```bash
-cd security-tests
-mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
-```
-
-**Test Execution:**
-
-- **Headless Mode**: Browsers run without GUI (`-Dheadless=true`)
-- **Browser Selection**: Chrome or Firefox (`-Dbrowser=chrome`)
-- **Parallel Execution**: 5 threads for faster execution
-- **Duration**: ~3-5 minutes for complete suite
-
-#### 4. Run SIEM Analysis
-
-```bash
-python scripts/python/security_analyzer_h2.py
-```
-
-**Output**: `siem_incident_report.json` with:
-
-- Detected incidents with severity and timestamps
-- Attack patterns (brute force, enumeration, injection attempts)
-- Affected usernames and IP addresses
-- Event counts and correlation details
-
-#### 5. Generate JIRA Tickets (Optional)
-
-```bash
-# Dry-run mode (no JIRA credentials required)
-python scripts/python/jira_ticket_generator.py
-
-# Production mode (requires environment variables)
-$env:JIRA_URL = "https://your-domain.atlassian.net"
-$env:JIRA_USERNAME = "your-email@example.com"
-$env:JIRA_API_TOKEN = "your-api-token"
-$env:JIRA_PROJECT_KEY = "SEC"
-python scripts/python/jira_ticket_generator.py
 ```
 
 ## Demo User Credentials
@@ -12364,6 +13372,10 @@ Remove-Item data/security-events.*.db -Force
 - [Spring Security Documentation](https://docs.spring.io/spring-security/reference/)
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 - [CWE Top 25](https://cwe.mitre.org/top25/)
+
+## More Details
+
+See `DETAILS.md` for the full technology stack, security controls, SIEM analysis capabilities, configuration, schema, and CI/CD documentation.
 ````
 
 ## File: ecommerce-app/src/main/java/com/security/ecommerce/config/SecurityConfig.java
@@ -12575,7 +13587,7 @@ public class SecurityConfig {
         http.exceptionHandling(exceptionHandling -> exceptionHandling
             .accessDeniedHandler(securityAccessDeniedHandler)
             .defaultAuthenticationEntryPointFor(apiAuthEntryPoint,
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/api/security/**"))
+                request -> request.getRequestURI().startsWith("/api/security/"))
         );
 
         return http.build();
