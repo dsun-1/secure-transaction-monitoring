@@ -3,7 +3,6 @@ package com.security.tests.base;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -160,7 +159,7 @@ public class BaseTest {
 
     private static boolean isAppReady(String baseUrl) {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(baseUrl).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) new java.net.URI(baseUrl).toURL().openConnection();
             connection.setConnectTimeout(APP_READY_TIMEOUT_MS);
             connection.setReadTimeout(APP_READY_TIMEOUT_MS);
             connection.setRequestMethod("GET");

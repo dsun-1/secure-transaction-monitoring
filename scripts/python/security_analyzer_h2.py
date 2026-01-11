@@ -357,6 +357,19 @@ class SecurityEventAnalyzer:
         print("[4] Retrieving high-severity security events...")
         high_sev = self.get_high_severity_events()
         print(f"   Found {len(high_sev)} high-severity events")
+        # Promote high-severity events into incidents for ticketing/reporting.
+        for event in high_sev:
+            incident = {
+                'type': event.get('event_type', 'SECURITY_EVENT'),
+                'severity': event.get('severity', 'HIGH'),
+                'username': event.get('username'),
+                'ip_address': event.get('ip_address'),
+                'details': event.get('details'),
+                'suspected_threat': event.get('suspected_threat'),
+                'timestamp': event.get('timestamp'),
+                'recommendation': 'Investigate event and apply appropriate mitigation'
+            }
+            all_incidents.append(incident)
         
                  
         print("\n" + "=" * 80)

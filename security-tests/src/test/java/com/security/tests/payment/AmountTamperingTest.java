@@ -255,7 +255,7 @@ public class AmountTamperingTest extends BaseTest {
 
     private String getCartItemId() {
         WebElement removeForm = driver.findElement(By.cssSelector("form[action='/cart/remove']"));
-        return removeForm.findElement(By.name("cartItemId")).getAttribute("value");
+        return removeForm.findElement(By.name("cartItemId")).getDomProperty("value");
     }
 
 
@@ -269,7 +269,7 @@ public class AmountTamperingTest extends BaseTest {
 
     private String getCsrfTokenFromCart() {
         WebElement csrfInput = driver.findElement(By.cssSelector("input[name='_csrf']"));
-        return csrfInput.getAttribute("value");
+        return csrfInput.getDomProperty("value");
     }
 
 

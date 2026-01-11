@@ -41,6 +41,7 @@ public class RateLimitingTest extends BaseTest {
         
         org.testng.Assert.assertTrue(tooManyRequestsCount > 0,
             "Rate limiting should trigger under burst traffic");
+        System.out.println("Success responses: " + successCount + ", Rate limited: " + tooManyRequestsCount);
         assertSecurityEventLogged("RATE_LIMIT_EXCEEDED");
     }
     

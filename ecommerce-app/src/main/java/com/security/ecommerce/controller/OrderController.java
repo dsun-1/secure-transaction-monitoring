@@ -27,6 +27,9 @@ public class OrderController {
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderSummary> getOrder(@PathVariable Long id) {
+        if (id == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
         Transaction transaction = transactionService.getTransactionById(id);
         if (transaction == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

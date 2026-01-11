@@ -61,8 +61,8 @@ public class RaceConditionTest extends BaseTest {
         
         // Extract cart item ID and CSRF token from the page
         String cartItemId = driver.findElement(By.cssSelector("form[action='/cart/remove'] input[name='cartItemId']"))
-            .getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+            .getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
         Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
         
         // Get session cookie
@@ -174,7 +174,7 @@ public class RaceConditionTest extends BaseTest {
         // Get CSRF token
         driver.get(baseUrl + "/cart");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
         Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
         
         // Clear cart first
@@ -201,7 +201,7 @@ public class RaceConditionTest extends BaseTest {
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
         String productId = driver.findElements(By.cssSelector("button.add-to-cart"))
                                 .get(0)
-                                .getAttribute("data-product-id");
+                                .getDomProperty("data-product-id");
         
         if (productId == null || productId.isEmpty()) {
             productId = "1"; // Default fallback
@@ -301,7 +301,7 @@ public class RaceConditionTest extends BaseTest {
         // Go to cart and get CSRF
         driver.get(baseUrl + "/cart");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.name("_csrf")));
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
         
         // Attempt concurrent checkouts (simulate double-click or network retry)
         AtomicInteger checkoutAttempts = new AtomicInteger(0);
@@ -404,8 +404,8 @@ public class RaceConditionTest extends BaseTest {
     private void forceAddToCartViaApi(WebDriverWait wait) {
         driver.get(baseUrl + "/products");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        String productId = driver.findElements(By.name("productId")).get(0).getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
 

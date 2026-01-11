@@ -35,8 +35,12 @@ public class SecurityExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<String> handleUnsupportedMedia(HttpMediaTypeNotSupportedException ex,
                                                          HttpServletRequest request) {
-        String contentType = ex.getContentType() != null ? ex.getContentType().toString() : "";
-        if (contentType.toLowerCase().contains("application/x-java-serialized-object")) {
+        String contentType = "";
+        var mediaType = ex.getContentType();
+        if (mediaType != null) {
+            contentType = mediaType.toString();
+        }
+        if (!contentType.isEmpty() && contentType.toLowerCase().contains("application/x-java-serialized-object")) {
             securityEventService.logHighSeverityEvent(
                 "DESERIALIZATION_ATTEMPT",
                 "anonymous",

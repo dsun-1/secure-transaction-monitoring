@@ -200,7 +200,12 @@ public class DataExposureTest extends BaseTest {
         
         // Check if password field has autocomplete enabled (should be off for security)
         WebElement passwordField = driver.findElement(By.name("password"));
-        String autocomplete = passwordField.getAttribute("autocomplete");
+        String autocomplete = passwordField.getDomProperty("autocomplete");
+        
+        // Password fields should have autocomplete="off" for security
+        if (autocomplete != null && !autocomplete.equals("off") && !autocomplete.equals("current-password")) {
+            System.out.println("Warning: Password field autocomplete is: " + autocomplete);
+        }
         
         // Get page source to check for hardcoded credentials
         String pageSource = driver.getPageSource().toLowerCase();

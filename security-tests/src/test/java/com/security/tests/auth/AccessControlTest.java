@@ -26,7 +26,7 @@ public class AccessControlTest extends BaseTest {
         ensureCartHasItem(wait);
 
         // Capture cart item ID for User A
-        String cartItemId = driver.findElement(By.name("cartItemId")).getAttribute("value");
+        String cartItemId = driver.findElement(By.name("cartItemId")).getDomProperty("value");
 
         // Start a clean browser session for User B
         driver.manage().deleteAllCookies();
@@ -236,8 +236,8 @@ public class AccessControlTest extends BaseTest {
     private void forceAddToCartViaApi(WebDriverWait wait) {
         driver.get(baseUrl + "/products");
         wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("button.add-to-cart")));
-        String productId = driver.findElements(By.name("productId")).get(0).getAttribute("value");
-        String csrfToken = driver.findElement(By.name("_csrf")).getAttribute("value");
+        String productId = driver.findElements(By.name("productId")).get(0).getDomProperty("value");
+        String csrfToken = driver.findElement(By.name("_csrf")).getDomProperty("value");
         Cookie sessionCookie = driver.manage().getCookieNamed("JSESSIONID");
         Cookie csrfCookie = driver.manage().getCookieNamed("XSRF-TOKEN");
 

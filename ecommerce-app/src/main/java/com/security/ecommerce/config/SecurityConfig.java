@@ -205,7 +205,7 @@ public class SecurityConfig {
         http.exceptionHandling(exceptionHandling -> exceptionHandling
             .accessDeniedHandler(securityAccessDeniedHandler)
             .defaultAuthenticationEntryPointFor(apiAuthEntryPoint,
-                new org.springframework.security.web.util.matcher.AntPathRequestMatcher("/api/security/**"))
+                request -> request.getRequestURI().startsWith("/api/security/"))
         );
 
         return http.build();

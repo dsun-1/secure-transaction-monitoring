@@ -88,7 +88,7 @@ public class TLSEnforcementTest extends BaseTest {
         }
         
         // Verify HSTS header has reasonable max-age (at least 1 year = 31536000 seconds)
-        Assert.assertTrue(hstsHeader.contains("max-age="), 
+        Assert.assertTrue(hstsHeader != null && hstsHeader.contains("max-age="), 
             "HSTS header should contain max-age directive");
         
         System.out.println("✓ HSTS header present: " + hstsHeader);

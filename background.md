@@ -1,3 +1,12 @@
+Get-Content .env | ForEach-Object {
+>>   if ($_ -match "^(.*?)=(.*)$") {
+>>     $name = $matches[1]
+>>     $value = $matches[2]
+>>     Set-Item -Path "Env:$name" -Value $value
+>>   }
+>> }
+>>
+
 
  this project is a demo for my security internship interview
 
