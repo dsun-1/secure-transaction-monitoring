@@ -18,6 +18,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/cart")
+// session-scoped cart operations with tampering signals
 public class CartController {
 
     private final CartService cartService;
@@ -30,6 +31,7 @@ public class CartController {
     }
 
     @GetMapping
+    // render the cart for the current session
     public String viewCart(HttpSession session, Model model) {
         String sessionId = session.getId();
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
@@ -42,6 +44,7 @@ public class CartController {
     }
 
     @PostMapping("/add")
+    // add items and log suspicious client parameters
     public String addToCart(@RequestParam Long productId,
                            @RequestParam(defaultValue = "1") Integer quantity,
                            HttpSession session,
@@ -69,6 +72,7 @@ public class CartController {
     }
 
     @PostMapping("/update")
+    // enforce ownership before updating quantities
     public String updateCart(@RequestParam Long cartItemId,
                             @RequestParam Integer quantity,
                             HttpSession session,
@@ -102,6 +106,7 @@ public class CartController {
     }
 
     @PostMapping("/remove")
+    // remove a single item from the cart
     public String removeFromCart(@RequestParam Long cartItemId,
                                 HttpSession session) {
         String sessionId = session.getId();
@@ -110,6 +115,7 @@ public class CartController {
     }
 
     @PostMapping("/clear")
+    // clear the session cart
     public String clearCart(HttpSession session) {
         String sessionId = session.getId();
         cartService.clearCart(sessionId);

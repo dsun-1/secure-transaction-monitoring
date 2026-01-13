@@ -16,12 +16,13 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 import jakarta.servlet.http.HttpSession;
 
 @Configuration
 @EnableWebSecurity
-// central security policy for auth, sessions, and csrf; this is the primary guardrail for the app
+// security policy for auth, sessions, and csrf
 public class SecurityConfig {
 
     private final SecurityEventService securityEventService;
@@ -30,17 +31,24 @@ public class SecurityConfig {
     private final ApiAuthEntryPoint apiAuthEntryPoint;
     private final CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
     private final boolean demoMode;
+    private final boolean requireHttps;
 
     public SecurityConfig(SecurityEventService securityEventService,
                           @Lazy UserService userService,
                           SecurityAccessDeniedHandler securityAccessDeniedHandler,
                           ApiAuthEntryPoint apiAuthEntryPoint,
-                          @Value("${security.demo-mode:false}") boolean demoMode) {
+                          @Value("${security.demo-mode:false}") boolean demoMode,
+                          @Value("${security.require-https:false}") boolean requireHttps,
+                          @Value("${security.cookies.secure:false}") boolean secureCookies) {
         this.securityEventService = securityEventService;
         this.userService = userService;
         this.securityAccessDeniedHandler = securityAccessDeniedHandler;
         this.apiAuthEntryPoint = apiAuthEntryPoint;
         this.demoMode = demoMode;
+        this.requireHttps = requireHttps;
+        this.csrfTokenRepository.setCookieHttpOnly(true);
+        this.csrfTokenRepository.setCookiePath("/");
+        this.csrfTokenRepository.setSecure(secureCookies);
     }
 
     @Bean
@@ -51,7 +59,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
-            // log successful auth for siem pipeline
+            // on login success, log and bind session context
             String username = authentication.getName();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -91,13 +99,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return (request, response, exception) -> {
-            // log failed auth and increment failure counters
+            // on login failure, log and update counters
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             
-            // Detect SQL injection attempts in login form
+            // inspect login inputs for obvious attack patterns
             if (username != null) {
                 String usernameLower = username.toLowerCase();
                 if (usernameLower.contains("'") || usernameLower.contains("--") || 
@@ -111,7 +119,6 @@ public class SecurityConfig {
                     );
                 }
                 
-                // Detect XSS attempts in login form
                 if (username.contains("<script") || username.contains("javascript:") ||
                     username.contains("onerror") || username.contains("alert(")) {
                     securityEventService.logHighSeverityEvent(
@@ -156,14 +163,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        if (requireHttps && !demoMode) {
+            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
+        }
+
         http
-            .authorizeHttpRequests(auth -> auth
-                // define public vs protected routes
-                .requestMatchers("/", "/login", "/error", "/h2-console/**", "/css/**", "/js/**",
-                               "/products", "/cart/**").permitAll()
-                .requestMatchers("/api/security/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(auth -> {
+                // public routes, admin api, and default auth
+                auth.requestMatchers("/", "/login", "/register", "/error", "/css/**", "/js/**",
+                    "/products", "/cart/**").permitAll();
+                auth.requestMatchers("/api/security/**").hasRole("ADMIN");
+                if (demoMode) {
+                    auth.requestMatchers("/h2-console/**").permitAll();
+                } else {
+                    auth.requestMatchers("/h2-console/**").denyAll();
+                }
+                auth.anyRequest().authenticated();
+            })
             
             .formLogin(form -> form
                 .loginPage("/login")
@@ -173,7 +189,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                // invalidate server session and clear cookie
+                // invalidate session and clear cookie
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
@@ -181,27 +197,57 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                // use cookie token for ui forms; allow h2 console in dev
+                // csrf settings for forms and demo console
                 .csrfTokenRepository(csrfTokenRepository)
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers(demoMode
-                    ? new String[]{"/h2-console/**", "/perform_login"}
-                    : new String[]{"/h2-console/**"})
             )
             .sessionManagement(session -> session
-                // limit concurrent sessions per user
+                // single session per user
+                .sessionFixation(sessionFixation -> sessionFixation.migrateSession())
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             );
+        if (demoMode) {
+            http.csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"));
+        }
 
-        // configure security headers - frameOptions allows H2 console in demo mode
-        http.headers(headers -> headers
-            .contentTypeOptions(contentTypeOptions -> {})  // defaults to nosniff
-            .xssProtection(xss -> {})  // defaults to enabled
-            .cacheControl(cache -> {})  // defaults to enabled
-            .frameOptions(frameOptions -> frameOptions.sameOrigin())  // allow same-origin framing for H2
-        );
+        // apply default security headers
+        http.headers(headers -> {
+            headers.contentTypeOptions(contentTypeOptions -> {});
+            headers.xssProtection(xss -> {});
+            headers.cacheControl(cache -> {});
+            if (demoMode) {
+                headers.frameOptions(frameOptions -> frameOptions.sameOrigin());
+            } else {
+                headers.frameOptions(frameOptions -> frameOptions.deny());
+            }
+            headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
+            headers.permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=(), payment=()"));
+            String cspDirectives = demoMode
+                ? "default-src 'self'; " +
+                  "script-src 'self' 'unsafe-inline'; " +
+                  "style-src 'self' 'unsafe-inline'; " +
+                  "img-src 'self' data:; " +
+                  "object-src 'none'; " +
+                  "base-uri 'self'; " +
+                  "form-action 'self'; " +
+                  "frame-ancestors 'self'"
+                : "default-src 'self'; " +
+                  "script-src 'self'; " +
+                  "style-src 'self' 'unsafe-inline'; " +
+                  "img-src 'self' data:; " +
+                  "object-src 'none'; " +
+                  "base-uri 'self'; " +
+                  "form-action 'self'; " +
+                  "frame-ancestors 'self'";
+            headers.contentSecurityPolicy(csp -> csp.policyDirectives(cspDirectives));
+            headers.httpStrictTransportSecurity(hsts -> hsts
+                .includeSubDomains(true)
+                .preload(true)
+                .maxAgeInSeconds(31536000));
+        });
 
+        // map auth failures and access denials to handlers
         http.exceptionHandling(exceptionHandling -> exceptionHandling
             .accessDeniedHandler(securityAccessDeniedHandler)
             .defaultAuthenticationEntryPointFor(apiAuthEntryPoint,

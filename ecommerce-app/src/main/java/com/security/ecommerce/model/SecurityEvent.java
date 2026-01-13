@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-// structured security telemetry persisted to H2 for analysis and reporting
+// security event entity stored for analysis
 public class SecurityEvent {
 
     @Id
@@ -42,7 +42,7 @@ public class SecurityEvent {
 
     private String additionalData;
 
-    // normalized categories used by tests and siem logic
+    // event categories used by detections and reporting
     public enum EventType {
         LOGIN_ATTEMPT,
         LOGIN_SUCCESS,
@@ -50,6 +50,7 @@ public class SecurityEvent {
         LOGOUT,
         ACCOUNT_LOCKED,
         ACCOUNT_ENUMERATION,
+        BOT_REGISTRATION_ATTEMPT,
         PASSWORD_CHANGE,
         ACCESS_CONTROL_VIOLATION,
         PRIVILEGE_ESCALATION_ATTEMPT,
@@ -82,7 +83,7 @@ public class SecurityEvent {
         VULNERABLE_COMPONENTS
     }
 
-    // severity levels to drive alerts and reporting
+    // severity levels used for alerting
     public enum EventSeverity {
         INFO,
         LOW,

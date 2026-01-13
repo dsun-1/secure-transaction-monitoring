@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// product catalog entry with stock tracking
 public class Product {
 
     @Id
@@ -45,6 +46,7 @@ public class Product {
     }
 
     public void decrementStock(int quantity) {
+        // guard against negative stock on fulfillment
         if (stock >= quantity) {
             stock -= quantity;
         } else {

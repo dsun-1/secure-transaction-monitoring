@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
+// scans request parameters for simple sqli and xss patterns
 public class RequestInspectionFilter extends OncePerRequestFilter {
 
     private static final Pattern SQLI_PATTERN = Pattern.compile(
@@ -38,6 +39,7 @@ public class RequestInspectionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        // log at most one sqli and one xss signal per request
         boolean loggedSql = false;
         boolean loggedXss = false;
         Enumeration<String> paramNames = request.getParameterNames();
@@ -70,6 +72,7 @@ public class RequestInspectionFilter extends OncePerRequestFilter {
 
     private void logEvent(String eventType, HttpServletRequest request, String paramName, String paramValue) {
         String username = resolveUsername();
+        // trim and cap payload to keep logs small
         String payload = paramValue == null ? "" : paramValue.replaceAll("\\s+", " ").trim();
         if (payload.length() > 120) {
             payload = payload.substring(0, 120) + "...";

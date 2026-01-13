@@ -28,6 +28,7 @@ public class SecurityEventLogger {
         "API_AUTH_FAILURE",
         "BRUTE_FORCE_DETECTED",
         "BRUTE_FORCE_PREVENTION_SUCCESS",
+        "BOT_REGISTRATION_ATTEMPT",
         "DISTRIBUTED_BRUTE_FORCE",
         "CREDENTIAL_STUFFING",
         "CART_MANIPULATION",

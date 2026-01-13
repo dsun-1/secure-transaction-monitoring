@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// user account with lockout tracking
 public class User {
 
     @Id
@@ -56,7 +57,7 @@ public class User {
 
     private boolean active = true;
 
-    
+    // increment failures and lock the account after threshold
     public void incrementFailedAttempts() {
         this.failedLoginAttempts++;
         this.lastFailedLogin = LocalDateTime.now();
@@ -76,7 +77,6 @@ public class User {
     public boolean isAccountLocked() {
         if (!accountNonLocked && accountLockedUntil != null) {
             if (LocalDateTime.now().isAfter(accountLockedUntil)) {
-                
                 this.accountNonLocked = true;
                 this.accountLockedUntil = null;
                 this.failedLoginAttempts = 0;

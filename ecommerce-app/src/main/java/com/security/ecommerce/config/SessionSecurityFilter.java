@@ -18,6 +18,7 @@ import java.io.IOException;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 15)
+// watches sessions for invalid ids and context mismatch
 public class SessionSecurityFilter extends OncePerRequestFilter {
 
     private static final String SESSION_IP = "session_ip";
@@ -34,6 +35,7 @@ public class SessionSecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        // log invalid session ids before continuing
         if (request.getRequestedSessionId() != null && !request.isRequestedSessionIdValid()) {
             securityEventService.logHighSeverityEvent(
                 "SESSION_HIJACK_ATTEMPT",

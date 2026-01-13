@@ -20,12 +20,18 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Service
 @Transactional
-// central logger for security telemetry; feeds the siem analysis pipeline
+// records security telemetry and derived signals
 public class SecurityEventService {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventService.class);
     private static final Duration SIGNAL_WINDOW = Duration.ofMinutes(5);
     private static final Duration SIGNAL_THROTTLE = Duration.ofMinutes(5);
+    private static final int MAX_USERNAME_LENGTH = 100;
+    private static final int MAX_IP_LENGTH = 45;
+    private static final int MAX_SESSION_LENGTH = 255;
+    private static final int MAX_USER_AGENT_LENGTH = 500;
+    private static final int MAX_DESCRIPTION_LENGTH = 500;
+    private static final int MAX_ADDITIONAL_LENGTH = 1000;
     
     private final SecurityEventRepository securityEventRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -39,6 +45,7 @@ public class SecurityEventService {
     }
 
     @PostConstruct
+    // ensure auxiliary tables exist for analytics
     public void ensureAuxTables() {
         jdbcTemplate.execute("""
             CREATE TABLE IF NOT EXISTS authentication_attempts (
@@ -64,19 +71,21 @@ public class SecurityEventService {
         """);
     }
     
-    // persist any security event and emit a structured audit log entry
+    // persist an event and emit an audit log
     public SecurityEvent logEvent(SecurityEvent event) {
         if (event.getTimestamp() == null) {
             event.setTimestamp(LocalDateTime.now());
         }
+        normalizeEventFields(event);
         SecurityEvent saved = securityEventRepository.save(event);
+        String safeDescription = sanitize(event.getDescription(), MAX_DESCRIPTION_LENGTH);
         logger.info("Security Event Logged: {} - {} - {}", 
-            event.getEventType(), event.getSeverity(), event.getDescription());
+            event.getEventType(), event.getSeverity(), safeDescription);
         
         return saved;
     }
     
-    // standardizes login success/failure events for auth monitoring
+    // normalize login success and failure events
     public SecurityEvent logAuthenticationAttempt(String username, String ipAddress, 
                                                    boolean successful, String userAgent) {
         SecurityEvent event = new SecurityEvent();
@@ -99,7 +108,7 @@ public class SecurityEventService {
         return saved;
     }
     
-    // convenience wrapper for high-severity alerts used by tests and detections
+    // helper for high severity events with type normalization
     public SecurityEvent logHighSeverityEvent(String eventType, String username, 
                                                String description, String additionalData) {
         SecurityEvent.EventType resolvedType = resolveEventType(eventType);
@@ -127,13 +136,13 @@ public class SecurityEventService {
         return logEvent(event);
     }
     
-    // used by dashboards or siem queries to pull recent critical activity
+    // fetch recent high severity events for dashboards
     public List<SecurityEvent> getRecentHighSeverityEvents(int hours) {
         LocalDateTime since = LocalDateTime.now().minusHours(hours);
         return securityEventRepository.findHighSeverityEventsSince(since);
     }
     
-    // admin-level view of all security events
+    // fetch all recorded events
     public List<SecurityEvent> getAllEvents() {
         return securityEventRepository.findAll();
     }
@@ -185,6 +194,7 @@ public class SecurityEventService {
         }
     }
 
+    // derive brute force signals from recent failures
     private void recordFailedLoginSignals(String username, String ipAddress) {
         LocalDateTime now = LocalDateTime.now();
         failedAttempts.addLast(new LoginAttempt(username, ipAddress, now));
@@ -222,6 +232,7 @@ public class SecurityEventService {
         }
     }
 
+    // limit repeat signals per user within the throttle window
     private void emitThrottledSignal(String eventType, String username, String description, String additional) {
         LocalDateTime now = LocalDateTime.now();
         String key = eventType + ":" + username;
@@ -233,6 +244,7 @@ public class SecurityEventService {
         logHighSeverityEvent(eventType, username != null ? username : "unknown", description, additional);
     }
 
+    // drop old attempts outside the signal window
     private void pruneOldAttempts(LocalDateTime now) {
         LocalDateTime cutoff = now.minus(SIGNAL_WINDOW);
         while (!failedAttempts.isEmpty()) {
@@ -242,6 +254,26 @@ public class SecurityEventService {
             }
             failedAttempts.pollFirst();
         }
+    }
+
+    private void normalizeEventFields(SecurityEvent event) {
+        event.setUsername(sanitize(event.getUsername(), MAX_USERNAME_LENGTH));
+        event.setIpAddress(sanitize(event.getIpAddress(), MAX_IP_LENGTH));
+        event.setSessionId(sanitize(event.getSessionId(), MAX_SESSION_LENGTH));
+        event.setUserAgent(sanitize(event.getUserAgent(), MAX_USER_AGENT_LENGTH));
+        event.setDescription(sanitize(event.getDescription(), MAX_DESCRIPTION_LENGTH));
+        event.setAdditionalData(sanitize(event.getAdditionalData(), MAX_ADDITIONAL_LENGTH));
+    }
+
+    private String sanitize(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String sanitized = value.replaceAll("[\\r\\n\\t]+", " ").replaceAll("\\p{C}", "").trim();
+        if (sanitized.length() > maxLength) {
+            sanitized = sanitized.substring(0, maxLength);
+        }
+        return sanitized;
     }
 
     private record LoginAttempt(String username, String ipAddress, LocalDateTime timestamp) {}

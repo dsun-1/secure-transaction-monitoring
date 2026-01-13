@@ -15,7 +15,7 @@
 </head>
 <body>
     <h1>Login</h1>
-    <a href="/products">Back to Products</a>
+    <a href="/products">Back to Products</a> | <a href="/register">Create Account</a>
     
     <div class="error" th:if="${error}" th:text="${error}"></div>
     <div class="message" th:if="${message}" th:text="${message}"></div>
@@ -35,7 +35,7 @@
         <button type="submit">Login</button>
     </form>
     
-    <p style="margin-top: 20px;">
+    <p style="margin-top: 20px;" th:if="${demoMode}">
         <strong>Test Credentials:</strong><br>
         Username: testuser<br>
         Password: password123

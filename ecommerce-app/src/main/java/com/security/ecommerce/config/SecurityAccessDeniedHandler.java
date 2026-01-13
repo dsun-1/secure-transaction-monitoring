@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
+// logs access denials and delegates the 403 response
 public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
 
     private final SecurityEventService securityEventService;
@@ -26,6 +27,7 @@ public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        // record csrf and admin access violations
         if (accessDeniedException instanceof CsrfException) {
             securityEventService.logHighSeverityEvent(
                 "CSRF_VIOLATION",

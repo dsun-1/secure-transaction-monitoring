@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// transaction record with fraud and status metadata
 public class Transaction {
 
     @Id
@@ -51,7 +52,7 @@ public class Transaction {
 
     private String suspicionReason;
 
-    
+    // coupon metadata for promotions
     private String couponCode;
 
     private BigDecimal discountAmount;
@@ -66,7 +67,7 @@ public class Transaction {
         FRAUDULENT
     }
 
-    
+    // detect client/server amount mismatch
     public boolean isAmountTampered() {
         if (originalAmount != null && amount != null) {
             return originalAmount.compareTo(amount) != 0;
@@ -74,7 +75,7 @@ public class Transaction {
         return false;
     }
 
-    
+    // mark the transaction as suspicious with a reason
     public void markSuspicious(String reason) {
         this.suspicious = true;
         this.suspicionReason = reason;

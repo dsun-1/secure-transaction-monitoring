@@ -29,8 +29,13 @@ public class CartManipulationTest extends BaseTest {
             "arguments[0].appendChild(input);", addToCartForm
         );
         addToCartForm.findElement(By.tagName("button")).click();
+        // Wait for the POST + redirect to complete so the add isn't interrupted.
+        wait.until(ExpectedConditions.stalenessOf(productRow));
 
         navigateToUrl("/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            fail("Cart is empty after price tampering attempt; add-to-cart may not have completed.");
+        }
         WebElement totalElement = wait.until(
             ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='total']/span")
         ));
@@ -56,6 +61,7 @@ public class CartManipulationTest extends BaseTest {
         quantityInput.clear();
         quantityInput.sendKeys("0");
         ((JavascriptExecutor) driver).executeScript("arguments[0].submit();", addToCartForm);
+        wait.until(ExpectedConditions.stalenessOf(productRow));
 
         navigateToUrl("/cart");
         boolean emptyCart = driver.getPageSource().contains("Your cart is empty");

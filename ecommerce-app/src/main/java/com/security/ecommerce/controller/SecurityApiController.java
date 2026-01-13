@@ -5,7 +5,10 @@ import com.security.ecommerce.model.Transaction;
 import java.math.BigDecimal;
 import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.TransactionService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,15 +18,19 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/security")
+// admin endpoints for security events and transaction anomalies
 public class SecurityApiController {
     
     private final SecurityEventService securityEventService;
     private final TransactionService transactionService;
+    private final boolean demoMode;
 
     public SecurityApiController(SecurityEventService securityEventService,
-                                 TransactionService transactionService) {
+                                 TransactionService transactionService,
+                                 @Value("${security.demo-mode:false}") boolean demoMode) {
         this.securityEventService = securityEventService;
         this.transactionService = transactionService;
+        this.demoMode = demoMode;
     }
     
     @GetMapping("/events")
@@ -53,6 +60,7 @@ public class SecurityApiController {
     }
     
     @GetMapping("/dashboard")
+    // aggregate counts and recent records for monitoring views
     public Map<String, Object> getDashboard() {
         Map<String, Object> dashboard = new HashMap<>();
         
@@ -77,7 +85,11 @@ public class SecurityApiController {
     }
     
     @PostMapping("/test-event")
+    // helper endpoint for emitting a synthetic event
     public SecurityEvent createTestEvent(@RequestBody Map<String, String> payload) {
+        if (!demoMode) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return securityEventService.logHighSeverityEvent(
             payload.getOrDefault("type", "TEST_EVENT"),
             payload.getOrDefault("username", "test"),

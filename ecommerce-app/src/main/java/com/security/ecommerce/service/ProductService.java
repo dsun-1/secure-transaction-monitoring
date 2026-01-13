@@ -10,6 +10,7 @@ import java.util.List;
 
 @Service
 @Transactional
+// product catalog queries and persistence
 public class ProductService {
 
     private final ProductRepository productRepository;

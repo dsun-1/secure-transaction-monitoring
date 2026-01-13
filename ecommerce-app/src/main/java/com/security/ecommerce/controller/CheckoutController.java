@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Controller
-// checkout flow; this is a key surface for tampering and fraud tests
+// checkout flow with validation and anomaly logging
 public class CheckoutController {
 
     private final CartService cartService;
@@ -41,7 +41,7 @@ public class CheckoutController {
     }
 
     @GetMapping("/checkout")
-    // renders checkout details and total for the current session cart
+    // render checkout for the current session cart
     public String checkoutPage(HttpSession session, Model model) {
         String sessionId = session.getId();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -60,7 +60,6 @@ public class CheckoutController {
         model.addAttribute("total", total);
         
         if (isAuthenticated) {
-            
             model.addAttribute("loggedIn", true);
         }
         
@@ -68,7 +67,7 @@ public class CheckoutController {
     }
 
     @PostMapping("/checkout/process")
-    // processes payment submission and creates a transaction record
+    // process payment details and create a transaction
     public String processCheckout(@RequestParam String cardNumber,
                                   @RequestParam String cardName,
                                   @RequestParam String expiryDate,

@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cart_items")
+// cart line item linked to a session and product
 public class CartItem {
     
     @Id
@@ -51,6 +52,7 @@ public class CartItem {
     public void setAddedDate(LocalDateTime addedDate) { this.addedDate = addedDate; }
     
     public BigDecimal getSubtotal() {
+        // compute price * quantity for display and totals
         return price.multiply(new BigDecimal(quantity));
     }
 }

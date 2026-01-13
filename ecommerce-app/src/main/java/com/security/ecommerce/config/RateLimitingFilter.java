@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+// simple in-memory rate limit for hot endpoints
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final long WINDOW_MS = 5_000L;
@@ -34,6 +35,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        // enforce rate limits only on selected paths
         String path = request.getRequestURI();
         if (!shouldRateLimit(path)) {
             filterChain.doFilter(request, response);
@@ -63,12 +65,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldRateLimit(String path) {
-        return path.startsWith("/products") || path.startsWith("/api/security");
+        return path.startsWith("/products") || path.startsWith("/api/security") || path.startsWith("/register");
     }
 
     private String rateLimitKey(String path) {
         if (path.startsWith("/api/security")) {
             return "/api/security";
+        }
+        if (path.startsWith("/register")) {
+            return "/register";
         }
         return "/products";
     }

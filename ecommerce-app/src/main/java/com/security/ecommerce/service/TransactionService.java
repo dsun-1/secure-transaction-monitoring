@@ -16,6 +16,7 @@ import java.util.UUID;
 
 @Service
 @Transactional
+// transaction creation with anomaly logging
 public class TransactionService {
     
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
@@ -39,7 +40,7 @@ public class TransactionService {
         transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         transaction.setTransactionDate(LocalDateTime.now());
         
-        
+        // flag suspicious amounts before persistence
         String username = user != null ? user.getUsername() : "guest";
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);

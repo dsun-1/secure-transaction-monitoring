@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body { font-family: Arial; margin: 40px; max-width: 420px; }
+        label { display: block; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin: 5px 0 10px; }
+        button { padding: 10px 15px; background: #0056b3; color: white; border: none; cursor: pointer; }
+        .error { color: red; margin-bottom: 10px; }
+        .hint { font-size: 12px; color: #444; }
+    </style>
+</head>
+<body>
+    <h2>Create Account</h2>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <form action="/register" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <label>Username:</label>
+        <input type="text" name="username" required minlength="3" maxlength="50"/>
+
+        <label>Email:</label>
+        <input type="email" name="email" required maxlength="100"/>
+
+        <label>Password:</label>
+        <input type="password" name="password" required
+               title="Must be 8+ chars with Upper, Lower, Number, Special"/>
+        <div class="hint">8+ chars, upper, lower, number, special.</div>
+
+        <div style="display:none;">
+            <label>Internal Phone (Do not fill):</label>
+            <input type="text" name="honeypot_field" tabindex="-1" autocomplete="off"/>
+        </div>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Login here</a></p>
+</body>
+</html>

@@ -62,15 +62,9 @@ public class AccessControlTest extends BaseTest {
         RestAssured.baseURI = baseUrl;
 
         // Login as testuser using API to keep the flow stable in headless runs.
-        Response loginResponse = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "testuser")
-            .formParam("password", "password123")
-            .post("/perform_login");
-
-        String sessionId = loginResponse.getCookie("JSESSIONID");
-        String csrfToken = loginResponse.getCookie("XSRF-TOKEN");
+        LoginSession loginSession = loginViaApi("testuser", "password123");
+        String sessionId = loginSession.sessionId();
+        String csrfToken = loginSession.csrfToken();
         Assert.assertNotNull(sessionId, "Expected session cookie after login");
 
         Response productsResponse = RestAssured
@@ -118,13 +112,8 @@ public class AccessControlTest extends BaseTest {
         Long orderId = Long.valueOf(matcher.group(1));
 
         // Login as paymentuser and attempt to access testuser order
-        Response paymentLogin = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "paymentuser")
-            .formParam("password", "Paym3nt@123")
-            .post("/perform_login");
-        String paymentSessionId = paymentLogin.getCookie("JSESSIONID");
+        LoginSession paymentLogin = loginViaApi("paymentuser", "Paym3nt@123");
+        String paymentSessionId = paymentLogin.sessionId();
         Assert.assertNotNull(paymentSessionId, "Expected session cookie for paymentuser");
 
         Response response = RestAssured
@@ -271,16 +260,9 @@ public class AccessControlTest extends BaseTest {
             }
         }
         // Fallback: login via REST and inject session cookies for stability in demos.
-        RestAssured.baseURI = baseUrl;
-        Response response = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", username)
-            .formParam("password", password)
-            .post("/perform_login");
-
-        String sessionId = response.getCookie("JSESSIONID");
-        String csrfToken = response.getCookie("XSRF-TOKEN");
+        LoginSession session = loginViaApi(username, password);
+        String sessionId = session.sessionId();
+        String csrfToken = session.csrfToken();
         if (sessionId == null || sessionId.isBlank()) {
             throw new TimeoutException("Login failed for user: " + username);
         }
@@ -294,6 +276,33 @@ public class AccessControlTest extends BaseTest {
         loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
     }
 
+    private LoginSession loginViaApi(String username, String password) {
+        RestAssured.baseURI = baseUrl;
+        Response loginPage = RestAssured
+            .given()
+            .redirects().follow(false)
+            .get("/login");
+        String csrfToken = extractHiddenValue(loginPage.getBody().asString(), "_csrf");
+        String csrfCookie = loginPage.getCookie("XSRF-TOKEN");
+        String sessionCookie = loginPage.getCookie("JSESSIONID");
+        if (csrfToken == null || csrfToken.isBlank()) {
+            csrfToken = csrfCookie;
+        }
+
+        Response loginResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie : "")
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie : "")
+            .header("X-XSRF-TOKEN", csrfToken != null ? csrfToken : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("username", username)
+            .formParam("password", password)
+            .post("/perform_login");
+
+        return new LoginSession(loginResponse.getCookie("JSESSIONID"), loginResponse.getCookie("XSRF-TOKEN"));
+    }
+
     private String extractHiddenValue(String html, String name) {
         if (html == null) {
             return null;
@@ -302,5 +311,7 @@ public class AccessControlTest extends BaseTest {
         Matcher matcher = pattern.matcher(html);
         return matcher.find() ? matcher.group(1) : null;
     }
+
+    private record LoginSession(String sessionId, String csrfToken) {}
     
 }

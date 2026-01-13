@@ -12,6 +12,7 @@ import java.util.List;
 
 @Service
 @Transactional
+// session-scoped cart operations
 public class CartService {
 
     private final CartItemRepository cartItemRepository;
@@ -45,7 +46,7 @@ public class CartService {
             return null;
         }
 
-        
+        // merge quantities when the product already exists in the cart
         List<CartItem> cartItems = cartItemRepository.findBySessionId(sessionId);
         for (CartItem item : cartItems) {
             if (item.getProduct().getId().equals(productId)) {
@@ -59,7 +60,7 @@ public class CartService {
             }
         }
 
-        
+        // create a new cart item when not found
         CartItem cartItem = new CartItem();
         cartItem.setSessionId(sessionId);
         cartItem.setProduct(product);

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/orders")
+// order retrieval with ownership checks
 public class OrderController {
 
     private final TransactionService transactionService;
@@ -35,6 +36,7 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
+        // ensure only the owner can read the order
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : "anonymous";
         String owner = transaction.getUser() != null ? transaction.getUser().getUsername() : null;

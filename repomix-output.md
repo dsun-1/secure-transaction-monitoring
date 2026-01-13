@@ -77,6 +77,7 @@ ecommerce-app/src/main/resources/templates/checkout.html
 ecommerce-app/src/main/resources/templates/confirmation.html
 ecommerce-app/src/main/resources/templates/login.html
 ecommerce-app/src/main/resources/templates/products.html
+ecommerce-app/src/main/resources/templates/register.html
 pom.xml
 README.md
 scripts/python/jira_ticket_generator.py
@@ -109,6 +110,54 @@ siem_incident_report.json
 ```
 
 # Files
+
+## File: ecommerce-app/src/main/resources/templates/register.html
+````html
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <style>
+        body { font-family: Arial; margin: 40px; max-width: 420px; }
+        label { display: block; margin-top: 10px; }
+        input { width: 100%; padding: 8px; margin: 5px 0 10px; }
+        button { padding: 10px 15px; background: #0056b3; color: white; border: none; cursor: pointer; }
+        .error { color: red; margin-bottom: 10px; }
+        .hint { font-size: 12px; color: #444; }
+    </style>
+</head>
+<body>
+    <h2>Create Account</h2>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <form action="/register" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <label>Username:</label>
+        <input type="text" name="username" required minlength="3" maxlength="50"/>
+
+        <label>Email:</label>
+        <input type="email" name="email" required maxlength="100"/>
+
+        <label>Password:</label>
+        <input type="password" name="password" required
+               title="Must be 8+ chars with Upper, Lower, Number, Special"/>
+        <div class="hint">8+ chars, upper, lower, number, special.</div>
+
+        <div style="display:none;">
+            <label>Internal Phone (Do not fill):</label>
+            <input type="text" name="honeypot_field" tabindex="-1" autocomplete="off"/>
+        </div>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already have an account? <a href="/login">Login here</a></p>
+</body>
+</html>
+````
 
 ## File: DETAILS.md
 ````markdown
@@ -561,6 +610,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
+// logs unauthorized api access and returns 401
 public class ApiAuthEntryPoint implements AuthenticationEntryPoint {
 
     private final SecurityEventService securityEventService;
@@ -573,6 +623,7 @@ public class ApiAuthEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
+        // emit a high severity event before sending the response
         securityEventService.logHighSeverityEvent(
             "API_AUTH_FAILURE",
             "anonymous",
@@ -607,6 +658,7 @@ import java.util.regex.Pattern;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 5)
+// scans request parameters for simple sqli and xss patterns
 public class RequestInspectionFilter extends OncePerRequestFilter {
 
     private static final Pattern SQLI_PATTERN = Pattern.compile(
@@ -626,6 +678,7 @@ public class RequestInspectionFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        // log at most one sqli and one xss signal per request
         boolean loggedSql = false;
         boolean loggedXss = false;
         Enumeration<String> paramNames = request.getParameterNames();
@@ -658,6 +711,7 @@ public class RequestInspectionFilter extends OncePerRequestFilter {
 
     private void logEvent(String eventType, HttpServletRequest request, String paramName, String paramValue) {
         String username = resolveUsername();
+        // trim and cap payload to keep logs small
         String payload = paramValue == null ? "" : paramValue.replaceAll("\\s+", " ").trim();
         if (payload.length() > 120) {
             payload = payload.substring(0, 120) + "...";
@@ -694,6 +748,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
+// logs access denials and delegates the 403 response
 public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
 
     private final SecurityEventService securityEventService;
@@ -707,6 +762,7 @@ public class SecurityAccessDeniedHandler implements AccessDeniedHandler {
     public void handle(HttpServletRequest request,
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        // record csrf and admin access violations
         if (accessDeniedException instanceof CsrfException) {
             securityEventService.logHighSeverityEvent(
                 "CSRF_VIOLATION",
@@ -754,6 +810,7 @@ import java.io.IOException;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 15)
+// watches sessions for invalid ids and context mismatch
 public class SessionSecurityFilter extends OncePerRequestFilter {
 
     private static final String SESSION_IP = "session_ip";
@@ -770,6 +827,7 @@ public class SessionSecurityFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
+        // log invalid session ids before continuing
         if (request.getRequestedSessionId() != null && !request.isRequestedSessionIdValid()) {
             securityEventService.logHighSeverityEvent(
                 "SESSION_HIJACK_ATTEMPT",
@@ -1041,6 +1099,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/orders")
+// order retrieval with ownership checks
 public class OrderController {
 
     private final TransactionService transactionService;
@@ -1062,6 +1121,7 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
+        // ensure only the owner can read the order
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : "anonymous";
         String owner = transaction.getUser() != null ? transaction.getUser().getUsername() : null;
@@ -1184,6 +1244,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cart_items")
+// cart line item linked to a session and product
 public class CartItem {
     
     @Id
@@ -1229,6 +1290,7 @@ public class CartItem {
     public void setAddedDate(LocalDateTime addedDate) { this.addedDate = addedDate; }
     
     public BigDecimal getSubtotal() {
+        // compute price * quantity for display and totals
         return price.multiply(new BigDecimal(quantity));
     }
 }
@@ -1254,6 +1316,7 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// product catalog entry with stock tracking
 public class Product {
 
     @Id
@@ -1283,6 +1346,7 @@ public class Product {
     }
 
     public void decrementStock(int quantity) {
+        // guard against negative stock on fulfillment
         if (stock >= quantity) {
             stock -= quantity;
         } else {
@@ -1310,6 +1374,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// transaction record with fraud and status metadata
 public class Transaction {
 
     @Id
@@ -1347,7 +1412,7 @@ public class Transaction {
 
     private String suspicionReason;
 
-    
+    // coupon metadata for promotions
     private String couponCode;
 
     private BigDecimal discountAmount;
@@ -1362,7 +1427,7 @@ public class Transaction {
         FRAUDULENT
     }
 
-    
+    // detect client/server amount mismatch
     public boolean isAmountTampered() {
         if (originalAmount != null && amount != null) {
             return originalAmount.compareTo(amount) != 0;
@@ -1370,7 +1435,7 @@ public class Transaction {
         return false;
     }
 
-    
+    // mark the transaction as suspicious with a reason
     public void markSuspicious(String reason) {
         this.suspicious = true;
         this.suspicionReason = reason;
@@ -1399,6 +1464,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+// user account with lockout tracking
 public class User {
 
     @Id
@@ -1439,7 +1505,7 @@ public class User {
 
     private boolean active = true;
 
-    
+    // increment failures and lock the account after threshold
     public void incrementFailedAttempts() {
         this.failedLoginAttempts++;
         this.lastFailedLogin = LocalDateTime.now();
@@ -1459,7 +1525,6 @@ public class User {
     public boolean isAccountLocked() {
         if (!accountNonLocked && accountLockedUntil != null) {
             if (LocalDateTime.now().isAfter(accountLockedUntil)) {
-                
                 this.accountNonLocked = true;
                 this.accountLockedUntil = null;
                 this.failedLoginAttempts = 0;
@@ -1524,6 +1589,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 }
 ````
 
@@ -1541,6 +1607,7 @@ import java.util.List;
 
 @Service
 @Transactional
+// product catalog queries and persistence
 public class ProductService {
 
     private final ProductRepository productRepository;
@@ -1586,7 +1653,7 @@ public class ProductService {
 </head>
 <body>
     <h1>Login</h1>
-    <a href="/products">Back to Products</a>
+    <a href="/products">Back to Products</a> | <a href="/register">Create Account</a>
     
     <div class="error" th:if="${error}" th:text="${error}"></div>
     <div class="message" th:if="${message}" th:text="${message}"></div>
@@ -1606,7 +1673,7 @@ public class ProductService {
         <button type="submit">Login</button>
     </form>
     
-    <p style="margin-top: 20px;">
+    <p style="margin-top: 20px;" th:if="${demoMode}">
         <strong>Test Credentials:</strong><br>
         Username: testuser<br>
         Password: password123
@@ -2315,69 +2382,6 @@ public class SecurityEvent {
 }
 ````
 
-## File: .gitignore
-````
-*.class
-target/
-*.jar
-*.war
-*.ear
-
-.idea/
-*.iml
-.vscode/
-.settings/
-.project
-.classpath
-
-.mvn/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.env
-
-test-output/
-reports/
-screenshots/
-*.log
-logs/
-
-*.db
-*.sqlite
-*.h2.db
-
-*.key
-*.pem
-secrets.properties
-fortify-token.txt
-
-.DS_Store
-Thumbs.db
-*.swp
-
-chromedriver.exe
-chromedriver
-
-incident-response/reports/generated/*
-!incident-response/reports/generated/.gitkeep
-scripts/python/siem_incident_report.json
-
-.fortify/
-fortify-results/
-
-jira-config.properties
-````
-
 ## File: ecommerce-app/src/main/java/com/security/ecommerce/config/RateLimitingFilter.java
 ````java
 package com.security.ecommerce.config;
@@ -2401,6 +2405,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
+// simple in-memory rate limit for hot endpoints
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final long WINDOW_MS = 5_000L;
@@ -2416,6 +2421,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+        // enforce rate limits only on selected paths
         String path = request.getRequestURI();
         if (!shouldRateLimit(path)) {
             filterChain.doFilter(request, response);
@@ -2445,12 +2451,15 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldRateLimit(String path) {
-        return path.startsWith("/products") || path.startsWith("/api/security");
+        return path.startsWith("/products") || path.startsWith("/api/security") || path.startsWith("/register");
     }
 
     private String rateLimitKey(String path) {
         if (path.startsWith("/api/security")) {
             return "/api/security";
+        }
+        if (path.startsWith("/register")) {
+            return "/register";
         }
         return "/products";
     }
@@ -2505,7 +2514,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-// structured security telemetry persisted to H2 for analysis and reporting
+// security event entity stored for analysis
 public class SecurityEvent {
 
     @Id
@@ -2534,7 +2543,7 @@ public class SecurityEvent {
 
     private String additionalData;
 
-    // normalized categories used by tests and siem logic
+    // event categories used by detections and reporting
     public enum EventType {
         LOGIN_ATTEMPT,
         LOGIN_SUCCESS,
@@ -2542,6 +2551,7 @@ public class SecurityEvent {
         LOGOUT,
         ACCOUNT_LOCKED,
         ACCOUNT_ENUMERATION,
+        BOT_REGISTRATION_ATTEMPT,
         PASSWORD_CHANGE,
         ACCESS_CONTROL_VIOLATION,
         PRIVILEGE_ESCALATION_ATTEMPT,
@@ -2574,7 +2584,7 @@ public class SecurityEvent {
         VULNERABLE_COMPONENTS
     }
 
-    // severity levels to drive alerts and reporting
+    // severity levels used for alerting
     public enum EventSeverity {
         INFO,
         LOW,
@@ -2592,6 +2602,9 @@ spring.h2.console.enabled=true
 spring.jpa.hibernate.ddl-auto=create
 security.lockout.enabled=false
 security.demo-mode=true
+security.require-https=false
+security.cookies.secure=false
+spring.thymeleaf.cache=false
 ````
 
 ## File: ecommerce-app/src/main/resources/templates/cart.html
@@ -2744,15 +2757,9 @@ public class AccessControlTest extends BaseTest {
         RestAssured.baseURI = baseUrl;
 
         // Login as testuser using API to keep the flow stable in headless runs.
-        Response loginResponse = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "testuser")
-            .formParam("password", "password123")
-            .post("/perform_login");
-
-        String sessionId = loginResponse.getCookie("JSESSIONID");
-        String csrfToken = loginResponse.getCookie("XSRF-TOKEN");
+        LoginSession loginSession = loginViaApi("testuser", "password123");
+        String sessionId = loginSession.sessionId();
+        String csrfToken = loginSession.csrfToken();
         Assert.assertNotNull(sessionId, "Expected session cookie after login");
 
         Response productsResponse = RestAssured
@@ -2800,13 +2807,8 @@ public class AccessControlTest extends BaseTest {
         Long orderId = Long.valueOf(matcher.group(1));
 
         // Login as paymentuser and attempt to access testuser order
-        Response paymentLogin = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", "paymentuser")
-            .formParam("password", "Paym3nt@123")
-            .post("/perform_login");
-        String paymentSessionId = paymentLogin.getCookie("JSESSIONID");
+        LoginSession paymentLogin = loginViaApi("paymentuser", "Paym3nt@123");
+        String paymentSessionId = paymentLogin.sessionId();
         Assert.assertNotNull(paymentSessionId, "Expected session cookie for paymentuser");
 
         Response response = RestAssured
@@ -2953,16 +2955,9 @@ public class AccessControlTest extends BaseTest {
             }
         }
         // Fallback: login via REST and inject session cookies for stability in demos.
-        RestAssured.baseURI = baseUrl;
-        Response response = RestAssured
-            .given()
-            .redirects().follow(false)
-            .formParam("username", username)
-            .formParam("password", password)
-            .post("/perform_login");
-
-        String sessionId = response.getCookie("JSESSIONID");
-        String csrfToken = response.getCookie("XSRF-TOKEN");
+        LoginSession session = loginViaApi(username, password);
+        String sessionId = session.sessionId();
+        String csrfToken = session.csrfToken();
         if (sessionId == null || sessionId.isBlank()) {
             throw new TimeoutException("Login failed for user: " + username);
         }
@@ -2976,6 +2971,33 @@ public class AccessControlTest extends BaseTest {
         loginWait.until(ExpectedConditions.not(ExpectedConditions.urlContains("/login")));
     }
 
+    private LoginSession loginViaApi(String username, String password) {
+        RestAssured.baseURI = baseUrl;
+        Response loginPage = RestAssured
+            .given()
+            .redirects().follow(false)
+            .get("/login");
+        String csrfToken = extractHiddenValue(loginPage.getBody().asString(), "_csrf");
+        String csrfCookie = loginPage.getCookie("XSRF-TOKEN");
+        String sessionCookie = loginPage.getCookie("JSESSIONID");
+        if (csrfToken == null || csrfToken.isBlank()) {
+            csrfToken = csrfCookie;
+        }
+
+        Response loginResponse = RestAssured
+            .given()
+            .redirects().follow(false)
+            .cookie("XSRF-TOKEN", csrfCookie != null ? csrfCookie : "")
+            .cookie("JSESSIONID", sessionCookie != null ? sessionCookie : "")
+            .header("X-XSRF-TOKEN", csrfToken != null ? csrfToken : "")
+            .formParam("_csrf", csrfToken)
+            .formParam("username", username)
+            .formParam("password", password)
+            .post("/perform_login");
+
+        return new LoginSession(loginResponse.getCookie("JSESSIONID"), loginResponse.getCookie("XSRF-TOKEN"));
+    }
+
     private String extractHiddenValue(String html, String name) {
         if (html == null) {
             return null;
@@ -2984,6 +3006,8 @@ public class AccessControlTest extends BaseTest {
         Matcher matcher = pattern.matcher(html);
         return matcher.find() ? matcher.group(1) : null;
     }
+
+    private record LoginSession(String sessionId, String csrfToken) {}
     
 }
 ````
@@ -7711,6 +7735,69 @@ public class TestListener implements ITestListener {
 }
 ````
 
+## File: .gitignore
+````
+*.class
+target/
+*.jar
+*.war
+*.ear
+
+.mvn/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.env
+
+test-output/
+reports/
+screenshots/
+*.log
+logs/
+repomix-output.md
+
+*.db
+*.sqlite
+*.h2.db
+
+*.key
+*.pem
+secrets.properties
+fortify-token.txt
+jira-config.properties
+
+.DS_Store
+Thumbs.db
+*.swp
+
+chromedriver.exe
+chromedriver
+
+incident-response/reports/generated/*
+!incident-response/reports/generated/.gitkeep
+scripts/python/siem_incident_report.json
+
+.fortify/
+fortify-results/
+````
+
 ## File: ecommerce-app/src/main/java/com/security/ecommerce/controller/CartController.java
 ````java
 package com.security.ecommerce.controller;
@@ -7733,6 +7820,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/cart")
+// session-scoped cart operations with tampering signals
 public class CartController {
 
     private final CartService cartService;
@@ -7745,6 +7833,7 @@ public class CartController {
     }
 
     @GetMapping
+    // render the cart for the current session
     public String viewCart(HttpSession session, Model model) {
         String sessionId = session.getId();
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
@@ -7757,6 +7846,7 @@ public class CartController {
     }
 
     @PostMapping("/add")
+    // add items and log suspicious client parameters
     public String addToCart(@RequestParam Long productId,
                            @RequestParam(defaultValue = "1") Integer quantity,
                            HttpSession session,
@@ -7784,6 +7874,7 @@ public class CartController {
     }
 
     @PostMapping("/update")
+    // enforce ownership before updating quantities
     public String updateCart(@RequestParam Long cartItemId,
                             @RequestParam Integer quantity,
                             HttpSession session,
@@ -7817,6 +7908,7 @@ public class CartController {
     }
 
     @PostMapping("/remove")
+    // remove a single item from the cart
     public String removeFromCart(@RequestParam Long cartItemId,
                                 HttpSession session) {
         String sessionId = session.getId();
@@ -7825,6 +7917,7 @@ public class CartController {
     }
 
     @PostMapping("/clear")
+    // clear the session cart
     public String clearCart(HttpSession session) {
         String sessionId = session.getId();
         cartService.clearCart(sessionId);
@@ -7843,7 +7936,10 @@ import com.security.ecommerce.model.Transaction;
 import java.math.BigDecimal;
 import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.TransactionService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7853,15 +7949,19 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/security")
+// admin endpoints for security events and transaction anomalies
 public class SecurityApiController {
     
     private final SecurityEventService securityEventService;
     private final TransactionService transactionService;
+    private final boolean demoMode;
 
     public SecurityApiController(SecurityEventService securityEventService,
-                                 TransactionService transactionService) {
+                                 TransactionService transactionService,
+                                 @Value("${security.demo-mode:false}") boolean demoMode) {
         this.securityEventService = securityEventService;
         this.transactionService = transactionService;
+        this.demoMode = demoMode;
     }
     
     @GetMapping("/events")
@@ -7891,6 +7991,7 @@ public class SecurityApiController {
     }
     
     @GetMapping("/dashboard")
+    // aggregate counts and recent records for monitoring views
     public Map<String, Object> getDashboard() {
         Map<String, Object> dashboard = new HashMap<>();
         
@@ -7915,7 +8016,11 @@ public class SecurityApiController {
     }
     
     @PostMapping("/test-event")
+    // helper endpoint for emitting a synthetic event
     public SecurityEvent createTestEvent(@RequestBody Map<String, String> payload) {
+        if (!demoMode) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
         return securityEventService.logHighSeverityEvent(
             payload.getOrDefault("type", "TEST_EVENT"),
             payload.getOrDefault("username", "test"),
@@ -7965,6 +8070,7 @@ import java.util.List;
 
 @Service
 @Transactional
+// session-scoped cart operations
 public class CartService {
 
     private final CartItemRepository cartItemRepository;
@@ -7998,7 +8104,7 @@ public class CartService {
             return null;
         }
 
-        
+        // merge quantities when the product already exists in the cart
         List<CartItem> cartItems = cartItemRepository.findBySessionId(sessionId);
         for (CartItem item : cartItems) {
             if (item.getProduct().getId().equals(productId)) {
@@ -8012,7 +8118,7 @@ public class CartService {
             }
         }
 
-        
+        // create a new cart item when not found
         CartItem cartItem = new CartItem();
         cartItem.setSessionId(sessionId);
         cartItem.setProduct(product);
@@ -8096,8 +8202,13 @@ public class CartManipulationTest extends BaseTest {
             "arguments[0].appendChild(input);", addToCartForm
         );
         addToCartForm.findElement(By.tagName("button")).click();
+        // Wait for the POST + redirect to complete so the add isn't interrupted.
+        wait.until(ExpectedConditions.stalenessOf(productRow));
 
         navigateToUrl("/cart");
+        if (driver.getPageSource().contains("Your cart is empty")) {
+            fail("Cart is empty after price tampering attempt; add-to-cart may not have completed.");
+        }
         WebElement totalElement = wait.until(
             ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='total']/span")
         ));
@@ -8123,6 +8234,7 @@ public class CartManipulationTest extends BaseTest {
         quantityInput.clear();
         quantityInput.sendKeys("0");
         ((JavascriptExecutor) driver).executeScript("arguments[0].submit();", addToCartForm);
+        wait.until(ExpectedConditions.stalenessOf(productRow));
 
         navigateToUrl("/cart");
         boolean emptyCart = driver.getPageSource().contains("Your cart is empty");
@@ -8327,7 +8439,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Controller
-// checkout flow; this is a key surface for tampering and fraud tests
+// checkout flow with validation and anomaly logging
 public class CheckoutController {
 
     private final CartService cartService;
@@ -8346,7 +8458,7 @@ public class CheckoutController {
     }
 
     @GetMapping("/checkout")
-    // renders checkout details and total for the current session cart
+    // render checkout for the current session cart
     public String checkoutPage(HttpSession session, Model model) {
         String sessionId = session.getId();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -8365,7 +8477,6 @@ public class CheckoutController {
         model.addAttribute("total", total);
         
         if (isAuthenticated) {
-            
             model.addAttribute("loggedIn", true);
         }
         
@@ -8373,7 +8484,7 @@ public class CheckoutController {
     }
 
     @PostMapping("/checkout/process")
-    // processes payment submission and creates a transaction record
+    // process payment details and create a transaction
     public String processCheckout(@RequestParam String cardNumber,
                                   @RequestParam String cardName,
                                   @RequestParam String expiryDate,
@@ -8495,6 +8606,7 @@ import java.util.UUID;
 
 @Service
 @Transactional
+// transaction creation with anomaly logging
 public class TransactionService {
     
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
@@ -8518,7 +8630,7 @@ public class TransactionService {
         transaction.setStatus(Transaction.TransactionStatus.COMPLETED);
         transaction.setTransactionDate(LocalDateTime.now());
         
-        
+        // flag suspicious amounts before persistence
         String username = user != null ? user.getUsername() : "guest";
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             transaction.setStatus(Transaction.TransactionStatus.FAILED);
@@ -9140,6 +9252,7 @@ public class SecurityEventLogger {
         "API_AUTH_FAILURE",
         "BRUTE_FORCE_DETECTED",
         "BRUTE_FORCE_PREVENTION_SUCCESS",
+        "BOT_REGISTRATION_ATTEMPT",
         "DISTRIBUTED_BRUTE_FORCE",
         "CREDENTIAL_STUFFING",
         "CART_MANIPULATION",
@@ -10491,48 +10604,73 @@ public class SQLInjectionTest extends BaseTest {
 ````java
 package com.security.ecommerce.controller;
 
+import com.security.ecommerce.service.SecurityEventService;
 import com.security.ecommerce.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
-// auth entry points; these are high-value attack surfaces for credential abuse
+// auth endpoints for login and registration
 public class AuthController {
 
-    private final UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
-    public AuthController(UserService userService) {
+    private final UserService userService;
+    private final SecurityEventService securityEventService;
+    private final boolean demoMode;
+
+    public AuthController(UserService userService,
+                          SecurityEventService securityEventService,
+                          @Value("${security.demo-mode:false}") boolean demoMode) {
         this.userService = userService;
+        this.securityEventService = securityEventService;
+        this.demoMode = demoMode;
     }
 
-    
     @GetMapping("/login")
-    // serves login page used by auth and brute-force tests
-    public String login() {
+    // render the login view
+    public String login(Model model) {
+        model.addAttribute("demoMode", demoMode);
         return "login"; 
     }
     
 
     @GetMapping("/register")
-    // serves registration form for new users
+    // render the registration view
     public String showRegistrationForm() {
         return "register";
     }
 
     @PostMapping("/register")
-    // registration flow that persists users and surfaces errors
+    // handle registration and surface errors in the view
     public String registerUser(@RequestParam String username, 
                              @RequestParam String email,
                              @RequestParam String password,
-                             Model model) {
+                             @RequestParam(required = false) String honeypot_field,
+                             Model model,
+                             HttpServletRequest request) {
+        if (honeypot_field != null && !honeypot_field.isBlank()) {
+            securityEventService.logHighSeverityEvent(
+                "BOT_REGISTRATION_ATTEMPT",
+                "bot-detected",
+                "Honeypot field populated during registration",
+                "ip=" + request.getRemoteAddr() + " | value=" + honeypot_field
+            );
+            return "redirect:/login?registered";
+        }
         try {
             userService.registerUser(username, email, password);
             return "redirect:/login?registered";
         } catch (Exception e) {
-            model.addAttribute("error", "Registration failed: " + e.getMessage());
+            logger.warn("Registration failed for {}", username, e);
+            model.addAttribute("error", "Registration failed. Please check your details and try again.");
             return "register";
         }
     }
@@ -10556,6 +10694,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Controller
+// product listing with basic input inspection
 public class ProductController {
 
     private final ProductService productService;
@@ -10575,7 +10714,7 @@ public class ProductController {
         List<Product> products = productService.getAllProducts();
         model.addAttribute("products", products);
         
-        // Detect SSRF attempts in imageUrl parameter
+        // log suspicious image url values
         if (imageUrl != null && !imageUrl.isBlank()) {
             if (isSSRFAttempt(imageUrl)) {
                 securityEventService.logHighSeverityEvent(
@@ -10588,7 +10727,7 @@ public class ProductController {
             }
         }
         
-        // Detect SQL injection attempts in search parameter
+        // log suspicious search values
         if (search != null && !search.isBlank()) {
             String searchLower = search.toLowerCase();
             if (searchLower.contains("'") || searchLower.contains("--") || 
@@ -10604,7 +10743,6 @@ public class ProductController {
                 );
             }
             
-            // Detect XSS attempts in search parameter
             if (searchLower.contains("<script") || searchLower.contains("javascript:") ||
                 searchLower.contains("onerror") || searchLower.contains("onload") ||
                 searchLower.contains("<img") || searchLower.contains("<iframe")) {
@@ -10628,10 +10766,7 @@ public class ProductController {
         return "products";
     }
     
-    /**
-     * Validates URL to prevent SSRF attacks
-     * Blocks: file://, localhost, private IP ranges, cloud metadata endpoints
-     */
+    // validate urls and block known ssrf targets
     private boolean isSSRFAttempt(String url) {
         if (url == null || url.isBlank()) {
             return false;
@@ -10639,17 +10774,14 @@ public class ProductController {
         
         String urlLower = url.toLowerCase();
         
-        // Block file:// protocol
         if (urlLower.startsWith("file://") || urlLower.startsWith("file:")) {
             return true;
         }
         
-        // Block non-HTTP protocols
         if (!urlLower.startsWith("http://") && !urlLower.startsWith("https://")) {
             return true;
         }
         
-        // Block localhost variants
         if (urlLower.contains("localhost") || 
             urlLower.contains("127.0.0.1") || 
             urlLower.contains("0.0.0.0") ||
@@ -10657,15 +10789,13 @@ public class ProductController {
             return true;
         }
         
-        // Block cloud metadata endpoints
-        if (urlLower.contains("169.254.169.254") ||  // AWS/Azure metadata
-            urlLower.contains("169.254.170.2") ||    // ECS task metadata
-            urlLower.contains("metadata.google.internal")) {  // GCP metadata
+        if (urlLower.contains("169.254.169.254") ||
+            urlLower.contains("169.254.170.2") ||
+            urlLower.contains("metadata.google.internal")) {
             return true;
         }
         
-        // Block private IP ranges
-        // 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+        // block private ip ranges
         if (urlLower.matches(".*://10\\..*") ||
             urlLower.matches(".*://172\\.(1[6-9]|2[0-9]|3[0-1])\\..*") ||
             urlLower.matches(".*://192\\.168\\..*")) {
@@ -10708,12 +10838,18 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Service
 @Transactional
-// central logger for security telemetry; feeds the siem analysis pipeline
+// records security telemetry and derived signals
 public class SecurityEventService {
     
     private static final Logger logger = LoggerFactory.getLogger(SecurityEventService.class);
     private static final Duration SIGNAL_WINDOW = Duration.ofMinutes(5);
     private static final Duration SIGNAL_THROTTLE = Duration.ofMinutes(5);
+    private static final int MAX_USERNAME_LENGTH = 100;
+    private static final int MAX_IP_LENGTH = 45;
+    private static final int MAX_SESSION_LENGTH = 255;
+    private static final int MAX_USER_AGENT_LENGTH = 500;
+    private static final int MAX_DESCRIPTION_LENGTH = 500;
+    private static final int MAX_ADDITIONAL_LENGTH = 1000;
     
     private final SecurityEventRepository securityEventRepository;
     private final JdbcTemplate jdbcTemplate;
@@ -10727,6 +10863,7 @@ public class SecurityEventService {
     }
 
     @PostConstruct
+    // ensure auxiliary tables exist for analytics
     public void ensureAuxTables() {
         jdbcTemplate.execute("""
             CREATE TABLE IF NOT EXISTS authentication_attempts (
@@ -10752,19 +10889,21 @@ public class SecurityEventService {
         """);
     }
     
-    // persist any security event and emit a structured audit log entry
+    // persist an event and emit an audit log
     public SecurityEvent logEvent(SecurityEvent event) {
         if (event.getTimestamp() == null) {
             event.setTimestamp(LocalDateTime.now());
         }
+        normalizeEventFields(event);
         SecurityEvent saved = securityEventRepository.save(event);
+        String safeDescription = sanitize(event.getDescription(), MAX_DESCRIPTION_LENGTH);
         logger.info("Security Event Logged: {} - {} - {}", 
-            event.getEventType(), event.getSeverity(), event.getDescription());
+            event.getEventType(), event.getSeverity(), safeDescription);
         
         return saved;
     }
     
-    // standardizes login success/failure events for auth monitoring
+    // normalize login success and failure events
     public SecurityEvent logAuthenticationAttempt(String username, String ipAddress, 
                                                    boolean successful, String userAgent) {
         SecurityEvent event = new SecurityEvent();
@@ -10787,7 +10926,7 @@ public class SecurityEventService {
         return saved;
     }
     
-    // convenience wrapper for high-severity alerts used by tests and detections
+    // helper for high severity events with type normalization
     public SecurityEvent logHighSeverityEvent(String eventType, String username, 
                                                String description, String additionalData) {
         SecurityEvent.EventType resolvedType = resolveEventType(eventType);
@@ -10815,13 +10954,13 @@ public class SecurityEventService {
         return logEvent(event);
     }
     
-    // used by dashboards or siem queries to pull recent critical activity
+    // fetch recent high severity events for dashboards
     public List<SecurityEvent> getRecentHighSeverityEvents(int hours) {
         LocalDateTime since = LocalDateTime.now().minusHours(hours);
         return securityEventRepository.findHighSeverityEventsSince(since);
     }
     
-    // admin-level view of all security events
+    // fetch all recorded events
     public List<SecurityEvent> getAllEvents() {
         return securityEventRepository.findAll();
     }
@@ -10873,6 +11012,7 @@ public class SecurityEventService {
         }
     }
 
+    // derive brute force signals from recent failures
     private void recordFailedLoginSignals(String username, String ipAddress) {
         LocalDateTime now = LocalDateTime.now();
         failedAttempts.addLast(new LoginAttempt(username, ipAddress, now));
@@ -10910,6 +11050,7 @@ public class SecurityEventService {
         }
     }
 
+    // limit repeat signals per user within the throttle window
     private void emitThrottledSignal(String eventType, String username, String description, String additional) {
         LocalDateTime now = LocalDateTime.now();
         String key = eventType + ":" + username;
@@ -10921,6 +11062,7 @@ public class SecurityEventService {
         logHighSeverityEvent(eventType, username != null ? username : "unknown", description, additional);
     }
 
+    // drop old attempts outside the signal window
     private void pruneOldAttempts(LocalDateTime now) {
         LocalDateTime cutoff = now.minus(SIGNAL_WINDOW);
         while (!failedAttempts.isEmpty()) {
@@ -10930,6 +11072,26 @@ public class SecurityEventService {
             }
             failedAttempts.pollFirst();
         }
+    }
+
+    private void normalizeEventFields(SecurityEvent event) {
+        event.setUsername(sanitize(event.getUsername(), MAX_USERNAME_LENGTH));
+        event.setIpAddress(sanitize(event.getIpAddress(), MAX_IP_LENGTH));
+        event.setSessionId(sanitize(event.getSessionId(), MAX_SESSION_LENGTH));
+        event.setUserAgent(sanitize(event.getUserAgent(), MAX_USER_AGENT_LENGTH));
+        event.setDescription(sanitize(event.getDescription(), MAX_DESCRIPTION_LENGTH));
+        event.setAdditionalData(sanitize(event.getAdditionalData(), MAX_ADDITIONAL_LENGTH));
+    }
+
+    private String sanitize(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String sanitized = value.replaceAll("[\\r\\n\\t]+", " ").replaceAll("\\p{C}", "").trim();
+        if (sanitized.length() > maxLength) {
+            sanitized = sanitized.substring(0, maxLength);
+        }
+        return sanitized;
     }
 
     private record LoginAttempt(String username, String ipAddress, LocalDateTime timestamp) {}
@@ -11410,9 +11572,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.regex.Pattern;
+
 @Service
 @Transactional
+// user lookup and account lock tracking
 public class UserService implements UserDetailsService {
+
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+        "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$"
+    );
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -11426,7 +11596,6 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user == null) {
-            
             User lockedUser = userRepository.findByUsername(username).orElse(null);
             if (lockedUser != null && lockedUser.isAccountLocked()) {
                 throw new UsernameNotFoundException("User account is locked");
@@ -11434,6 +11603,7 @@ public class UserService implements UserDetailsService {
             
             throw new UsernameNotFoundException("User not found: " + username);
         }
+        // map domain user to spring security user details
         org.springframework.security.core.userdetails.User.UserBuilder builder =
             org.springframework.security.core.userdetails.User.withUsername(user.getUsername())
             .password(user.getPassword())
@@ -11448,7 +11618,7 @@ public class UserService implements UserDetailsService {
         return builder.roles(role != null ? role : "USER").build();
     }
 
-    
+    // track failed login attempts and lockout thresholds
     public boolean incrementFailedAttempts(String username) {
         User user = userRepository.findByUsername(username).orElse(null);
         if (user != null) {
@@ -11467,16 +11637,24 @@ public class UserService implements UserDetailsService {
             userRepository.save(user);
         }
     }
-    
-
+    // lookup helpers for controllers and services
     public User findByUsername(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }
 
     public User registerUser(String username, String email, String password) {
+        String normalizedUsername = username == null ? null : username.trim();
+        String normalizedEmail = email == null ? null : email.trim();
+        validateRegistration(normalizedUsername, normalizedEmail, password);
+        if (userRepository.existsByUsername(normalizedUsername)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new IllegalArgumentException("Email already exists");
+        }
         User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole("USER");
         user.setActive(true);
@@ -11486,6 +11664,18 @@ public class UserService implements UserDetailsService {
 
     public User save(@NonNull User user) {
         return userRepository.save(user);
+    }
+
+    private void validateRegistration(String username, String email, String password) {
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (email == null || email.isBlank() || !EMAIL_PATTERN.matcher(email).matches()) {
+            throw new IllegalArgumentException("Valid email is required");
+        }
+        if (password == null || !PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new IllegalArgumentException("Password does not meet complexity requirements");
+        }
     }
 }
 ````
@@ -11511,6 +11701,11 @@ spring.jpa.properties.hibernate.format_sql=true
 # h2 console is demo-only; enable via the demo profile
 spring.h2.console.enabled=false
 
+# production security toggles
+security.demo-mode=false
+security.require-https=true
+security.cookies.secure=true
+
 # security logging toggles for event visibility
 security.logging.enabled=true
 security.logging.level=INFO
@@ -11519,10 +11714,16 @@ security.lockout.enabled=false
 # session cookie behavior used by auth/session tests
 server.servlet.session.timeout=30m
 server.servlet.session.cookie.http-only=true
-server.servlet.session.cookie.secure=false
+server.servlet.session.cookie.secure=${security.cookies.secure}
+server.servlet.session.cookie.same-site=strict
 
-# disable thymeleaf caching to make demo changes visible
-spring.thymeleaf.cache=false
+# enable thymeleaf caching in production
+spring.thymeleaf.cache=true
+
+# suppress verbose error responses
+server.error.include-stacktrace=never
+server.error.include-message=never
+server.error.whitelabel.enabled=false
 
 # thread pool sizing for async tasks
 spring.task.execution.pool.core-size=5
@@ -12985,103 +13186,6 @@ $env:JIRA_PROJECT_KEY = "SEC"
 python scripts/python/jira_ticket_generator.py
 ```
 
-## Repository Structure
-
-```
-secure-transac/
-??? ecommerce-app/                    # Spring Boot Application
-?   ??? src/main/java/com/security/ecommerce/
-?   ?   ??? EcommerceApplication.java           # Main application entry point
-?   ?   ??? config/                             # Security & infrastructure config
-?   ?   ?   ??? SecurityConfig.java             # Spring Security configuration
-?   ?   ?   ??? RateLimitingFilter.java         # Custom rate limiting filter
-?   ?   ?   ??? ApiAuthEntryPoint.java          # 401 authentication entry point
-?   ?   ?   ??? SecurityAccessDeniedHandler.java # 403 access denied handler
-?   ?   ?   ??? DataInitializer.java            # Demo user seeding
-?   ?   ?   ??? RequestInspectionFilter.java    # Request logging filter
-?   ?   ??? controller/                         # MVC controllers
-?   ?   ?   ??? ProductController.java          # Product listing with SQLi/XSS detection
-?   ?   ?   ??? CheckoutController.java         # Payment flow controller
-?   ?   ?   ??? AuthController.java             # Login/logout endpoints
-?   ?   ?   ??? SecurityDashboardController.java # Admin security dashboard
-?   ?   ??? model/                              # JPA entities
-?   ?   ?   ??? User.java                       # User entity with roles
-?   ?   ?   ??? Product.java                    # Product catalog entity
-?   ?   ?   ??? CartItem.java                   # Shopping cart entity
-?   ?   ?   ??? SecurityEvent.java              # Security event entity
-?   ?   ??? repository/                         # Spring Data repositories
-?   ?   ?   ??? UserRepository.java
-?   ?   ?   ??? ProductRepository.java
-?   ?   ?   ??? CartItemRepository.java
-?   ?   ?   ??? SecurityEventRepository.java
-?   ?   ??? service/                            # Business logic layer
-?   ?       ??? UserService.java                # User management & authentication
-?   ?       ??? ProductService.java             # Product operations
-?   ?       ??? CartService.java                # Cart management
-?   ?       ??? SecurityEventService.java       # Security event logging
-?   ?       ??? CheckoutService.java            # Payment processing
-?   ??? src/main/resources/
-?   ?   ??? application.properties              # Production configuration
-?   ?   ??? application-demo.properties         # Demo profile with test users
-?   ?   ??? templates/                          # Thymeleaf HTML templates
-?   ?       ??? login.html                      # Login form with CSRF
-?   ?       ??? products.html                   # Product catalog
-?   ?       ??? cart.html                       # Shopping cart
-?   ?       ??? checkout.html                   # Payment form
-?   ?       ??? confirmation.html               # Order confirmation
-?   ??? pom.xml                                 # Maven dependencies & build config
-?
-??? security-tests/                   # Automated Attack Simulation Suite
-?   ??? src/test/java/com/security/tests/
-?   ?   ??? base/
-?   ?   ?   ??? BaseTest.java                   # Selenium setup & event logger (headless default)
-?   ?   ??? injection/                          # Injection attack tests (OWASP A03)
-?   ?   ?   ??? SQLInjectionTest.java           # SQL injection attempts
-?   ?   ?   ??? XSSTest.java                    # XSS attack simulation
-?   ?   ?   ??? CSRFTest.java                   # CSRF token bypass attempts
-?   ?   ?   ??? SSRFTest.java                   # SSRF protocol/IP bypass tests
-?   ?   ??? auth/                               # Authentication attack tests (OWASP A01, A07)
-?   ?   ?   ??? BruteForceTest.java             # Login brute force (50 attempts)
-?   ?   ?   ??? SessionFixationTest.java        # Session fixation attacks
-?   ?   ?   ??? SessionHijackingTest.java       # Session theft simulation
-?   ?   ?   ??? PrivilegeEscalationTest.java    # Vertical privilege escalation (USER -> ADMIN)
-?   ?   ?   ??? AccessControlTest.java          # Horizontal access control, IDOR, forced browsing
-?   ?   ??? api/                                # API security tests (OWASP A04)
-?   ?   ?   ??? APIAuthenticationTest.java      # Unauthorized API access
-?   ?   ?   ??? RateLimitingTest.java           # Rate limit enforcement + bypass (IP spoofing, session rotation, slowloris)
-?   ?   ??? business/                           # Business logic attack tests (OWASP A04)
-?   ?   ?   ??? AmountTamperingTest.java        # Price manipulation attacks
-?   ?   ?   ??? CartManipulationTest.java       # Cart tampering tests
-?   ?   ?   ??? RaceConditionTest.java          # Concurrent cart/checkout race conditions
-?   ?   ??? config/                             # Security configuration tests (OWASP A05)
-?   ?   ?   ??? SecurityMisconfigurationTest.java # Headers, stack traces, OPTIONS method leakage
-?   ?   ??? crypto/                             # Cryptographic tests (OWASP A02)
-?   ?   ?   ??? TLSEnforcementTest.java         # HTTPS redirect, HSTS, Secure cookies
-?   ?   ?   ??? DataExposureTest.java           # localStorage/sessionStorage/DOM exposure, HttpOnly cookies
-?   ?   ??? utils/                              # Test utilities
-?   ?       ??? SecurityEvent.java              # Event POJO for test logging
-?   ?       ??? SecurityEventLogger.java        # Direct H2 event writer (36 event types)
-?   ??? src/test/resources/
-?   ?   ??? testng.xml                          # TestNG suite configuration (16 test classes)
-?   ??? pom.xml                                 # Selenium & TestNG dependencies
-?
-??? scripts/python/                   # SIEM & Incident Response
-?   ??? security_analyzer_h2.py                 # SIEM analyzer (pattern detection)
-?   ??? jira_ticket_generator.py                # JIRA ticket creation (dry-run capable)
-?   ??? requirements.txt                        # Python dependencies
-?
-??? .github/workflows/                # CI/CD Automation
-?   ??? security-tests.yml                      # Automated security testing
-?   ??? manual-jira-tickets.yml                 # Manual JIRA workflow trigger
-?
-??? data/                             # Runtime data (gitignored)
-?   ??? security-events.mv.db                   # H2 database file
-?
-??? demo-interview.ps1                # One-command demo orchestration script
-??? pom.xml                           # Parent POM for multi-module build
-??? README.md                         # This file
-```
-
 ## Demo User Credentials
 
 Test accounts seeded in **demo profile only** (`application-demo.properties`):
@@ -13398,12 +13502,13 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 import jakarta.servlet.http.HttpSession;
 
 @Configuration
 @EnableWebSecurity
-// central security policy for auth, sessions, and csrf; this is the primary guardrail for the app
+// security policy for auth, sessions, and csrf
 public class SecurityConfig {
 
     private final SecurityEventService securityEventService;
@@ -13412,17 +13517,24 @@ public class SecurityConfig {
     private final ApiAuthEntryPoint apiAuthEntryPoint;
     private final CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
     private final boolean demoMode;
+    private final boolean requireHttps;
 
     public SecurityConfig(SecurityEventService securityEventService,
                           @Lazy UserService userService,
                           SecurityAccessDeniedHandler securityAccessDeniedHandler,
                           ApiAuthEntryPoint apiAuthEntryPoint,
-                          @Value("${security.demo-mode:false}") boolean demoMode) {
+                          @Value("${security.demo-mode:false}") boolean demoMode,
+                          @Value("${security.require-https:false}") boolean requireHttps,
+                          @Value("${security.cookies.secure:false}") boolean secureCookies) {
         this.securityEventService = securityEventService;
         this.userService = userService;
         this.securityAccessDeniedHandler = securityAccessDeniedHandler;
         this.apiAuthEntryPoint = apiAuthEntryPoint;
         this.demoMode = demoMode;
+        this.requireHttps = requireHttps;
+        this.csrfTokenRepository.setCookieHttpOnly(true);
+        this.csrfTokenRepository.setCookiePath("/");
+        this.csrfTokenRepository.setSecure(secureCookies);
     }
 
     @Bean
@@ -13433,7 +13545,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
-            // log successful auth for siem pipeline
+            // on login success, log and bind session context
             String username = authentication.getName();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -13473,13 +13585,13 @@ public class SecurityConfig {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return (request, response, exception) -> {
-            // log failed auth and increment failure counters
+            // on login failure, log and update counters
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             
-            // Detect SQL injection attempts in login form
+            // inspect login inputs for obvious attack patterns
             if (username != null) {
                 String usernameLower = username.toLowerCase();
                 if (usernameLower.contains("'") || usernameLower.contains("--") || 
@@ -13493,7 +13605,6 @@ public class SecurityConfig {
                     );
                 }
                 
-                // Detect XSS attempts in login form
                 if (username.contains("<script") || username.contains("javascript:") ||
                     username.contains("onerror") || username.contains("alert(")) {
                     securityEventService.logHighSeverityEvent(
@@ -13538,14 +13649,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        if (requireHttps && !demoMode) {
+            http.requiresChannel().anyRequest().requiresSecure();
+        }
+
         http
-            .authorizeHttpRequests(auth -> auth
-                // define public vs protected routes
-                .requestMatchers("/", "/login", "/error", "/h2-console/**", "/css/**", "/js/**",
-                               "/products", "/cart/**").permitAll()
-                .requestMatchers("/api/security/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(auth -> {
+                // public routes, admin api, and default auth
+                auth.requestMatchers("/", "/login", "/register", "/error", "/css/**", "/js/**",
+                    "/products", "/cart/**").permitAll();
+                auth.requestMatchers("/api/security/**").hasRole("ADMIN");
+                if (demoMode) {
+                    auth.requestMatchers("/h2-console/**").permitAll();
+                } else {
+                    auth.requestMatchers("/h2-console/**").denyAll();
+                }
+                auth.anyRequest().authenticated();
+            })
             
             .formLogin(form -> form
                 .loginPage("/login")
@@ -13555,7 +13675,7 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                // invalidate server session and clear cookie
+                // invalidate session and clear cookie
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
@@ -13563,27 +13683,57 @@ public class SecurityConfig {
                 .permitAll()
             )
             .csrf(csrf -> csrf
-                // use cookie token for ui forms; allow h2 console in dev
+                // csrf settings for forms and demo console
                 .csrfTokenRepository(csrfTokenRepository)
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers(demoMode
-                    ? new String[]{"/h2-console/**", "/perform_login"}
-                    : new String[]{"/h2-console/**"})
             )
             .sessionManagement(session -> session
-                // limit concurrent sessions per user
+                // single session per user
+                .sessionFixation(sessionFixation -> sessionFixation.migrateSession())
                 .maximumSessions(1)
                 .maxSessionsPreventsLogin(false)
             );
+        if (demoMode) {
+            http.csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"));
+        }
 
-        // configure security headers - frameOptions allows H2 console in demo mode
-        http.headers(headers -> headers
-            .contentTypeOptions(contentTypeOptions -> {})  // defaults to nosniff
-            .xssProtection(xss -> {})  // defaults to enabled
-            .cacheControl(cache -> {})  // defaults to enabled
-            .frameOptions(frameOptions -> frameOptions.sameOrigin())  // allow same-origin framing for H2
-        );
+        // apply default security headers
+        http.headers(headers -> {
+            headers.contentTypeOptions(contentTypeOptions -> {});
+            headers.xssProtection(xss -> {});
+            headers.cacheControl(cache -> {});
+            if (demoMode) {
+                headers.frameOptions(frameOptions -> frameOptions.sameOrigin());
+            } else {
+                headers.frameOptions(frameOptions -> frameOptions.deny());
+            }
+            headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
+            headers.permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=(), payment=()"));
+            String cspDirectives = demoMode
+                ? "default-src 'self'; " +
+                  "script-src 'self' 'unsafe-inline'; " +
+                  "style-src 'self' 'unsafe-inline'; " +
+                  "img-src 'self' data:; " +
+                  "object-src 'none'; " +
+                  "base-uri 'self'; " +
+                  "form-action 'self'; " +
+                  "frame-ancestors 'self'"
+                : "default-src 'self'; " +
+                  "script-src 'self'; " +
+                  "style-src 'self' 'unsafe-inline'; " +
+                  "img-src 'self' data:; " +
+                  "object-src 'none'; " +
+                  "base-uri 'self'; " +
+                  "form-action 'self'; " +
+                  "frame-ancestors 'self'";
+            headers.contentSecurityPolicy(csp -> csp.policyDirectives(cspDirectives));
+            headers.httpStrictTransportSecurity(hsts -> hsts
+                .includeSubDomains(true)
+                .preload(true)
+                .maxAgeInSeconds(31536000));
+        });
 
+        // map auth failures and access denials to handlers
         http.exceptionHandling(exceptionHandling -> exceptionHandling
             .accessDeniedHandler(securityAccessDeniedHandler)
             .defaultAuthenticationEntryPointFor(apiAuthEntryPoint,

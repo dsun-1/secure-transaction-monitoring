@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
+// logs unauthorized api access and returns 401
 public class ApiAuthEntryPoint implements AuthenticationEntryPoint {
 
     private final SecurityEventService securityEventService;
@@ -23,6 +24,7 @@ public class ApiAuthEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request,
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
+        // emit a high severity event before sending the response
         securityEventService.logHighSeverityEvent(
             "API_AUTH_FAILURE",
             "anonymous",
