@@ -10,10 +10,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -24,12 +27,19 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private static final long WINDOW_MS = 5_000L;
     private static final int MAX_REQUESTS = 50;
-    private static final ConcurrentHashMap<String, Window> WINDOWS = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, SlidingWindow> WINDOWS = new ConcurrentHashMap<>();
 
     private final SecurityEventService securityEventService;
+    private final Clock clock;
 
+    @Autowired
     public RateLimitingFilter(SecurityEventService securityEventService) {
+        this(securityEventService, Clock.systemUTC());
+    }
+
+    RateLimitingFilter(SecurityEventService securityEventService, Clock clock) {
         this.securityEventService = securityEventService;
+        this.clock = clock;
     }
 
     @Override
@@ -43,16 +53,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
 
         String key = request.getRemoteAddr() + ":" + rateLimitKey(path);
-        long now = System.currentTimeMillis();
+        long now = clock.millis();
         pruneExpiredWindows(now);
-        Window window = WINDOWS.compute(key, (k, existing) -> {
-            if (existing == null || now - existing.windowStart >= WINDOW_MS) {
-                return new Window(now);
-            }
-            return existing;
-        });
-
-        int count = window.count.incrementAndGet();
+        SlidingWindow window = WINDOWS.computeIfAbsent(key, k -> new SlidingWindow());
+        int count = window.addAndCount(now);
         if (count > MAX_REQUESTS) {
             response.setStatus(429);
             response.setContentType("text/plain");
@@ -79,15 +83,31 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private void pruneExpiredWindows(long now) {
-        WINDOWS.entrySet().removeIf(entry -> now - entry.getValue().windowStart >= WINDOW_MS);
+        WINDOWS.entrySet().removeIf(entry -> entry.getValue().pruneAndIsEmpty(now));
     }
 
-    private static class Window {
-        private final long windowStart;
-        private final AtomicInteger count = new AtomicInteger(0);
+    private static class SlidingWindow {
+        private final Deque<Long> timestamps = new ArrayDeque<>();
 
-        private Window(long windowStart) {
-            this.windowStart = windowStart;
+        private int addAndCount(long now) {
+            synchronized (this) {
+                prune(now);
+                timestamps.addLast(now);
+                return timestamps.size();
+            }
+        }
+
+        private boolean pruneAndIsEmpty(long now) {
+            synchronized (this) {
+                prune(now);
+                return timestamps.isEmpty();
+            }
+        }
+
+        private void prune(long now) {
+            while (!timestamps.isEmpty() && now - timestamps.peekFirst() >= WINDOW_MS) {
+                timestamps.pollFirst();
+            }
         }
     }
 

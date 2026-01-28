@@ -3,7 +3,7 @@ param(
     [string]$DemoProfile = "demo",
     [string]$BaseUrl = "http://localhost:8080",
     [string]$Browser = "chrome",
-    [bool]$Headless = $true,
+    [bool]$Headless = $false,
     [bool]$InstallPythonDependencies = $true
 )
 

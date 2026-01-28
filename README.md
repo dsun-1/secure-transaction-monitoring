@@ -1,400 +1,77 @@
 # Secure E-Commerce Transaction Monitor
 
-Security engineering demo for internship interview showcasing runtime security monitoring, SIEM integration, and automated incident response on a Spring Boot e-commerce application.
+Security demo app that shows how web attacks are detected, logged, and turned into incidents.
 
-## Project Overview
+## What it does
 
-This project demonstrates a complete **Attack -> Detect -> Analyze -> Respond** workflow using modern security engineering practices:
+- Simulates attacks with Selenium/TestNG (DAST)
+- Detects SQLi/XSS and auth abuse inside the Spring app
+- Stores structured security events in H2
+- Python analyzer groups events into incidents
+- Optional JIRA ticket creation (dry-run supported)
 
-1. **Attack Simulation**: Automated TestNG test suite with Selenium WebDriver simulates OWASP Top 10 threats
-2. **Runtime Detection**: Spring Boot application detects attacks in real-time and logs structured security events to H2 database
-3. **SIEM Analysis**: Python analyzer correlates events, identifies attack patterns, and generates incident reports
-4. **Incident Response**: JIRA integration creates tickets for security teams (with dry-run fallback)
+## Quick start (demo mode)
 
-## Quick Start (Demo Mode)
+### Prereqs
 
-### Prerequisites
+- Java 21
+- Maven 3.8+
+- Python 3.9+
+- Chrome (or Firefox)
 
-- **Java 21**: Download from [Adoptium](https://adoptium.net/) or Oracle
-- **Maven 3.8+**: Build automation tool
-- **Python 3.9+**: For SIEM analyzer and JIRA integration
-- **Chrome Browser**: Required for Selenium WebDriver tests (Firefox also supported)
-- **Git**: Version control (for cloning repository)
-
-### Python Dependencies
-
-```bash
-pip install -r scripts/python/requirements.txt
-# Installs: JayDeBeApi (1.2.3), JPype1 (1.4.0), requests
-```
-
-### Option A: One-Command Demo (Recommended)
+### Option A: one-command demo
 
 ```powershell
 .\demo-interview.ps1
 ```
 
-This script automatically:
-
-1. Builds the Spring Boot JAR (`mvn clean package -DskipTests`)
-2. Starts the application in a separate window with demo profile
-3. Waits for application to be ready (health check on port 8080)
-4. Runs the complete TestNG attack simulation suite
-5. Analyzes security events with Python SIEM (`security_analyzer_h2.py`)
-6. Generates JIRA incident tickets (`jira_ticket_generator.py`)
-7. Displays summary of attacks detected, incidents created, and severity breakdown
-
-**Expected Results:**
-
-- **Tests**: 55 tests executed across 16 test classes
-- **Security Events**: 80+ HIGH/MEDIUM severity events logged
-- **SIEM Incidents**: Brute force, enumeration, transaction anomalies, and event-based alerts
-- **OWASP Coverage**: 8 out of 10 categories
-- **JIRA Tickets**: Created if credentials are configured
-
-### Option B: Manual Step-by-Step
-
-#### 1. Build the Application
+### Option B: manual steps
 
 ```bash
 cd ecommerce-app
 mvn clean package -DskipTests
-```
 
-#### 2. Start Application with Demo Profile
-
-```bash
-# Option A: Using Maven
+# run the app
 mvn spring-boot:run -Dspring-boot.run.profiles=demo
-
-# Option B: Using JAR
+# or
 java -Dspring.profiles.active=demo -jar target/ecommerce-app-1.0.0.jar
 ```
 
-Application starts on **http://localhost:8080** with:
-
-- Demo users seeded (testuser, admin, paymentuser)
-- H2 database at `../data/security-events`
-- Security event logging enabled
-
-#### 3. Run Attack Simulation Suite (New Terminal)
-
 ```bash
+# in another terminal
 cd security-tests
 mvn test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
 ```
 
-#### 4. Run SIEM Analysis
-
 ```bash
+# analyze events
 python scripts/python/security_analyzer_h2.py
 ```
 
-#### 5. Generate JIRA Tickets (Optional)
-
 ```bash
-# Dry-run mode (no JIRA credentials required)
-python scripts/python/jira_ticket_generator.py
-
-# Production mode (requires environment variables)
-$env:JIRA_URL = "https://your-domain.atlassian.net"
-$env:JIRA_USERNAME = "your-email@example.com"
-$env:JIRA_API_TOKEN = "your-api-token"
-$env:JIRA_PROJECT_KEY = "SEC"
+# optional JIRA tickets (dry-run if no creds)
 python scripts/python/jira_ticket_generator.py
 ```
 
-## Demo User Credentials
+## Demo accounts (demo profile only)
 
-Test accounts seeded in **demo profile only** (`application-demo.properties`):
+| Username | Password | Role |
+|---|---|---|
+| testuser | password123 | USER |
+| admin | admin123 | ADMIN |
+| paymentuser | Paym3nt@123 | USER |
 
-| Username | Password | Role | Purpose |
-|----------|----------|------|---------|
-| `testuser` | `password123` | USER | Standard user account for login/session tests |
-| `admin` | `admin123` | ADMIN | Administrator for privileged operations testing |
-| `paymentuser` | `Paym3nt@123` | USER | Transaction and payment flow testing |
+## Notes
 
-**Security Note**: These credentials are intentionally weak for attack simulation. Production systems use strong password policies enforced via Jakarta Validation.
+- Demo profile seeds users and enables the H2 console.
+- Security events are stored in `../data/security-events`.
 
-## Configuration Details
+## Repo map
 
-### Application Properties
+- `ecommerce-app`: Spring Boot app with runtime detection and logging
+- `security-tests`: Selenium/TestNG DAST suite
+- `scripts/python`: SIEM analyzer + JIRA integration
 
-**Production Config** (`application.properties`):
+## More details
 
-```properties
-# Server Configuration
-server.port=8080
-
-# H2 Database (File-based)
-spring.datasource.url=jdbc:h2:file:../data/security-events
-spring.datasource.driver-class-name=org.h2.Driver
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=false
-
-# H2 Console (Disabled by default)
-spring.h2.console.enabled=false
-
-# Thymeleaf Template Engine
-spring.thymeleaf.cache=true
-
-# Logging
-logging.level.root=INFO
-logging.level.com.security.ecommerce=INFO
-```
-
-**Demo Profile** (`application-demo.properties`):
-
-```properties
-# Demo user seeding
-demo.users.enabled=true
-
-# H2 Console (Enabled for demo)
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-
-# Enhanced logging for demo
-logging.level.com.security.ecommerce=DEBUG
-logging.level.org.springframework.security=DEBUG
-
-# Thymeleaf hot reload
-spring.thymeleaf.cache=false
-```
-
-### Test Configuration
-
-**TestNG Suite** (`testng.xml`):
-
-- **Thread Count**: 5 (parallel test execution)
-- **Verbose Level**: 1 (minimal output)
-- **Test Classes**: 16 active test classes (13 functional security tests, 1 destructive test, 2 cryptographic tests)
-- **Listener**: ExtentReports for HTML test reports
-- **Headless Mode**: Enabled by default (no browser UI)
-
-**System Properties**:
-
-- `-Dheadless=true/false`: Browser display mode
-- `-Dbrowser=chrome/firefox`: Browser selection
-- `-DbaseUrl=http://localhost:8080`: Application URL
-
-### Environment Variables
-
-**JIRA Integration** (Optional):
-
-```bash
-JIRA_URL=https://your-domain.atlassian.net
-JIRA_USERNAME=your-email@example.com
-JIRA_API_TOKEN=your-api-token
-JIRA_PROJECT_KEY=SEC
-```
-
-**Python/JDBC**:
-
-- `JAVA_HOME`: Required for JPype1 to find JVM
-- Path to H2 JDBC driver: Auto-detected from Maven repository
-
-## API Endpoints
-
-### Public Endpoints
-
-- `GET /`: Home page redirect to login
-- `GET /login`: Login form (CSRF protected)
-- `POST /perform_login`: Login submission handler
-- `POST /logout`: Logout handler
-
-### Authenticated Endpoints (USER role)
-
-- `GET /products`: Product catalog with search
-- `POST /products/search`: Product search (SQLi/XSS detection)
-- `GET /cart`: Shopping cart view
-- `POST /cart/add`: Add item to cart
-- `POST /cart/update`: Update cart quantities
-- `GET /checkout`: Checkout form
-- `POST /checkout/submit`: Payment processing
-- `GET /confirmation`: Order confirmation
-
-### Admin Endpoints (ADMIN role)
-
-- `GET /api/security/dashboard`: Security metrics dashboard (JSON)
-- `GET /api/security/events`: Recent security events (JSON)
-- `GET /api/security/stats`: Statistics summary (JSON)
-
-### Development Endpoints (Demo profile)
-
-- `GET /h2-console`: H2 database console (JDBC URL: `jdbc:h2:file:../data/security-events`)
-
-## Database Schema
-
-### security_events
-
-```sql
-CREATE TABLE security_events (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,           -- SQL_INJECTION_ATTEMPT, XSS_ATTEMPT, etc.
-    severity VARCHAR(20) NOT NULL,             -- INFO, LOW, MEDIUM, HIGH, CRITICAL
-    username VARCHAR(100),                     -- Affected user account
-    session_id VARCHAR(255),                   -- HTTP session ID
-    ip_address VARCHAR(45),                    -- Source IP address
-    user_agent VARCHAR(500),                   -- Browser/client identifier
-    description TEXT,                          -- Event details
-    successful BOOLEAN,                        -- Attack success indicator
-    timestamp TIMESTAMP NOT NULL,              -- Event occurrence time
-    additional_data TEXT                       -- JSON/structured metadata
-);
-
--- Indexes for SIEM query performance
-CREATE INDEX idx_event_type ON security_events(event_type);
-CREATE INDEX idx_severity ON security_events(severity);
-CREATE INDEX idx_username ON security_events(username);
-CREATE INDEX idx_timestamp ON security_events(timestamp);
-```
-
-### authentication_attempts
-
-```sql
-CREATE TABLE authentication_attempts (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) NOT NULL,
-    success BOOLEAN NOT NULL,
-    ip_address VARCHAR(45),
-    failure_reason VARCHAR(200),
-    attempt_timestamp TIMESTAMP NOT NULL
-);
-
-CREATE INDEX idx_username_time ON authentication_attempts(username, attempt_timestamp);
-CREATE INDEX idx_success ON authentication_attempts(success);
-```
-
-### transaction_anomalies
-
-```sql
-CREATE TABLE transaction_anomalies (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id VARCHAR(100),
-    username VARCHAR(100),
-    anomaly_type VARCHAR(50) NOT NULL,         -- AMOUNT_TAMPERING, CART_MANIPULATION
-    original_amount DECIMAL(10,2),
-    modified_amount DECIMAL(10,2),
-    anomaly_details TEXT,
-    detection_timestamp TIMESTAMP NOT NULL
-);
-
-CREATE INDEX idx_anomaly_type ON transaction_anomalies(anomaly_type);
-CREATE INDEX idx_tx_username ON transaction_anomalies(username);
-```
-
-## CI/CD Integration
-
-### GitHub Actions Workflows
-
-**Security Test Workflow** (`.github/workflows/security-tests.yml`):
-
-```yaml
-# Triggers: Push to main, Pull requests, Manual dispatch
-# Steps:
-#   1. Checkout code
-#   2. Setup Java 21
-#   3. Setup Python 3.9
-#   4. Install Python dependencies
-#   5. Build Spring Boot application
-#   6. Start application in background
-#   7. Run TestNG security test suite (headless)
-#   8. Run SIEM analysis on test results
-#   9. Upload test reports as artifacts
-```
-
-**Manual JIRA Workflow** (`.github/workflows/manual-jira-tickets.yml`):
-
-```yaml
-# Trigger: Manual workflow dispatch
-# Inputs: JIRA credentials (secrets)
-# Steps:
-#   1. Checkout code
-#   2. Setup Python
-#   3. Run SIEM analysis
-#   4. Create JIRA tickets from incidents
-```
-
-## Development Guidelines
-
-### Adding New Security Event Types
-
-1. **Add to SecurityEventLogger allowed types**:
-
-```java
-private static final Set<String> ALLOWED_EVENT_TYPES = Set.of(
-    // ... existing types
-    "NEW_EVENT_TYPE"
-);
-```
-
-2. **Log events in application code**:
-
-```java
-@Autowired
-private SecurityEventService securityEventService;
-
-securityEventService.logSecurityEvent(
-    "NEW_EVENT_TYPE",
-    "HIGH",
-    username,
-    sessionId,
-    "Event description"
-);
-```
-
-3. **Update SIEM analyzer patterns** (`security_analyzer_h2.py`):
-
-```python
-def detect_new_pattern(events):
-    # Add correlation logic
-    pass
-```
-
-## Performance Metrics
-
-### Application Startup
-
-- **Cold Start**: ~8-12 seconds (Spring Boot initialization)
-- **Warm Start**: ~5-7 seconds (JVM already running)
-
-### Test Execution
-
-- **Full Suite**: 47+ tests in ~4-6 minutes (parallel execution, 5 threads, headless mode)
-- **Single Test**: ~5-15 seconds (depends on Selenium interactions)
-- **Race Condition Tests**: ~20-30 seconds (concurrent ExecutorService operations)
-
-### SIEM Analysis
-
-- **100 events**: <1 second
-- **1,000 events**: ~2-3 seconds
-- **10,000 events**: ~15-20 seconds (JDBC query + Python processing)
-
-## Troubleshooting
-
-### Port Already in Use (8080)
-
-```powershell
-# Find process using port 8080
-Get-NetTCPConnection -LocalPort 8080 | Select-Object OwningProcess
-
-# Kill process
-Stop-Process -Id <PID> -Force
-```
-
-### H2 Database Lock
-
-```powershell
-# Delete lock files
-Remove-Item data/security-events.*.db -Force
-```
-## References
-
-- [OWASP Top 10 2021](https://owasp.org/www-project-top-ten/)
-- [Spring Security Documentation](https://docs.spring.io/spring-security/reference/)
-- [MITRE ATT&CK Framework](https://attack.mitre.org/)
-- [CWE Top 25](https://cwe.mitre.org/top25/)
-
-## More Details
-
-See `DETAILS.md` for the full technology stack, security controls, SIEM analysis capabilities, configuration, schema, and CI/CD documentation.
+See `DETAILS.md` for a slightly deeper overview (still short).

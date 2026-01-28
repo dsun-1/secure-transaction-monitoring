@@ -31,24 +31,19 @@ public class SecurityConfig {
     private final ApiAuthEntryPoint apiAuthEntryPoint;
     private final CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
     private final boolean demoMode;
-    private final boolean requireHttps;
 
     public SecurityConfig(SecurityEventService securityEventService,
                           @Lazy UserService userService,
                           SecurityAccessDeniedHandler securityAccessDeniedHandler,
                           ApiAuthEntryPoint apiAuthEntryPoint,
                           @Value("${security.demo-mode:false}") boolean demoMode,
-                          @Value("${security.require-https:false}") boolean requireHttps,
                           @Value("${security.cookies.secure:false}") boolean secureCookies) {
         this.securityEventService = securityEventService;
         this.userService = userService;
         this.securityAccessDeniedHandler = securityAccessDeniedHandler;
         this.apiAuthEntryPoint = apiAuthEntryPoint;
         this.demoMode = demoMode;
-        this.requireHttps = requireHttps;
-        this.csrfTokenRepository.setCookieHttpOnly(true);
         this.csrfTokenRepository.setCookiePath("/");
-        this.csrfTokenRepository.setSecure(secureCookies);
     }
 
     @Bean
@@ -163,10 +158,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        if (requireHttps && !demoMode) {
-            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
-        }
-
         http
             .authorizeHttpRequests(auth -> {
                 // public routes, admin api, and default auth
@@ -222,7 +213,9 @@ public class SecurityConfig {
                 headers.frameOptions(frameOptions -> frameOptions.deny());
             }
             headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN));
-            headers.permissionsPolicy(permissions -> permissions.policy("geolocation=(), microphone=(), camera=(), payment=()"));
+            headers.addHeaderWriter((request, response) -> {
+                response.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=()");
+            });
             String cspDirectives = demoMode
                 ? "default-src 'self'; " +
                   "script-src 'self' 'unsafe-inline'; " +
