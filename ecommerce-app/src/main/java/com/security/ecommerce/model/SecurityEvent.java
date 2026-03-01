@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "security_events")
 @Data
@@ -44,6 +43,7 @@ public class SecurityEvent {
 
     // event categories used by detections and reporting
     public enum EventType {
+        // authentication layer
         LOGIN_ATTEMPT,
         LOGIN_SUCCESS,
         LOGIN_FAILURE,
@@ -59,6 +59,7 @@ public class SecurityEvent {
         BRUTE_FORCE_PREVENTION_SUCCESS,
         DISTRIBUTED_BRUTE_FORCE,
         CREDENTIAL_STUFFING,
+        // application layer
         SQL_INJECTION_ATTEMPT,
         SSRF_ATTEMPT,
         XSS_ATTEMPT,
@@ -80,7 +81,16 @@ public class SecurityEvent {
         CRYPTOGRAPHIC_FAILURE,
         DESERIALIZATION_ATTEMPT,
         SOFTWARE_INTEGRITY_VIOLATION,
-        VULNERABLE_COMPONENTS
+        VULNERABLE_COMPONENTS,
+        // network layer
+        DNS_REBINDING_ATTEMPT,
+        REQUEST_SMUGGLING_ATTEMPT,
+        PORT_SCAN_DETECTED,
+        MALICIOUS_IP_DETECTED,
+        GEO_ANOMALY_DETECTED,
+        ABNORMAL_TRAFFIC_PATTERN,
+        TLS_DOWNGRADE_ATTEMPT,
+        PROTOCOL_VIOLATION
     }
 
     // severity levels used for alerting

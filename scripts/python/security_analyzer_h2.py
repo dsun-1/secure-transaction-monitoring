@@ -225,6 +225,73 @@ class SecurityEventAnalyzer:
         conn.close()
         logger.info("Transaction anomaly detection found %d incidents", len(incidents))
         return incidents
+
+    # correlate network-layer security events across DNS, protocol, and traffic anomalies
+    def detect_network_layer_threats(self):
+        logger.debug("Detecting network-layer threats")
+        try:
+            conn = self.connect()
+            cursor = conn.cursor()
+        except Exception as e:
+            logger.error("Failed to connect to DB for network threat detection: %s", e)
+            return []
+
+        network_event_types = (
+            "'DNS_REBINDING_ATTEMPT','REQUEST_SMUGGLING_ATTEMPT','PORT_SCAN_DETECTED',"
+            "'MALICIOUS_IP_DETECTED','GEO_ANOMALY_DETECTED','ABNORMAL_TRAFFIC_PATTERN',"
+            "'TLS_DOWNGRADE_ATTEMPT','PROTOCOL_VIOLATION'"
+        )
+
+        query = f"""
+            SELECT event_type, ip_address, COUNT(*) as event_count,
+                   MIN(timestamp) as first_seen,
+                   MAX(timestamp) as last_seen,
+                   LISTAGG(DISTINCT username, ', ') as affected_users
+            FROM security_events
+            WHERE event_type IN ({network_event_types})
+              AND timestamp > DATEADD('HOUR', -24, CURRENT_TIMESTAMP())
+            GROUP BY event_type, ip_address
+            ORDER BY event_count DESC
+        """
+
+        try:
+            cursor.execute(query)
+            results = cursor.fetchall()
+        except Exception as e:
+            logger.warning("Network threat query failed: %s", e)
+            results = []
+
+        incidents = []
+        for row in results:
+            severity = 'HIGH' if row[2] >= 5 else 'MEDIUM'
+            event_type = row[0]
+            recommendations = {
+                'DNS_REBINDING_ATTEMPT': 'Validate Host header against allow-list, block offending IPs',
+                'REQUEST_SMUGGLING_ATTEMPT': 'Review reverse proxy configuration, reject ambiguous requests',
+                'PORT_SCAN_DETECTED': 'Block source IP at firewall, investigate reconnaissance activity',
+                'MALICIOUS_IP_DETECTED': 'Add IP to blocklist, review WAF rules',
+                'GEO_ANOMALY_DETECTED': 'Enforce geo-fencing policy, flag for manual review',
+                'ABNORMAL_TRAFFIC_PATTERN': 'Analyze traffic pattern, adjust rate limiting',
+                'TLS_DOWNGRADE_ATTEMPT': 'Enforce HSTS, reject non-TLS connections',
+                'PROTOCOL_VIOLATION': 'Block offending request pattern, update WAF signatures',
+            }
+            incident = {
+                'type': event_type,
+                'severity': severity,
+                'layer': 'network',
+                'ip_address': row[1],
+                'event_count': row[2],
+                'first_seen': str(row[3]),
+                'last_seen': str(row[4]),
+                'affected_users': row[5],
+                'recommendation': recommendations.get(event_type, 'Investigate network anomaly')
+            }
+            incidents.append(incident)
+
+        cursor.close()
+        conn.close()
+        logger.info("Network layer threat detection found %d incidents", len(incidents))
+        return incidents
     
     # pull recent high-severity events for reporting and escalation
     def get_high_severity_events(self, hours=24):
@@ -370,8 +437,13 @@ class SecurityEventAnalyzer:
                 'recommendation': 'Investigate event and apply appropriate mitigation'
             }
             all_incidents.append(incident)
+
+        # network layer
+        print("[5] Analyzing network-layer threats...")
+        network_threats = self.detect_network_layer_threats()
+        all_incidents.extend(network_threats)
+        print(f"   Found {len(network_threats)} network-layer incidents")
         
-                 
         print("\n" + "=" * 80)
         print("SUMMARY")
         print("=" * 80)

@@ -46,11 +46,25 @@ jobs:
       - name: Set up Chrome
         uses: browser-actions/setup-chrome@v1
 
-      # build the app first so the tests can run against it
-      - name: Build ecommerce app
-        run: mvn -pl ecommerce-app -DskipTests package
+      # build both microservices so the tests can run against them
+      - name: Build microservices
+        run: mvn -pl ecommerce-app,security-monitoring-service -DskipTests package
 
-      # start the app and wait until it responds
+      # start the monitoring service first, then the ecommerce app
+      - name: Start monitoring service
+        run: |
+          cd security-monitoring-service
+          nohup mvn -DskipTests spring-boot:run > monitoring.log 2>&1 &
+          echo $! > monitoring.pid
+          for i in {1..20}; do
+            if curl -fsS http://localhost:8081/api/analytics/health >/dev/null; then
+              echo "Monitoring service is up"
+              break
+            fi
+            sleep 2
+          done
+
+      # start the ecommerce app and wait until it responds
       - name: Start ecommerce app
         run: |
           cd ecommerce-app
@@ -70,11 +84,14 @@ jobs:
         run: mvn -pl security-tests test -Dheadless=true -Dbrowser=chrome -DbaseUrl=http://localhost:8080
 
       # cleanup is always executed to avoid leaked processes
-      - name: Stop ecommerce app
+      - name: Stop microservices
         if: always()
         run: |
           if [ -f ecommerce-app/app.pid ]; then
             kill $(cat ecommerce-app/app.pid) || true
+          fi
+          if [ -f security-monitoring-service/monitoring.pid ]; then
+            kill $(cat security-monitoring-service/monitoring.pid) || true
           fi
           pkill -f "spring-boot:run" || true
 

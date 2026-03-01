@@ -33,10 +33,14 @@ screenshots/
 *.log
 logs/
 repomix-output.md
+repomix-output.xml
 
 *.db
 *.sqlite
 *.h2.db
+*.mv.db
+*.trace.db
+data/
 
 *.key
 *.pem
@@ -54,6 +58,7 @@ chromedriver
 incident-response/reports/generated/*
 !incident-response/reports/generated/.gitkeep
 scripts/python/siem_incident_report.json
+siem_incident_report.json
 
 .fortify/
 fortify-results/

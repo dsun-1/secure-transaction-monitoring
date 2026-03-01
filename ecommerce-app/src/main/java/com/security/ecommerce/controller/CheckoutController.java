@@ -31,9 +31,9 @@ public class CheckoutController {
     private final SecurityEventService securityEventService;
 
     public CheckoutController(CartService cartService,
-                              TransactionService transactionService,
-                              UserService userService,
-                              SecurityEventService securityEventService) {
+            TransactionService transactionService,
+            UserService userService,
+            SecurityEventService securityEventService) {
         this.cartService = cartService;
         this.transactionService = transactionService;
         this.userService = userService;
@@ -46,48 +46,49 @@ public class CheckoutController {
         String sessionId = session.getId();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = authentication != null
-            && authentication.isAuthenticated()
-            && !(authentication instanceof AnonymousAuthenticationToken);
-        
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
+
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
         BigDecimal total = cartService.getCartTotal(sessionId);
-        
+
         if (cartItems.isEmpty()) {
             return "redirect:/cart";
         }
-        
+
         model.addAttribute("cartItems", cartItems);
         model.addAttribute("total", total);
-        
+
         if (isAuthenticated) {
             model.addAttribute("loggedIn", true);
         }
-        
+
         return "checkout";
     }
 
     @PostMapping("/checkout/process")
     // process payment details and create a transaction
     public String processCheckout(@RequestParam String cardNumber,
-                                  @RequestParam String cardName,
-                                  @RequestParam String expiryDate,
-                                  @RequestParam String cvv,
-                                  @RequestParam(required = false) String clientTotal,
-                                  @RequestParam(required = false) String shippingAddress,
-                                  HttpSession session,
-                                  Model model) {
-        
+            @RequestParam String cardName,
+            @RequestParam String expiryDate,
+            @RequestParam String cvv,
+            @RequestParam(required = false) String clientTotal,
+            @RequestParam(required = false) String shippingAddress,
+            HttpSession session,
+            Model model) {
+
         String sessionId = session.getId();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication != null ? authentication.getName() : null;
-        
+
         List<CartItem> cartItems = cartService.getCartItems(sessionId);
-        BigDecimal total = cartService.getCartTotal(sessionId);
-        
+        // pessimistic lock on all cart items prevents race conditions during checkout
+        BigDecimal total = cartService.getCartTotalForCheckout(sessionId);
+
         if (cartItems.isEmpty()) {
             return "redirect:/cart";
         }
-        
+
         String validationError = null;
         if (cardNumber == null || cardNumber.length() < 13) {
             validationError = "Invalid card number";
@@ -102,7 +103,7 @@ public class CheckoutController {
                 && shippingAddress.trim().length() < 10) {
             validationError = "Shipping address is too short";
         }
-        
+
         if (validationError != null) {
             model.addAttribute("error", validationError);
             model.addAttribute("cartItems", cartItems);
@@ -116,48 +117,44 @@ public class CheckoutController {
                 if (submittedTotal.compareTo(total) != 0) {
                     String usernameLabel = username != null ? username : "anonymous";
                     securityEventService.logHighSeverityEvent(
-                        "AMOUNT_TAMPERING",
-                        usernameLabel,
-                        "Checkout total mismatch detected",
-                        "client_total=" + submittedTotal + " | server_total=" + total
-                    );
+                            "AMOUNT_TAMPERING",
+                            usernameLabel,
+                            "Checkout total mismatch detected",
+                            "client_total=" + submittedTotal + " | server_total=" + total);
                     securityEventService.recordTransactionAnomaly(
-                        "CLIENT_TOTAL_MISMATCH",
-                        usernameLabel,
-                        "CLIENT_TOTAL_MISMATCH",
-                        total.doubleValue(),
-                        submittedTotal.doubleValue(),
-                        "Client total did not match server total"
-                    );
+                            "CLIENT_TOTAL_MISMATCH",
+                            usernameLabel,
+                            "CLIENT_TOTAL_MISMATCH",
+                            total.doubleValue(),
+                            submittedTotal.doubleValue(),
+                            "Client total did not match server total");
                 }
             } catch (NumberFormatException ex) {
                 securityEventService.logHighSeverityEvent(
-                    "AMOUNT_TAMPERING",
-                    username != null ? username : "anonymous",
-                    "Invalid checkout total submitted",
-                    "client_total=" + clientTotal
-                );
+                        "AMOUNT_TAMPERING",
+                        username != null ? username : "anonymous",
+                        "Invalid checkout total submitted",
+                        "client_total=" + clientTotal);
             }
         }
-        
+
         User user = username != null ? userService.findByUsername(username) : null;
-        
+
         try {
             Objects.requireNonNull(cardNumber, "Card number is required");
             String last4 = cardNumber.substring(cardNumber.length() - 4);
             Transaction transaction = transactionService.createTransaction(
-                user,
-                total,
-                last4
-            );
-            
+                    user,
+                    total,
+                    last4);
+
             cartService.clearCart(sessionId);
-            
+
             model.addAttribute("transaction", transaction);
             model.addAttribute("transactionId", transaction.getId());
-            
+
             return "confirmation";
-            
+
         } catch (Exception e) {
             model.addAttribute("error", "Payment processing failed: " + e.getMessage());
             model.addAttribute("cartItems", cartItems);

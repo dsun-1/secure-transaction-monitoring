@@ -19,7 +19,7 @@ public class CartService {
     private final ProductRepository productRepository;
 
     public CartService(CartItemRepository cartItemRepository,
-                       ProductRepository productRepository) {
+            ProductRepository productRepository) {
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
     }
@@ -41,7 +41,7 @@ public class CartService {
         }
 
         Product product = productRepository.findById(productId).orElse(null);
-        
+
         if (product == null) {
             return null;
         }
@@ -66,7 +66,7 @@ public class CartService {
         cartItem.setProduct(product);
         cartItem.setQuantity(quantity);
         cartItem.setPrice(product.getPrice());
-        
+
         return cartItemRepository.save(cartItem);
     }
 
@@ -75,7 +75,8 @@ public class CartService {
             return;
         }
 
-        CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
+        // pessimistic lock prevents concurrent quantity updates from corrupting state
+        CartItem item = cartItemRepository.findByIdWithLock(cartItemId).orElse(null);
         if (item != null && item.getSessionId().equals(sessionId)) {
             if (quantity <= 0) {
                 cartItemRepository.delete(item);
@@ -91,7 +92,8 @@ public class CartService {
             return;
         }
 
-        CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
+        // pessimistic lock ensures no concurrent update races the delete
+        CartItem item = cartItemRepository.findByIdWithLock(cartItemId).orElse(null);
         if (item != null && item.getSessionId().equals(sessionId)) {
             cartItemRepository.delete(item);
         }
@@ -102,7 +104,17 @@ public class CartService {
     }
 
     public BigDecimal getCartTotal(String sessionId) {
+        // non-locking read for display; checkout path uses getCartTotalForCheckout
         List<CartItem> items = cartItemRepository.findBySessionId(sessionId);
+        return items.stream()
+                .map(CartItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // pessimistic lock on all session items prevents total from changing
+    // mid-checkout
+    public BigDecimal getCartTotalForCheckout(String sessionId) {
+        List<CartItem> items = cartItemRepository.findBySessionIdWithLock(sessionId);
         return items.stream()
                 .map(CartItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
